@@ -62,33 +62,39 @@ def turso_query(sql, params=None):
                     parsed.append(d)
                 return parsed
         return []
-    except:
+    except Exception as e:
+        st.sidebar.write(f"Turso error: {e}")
         return []
 
 def save_lead(d):
-    lid = str(uuid.uuid4())
-    now = datetime.now().isoformat()
-    mats = json.dumps(d.get('mt', []))
-    tags = json.dumps(d.get('tg', []))
-    ins = 1 if d.get('ins') else 0
-    mk = 1 if d.get('mk') else 1
-    turso_query(
-        "INSERT INTO leads(id,first_name,last_name,email,phone,company,job_title,timing,materials,tags,inspection,marketing,campaign,device_id,submitted) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-        [lid, d.get('fn',''), d.get('ln',''), d.get('em',''), d.get('ph',''),
-         d.get('co',''), d.get('jt',''), d.get('ti',''), mats, tags, ins, mk,
-         'NOG Energy Week 2026', st.session_state.get('did',''), now]
-    )
-    return True
+    try:
+        lid = str(uuid.uuid4())
+        now = datetime.now().isoformat()
+        mats = json.dumps(d.get('mt', []))
+        tags = json.dumps(d.get('tg', []))
+        ins = 1 if d.get('ins') else 0
+        mk = 1 if d.get('mk') else 1
+        
+        result = turso_query(
+            "INSERT INTO leads(id,first_name,last_name,email,phone,company,job_title,timing,materials,tags,inspection,marketing,campaign,device_id,submitted) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            [lid, d.get('fn',''), d.get('ln',''), d.get('em',''), d.get('ph',''),
+             d.get('co',''), d.get('jt',''), d.get('ti',''), mats, tags, ins, mk,
+             'NOG Energy Week 2026', st.session_state.get('did',''), now]
+        )
+        st.sidebar.write(f"Save result: {result}")
+        return True
+    except Exception as e:
+        st.sidebar.write(f"Save error: {e}")
+        return False
 
 def get_all_leads(n=200):
-    return turso_query("SELECT * FROM leads ORDER BY submitted DESC LIMIT ?", [n])
-
-def get_stats():
-    r = turso_query("SELECT COUNT(*) as total, COALESCE(SUM(inspection),0) as inspections, COALESCE(SUM(marketing),0) as optins FROM leads")
-    if r and len(r) > 0:
-        row = r[0]
-        return {'t': int(row.get('total') or 0), 'i': int(row.get('inspections') or 0), 'm': int(row.get('optins') or 0)}
-    return {'t': 0, 'i': 0, 'm': 0}
+    result = turso_query("SELECT * FROM leads ORDER BY submitted DESC LIMIT ?", [n])
+    # DEBUG
+    if result:
+        st.sidebar.write(f"Leads found: {len(result)}")
+    else:
+        st.sidebar.write("No leads returned from Turso")
+    return result
 
 def export_csv():
     rows = get_all_leads(9999)
