@@ -336,7 +336,8 @@ def admin():
     st.markdown('<h3 style="color:#e8e4dc;font-family:Georgia,serif;margin-top:20px">Recent Leads</h3>',True)
     
     if l:
-        td=[{"Time":str(r.get("submitted",""))[:16],"Name":f"{r.get('first_name','')} {r.get('last_name','')}".strip(),"Company":str(r.get("company","")),"Email":str(r.get("email","")),"Phone":str(r.get("phone","")),"Inspection":"✅" if r.get("inspection") else "—","Opt-In":"✅" if r.get("marketing") else "—"} for r in l]
+        st.write(f"DEBUG: {len(l)} leads. Sample: {list(l[0].keys()) if l else 'none'}")
+        td=[{"Time":str(r.get("submitted","") or r.get("SUBMITTED",""))[:16],"Name":f"{r.get('first_name','') or r.get('FIRST_NAME','')} {r.get('last_name','') or r.get('LAST_NAME','')}".strip(),"Company":str(r.get("company","") or r.get("COMPANY","")),"Email":str(r.get("email","") or r.get("EMAIL","")),"Phone":str(r.get("phone","") or r.get("PHONE","")),"Inspection":"✅" if r.get("inspection") or r.get("INSPECTION") else "—","Opt-In":"✅" if r.get("marketing") or r.get("MARKETING") else "—"} for r in l]
         st.dataframe(td,use_container_width=True,hide_index=True,height=400)
     else:
         st.info("No leads yet. Submit a test lead from the main app.")
