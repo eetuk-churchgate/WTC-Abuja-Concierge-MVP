@@ -110,9 +110,15 @@ def get_all_leads(n=200):
     return turso_query(f"SELECT * FROM leads ORDER BY submitted DESC LIMIT {n}")
 
 def get_stats():
-    r = turso_query("SELECT COUNT(*) as total, COALESCE(SUM(inspection),0) as inspections, COALESCE(SUM(marketing),0) as optins FROM leads")
-    if r: return {'t':int(r[0].get('total') or 0),'i':int(r[0].get('inspections') or 0),'m':int(r[0].get('optins') or 0)}
-    return {'t':0,'i':0,'m':0}
+    r = turso_query("SELECT COUNT(*) as total FROM leads")
+    r2 = turso_query("SELECT COALESCE(SUM(inspection),0) as inspections FROM leads")
+    r3 = turso_query("SELECT COALESCE(SUM(marketing),0) as optins FROM leads")
+    
+    t = int(r[0].get('total',0)) if r else 0
+    i = int(r2[0].get('inspections',0)) if r2 else 0
+    m = int(r3[0].get('optins',0)) if r3 else 0
+    
+    return {'t':t,'i':i,'m':m}
 
 def get_source_stats():
     r = turso_query("SELECT source, COUNT(*) as cnt FROM leads GROUP BY source ORDER BY cnt DESC")
@@ -436,7 +442,12 @@ def admin():
                 else: st.error("Invalid PIN")
         return
     
-    try: s=get_stats(); l=get_all_leads(100); src_stats=get_source_stats()
+    s=get_stats()
+    l=get_all_leads(100)
+    src_stats=get_source_stats()
+    if not s: s={'t':0,'i':0,'m':0}
+    if not l: l=[]
+    if not src_stats: src_stats=[]
     except: s={'t':0,'i':0,'m':0}; l=[]; src_stats=[]
     
     t=int(s.get('t',0)); i=int(s.get('i',0)); m=int(s.get('m',0)); dp=t-i if t>=i else 0
