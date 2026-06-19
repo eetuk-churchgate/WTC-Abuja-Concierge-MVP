@@ -321,28 +321,31 @@ def admin():
     
     s=db.stats()
     l=db.all(100)
-    t=s.get('t',0)
-    i=s.get('i',0)
-    m=s.get('m',0)
+    
+    # SAFE values - convert everything to int, default 0
+    t=int(s.get('t') or 0)
+    i=int(s.get('i') or 0)
+    m=int(s.get('m') or 0)
+    dp=t-i if t>=i else 0
     
     c1,c2=st.columns([3,1])
     with c1: st.markdown('<h2 style="color:#e8e4dc;margin:12px 0;font-family:Georgia,serif">Admin Panel — WTC Abuja Concierge</h2>',True)
     with c2:
         if st.button("🚪 Logout",key="ao",use_container_width=True): st.session_state.adm=False; go("idle"); st.rerun()
     
-    # Stats row - 4 columns only (removed the text one)
-    c1,c2,c3,c4=st.columns(4)
-    c1.metric("Total Leads",t)
-    c2.metric("Inspections",i)
-    c3.metric("Opt-Ins",m)
-    c4.metric("Digital Packs",t-i)
+    # 4 stat columns
+    col1,col2,col3,col4=st.columns(4)
+    with col1: st.metric("Total Leads",t)
+    with col2: st.metric("Inspections",i)
+    with col3: st.metric("Opt-Ins",m)
+    with col4: st.metric("Digital Packs",dp)
     
     # Download CSV
     csv_data=db.csv()
     if csv_data:
         st.download_button("📥 Download CSV",csv_data,f"wtc_leads_{datetime.now().strftime('%Y%m%d_%H%M')}.csv","text/csv")
     
-    st.markdown(f'<p style="color:#8a8680;font-size:11px;font-family:Arial,sans-serif;margin:8px 0">📅 Campaign: <b style="color:#c8a45c">NOG Energy Week 2026</b> | 💾 Database: <b style="color:#c8a45c">SQLite (wtc_abuja.db)</b> | 🕐 {datetime.now().strftime("%d %b %Y, %H:%M")}</p>',True)
+    st.markdown(f'<p style="color:#8a8680;font-size:11px;font-family:Arial,sans-serif;margin:8px 0">📅 Campaign: <b style="color:#c8a45c">NOG Energy Week 2026</b> | 💾 Database: <b style="color:#c8a45c">SQLite</b> | 🕐 {datetime.now().strftime("%d %b %Y, %H:%M")}</p>',True)
     
     st.markdown('<h3 style="color:#e8e4dc;font-family:Georgia,serif;margin-top:20px">Recent Leads</h3>',True)
     
@@ -350,16 +353,17 @@ def admin():
         td=[]
         for r in l:
             try:
-                mat=json.loads(r.get("materials","[]")) if isinstance(r.get("materials"),str) else r.get("materials",[])
-                mat=", ".join(mat[:3])
+                mat_raw=r.get("materials","[]")
+                if isinstance(mat_raw,str): mat_raw=json.loads(mat_raw)
+                mat=", ".join(mat_raw[:3]) if mat_raw else ""
             except:
                 mat=""
             td.append({
-                "Time":r.get("submitted","")[:16],
-                "Name":f"{r.get('first_name','')} {r.get('last_name','')}",
-                "Company":r.get("company",""),
-                "Email":r.get("email",""),
-                "Phone":r.get("phone",""),
+                "Time":str(r.get("submitted",""))[:16] if r.get("submitted") else "",
+                "Name":f"{r.get('first_name','')} {r.get('last_name','')}".strip(),
+                "Company":str(r.get("company","")),
+                "Email":str(r.get("email","")),
+                "Phone":str(r.get("phone","")),
                 "Materials":mat,
                 "Inspection":"✅" if r.get("inspection") else "—",
                 "Opt-In":"✅" if r.get("marketing") else "—"
@@ -367,9 +371,9 @@ def admin():
         st.dataframe(td,use_container_width=True,hide_index=True,height=400)
         st.markdown(f'<p style="color:#6b6762;font-size:10px;font-family:Arial,sans-serif;margin-top:4px">Showing {len(td)} of {t} total leads.</p>',True)
     else:
-        st.info("No leads captured yet. Leads appear here when visitors submit the form on the tablet.")
+        st.info("No leads captured yet. Leads appear here when visitors submit the form.")
     
-    st.markdown('<div style="background:#252525;border:1px solid #3a3a3a;border-radius:6px;padding:14px;margin:12px 0"><p style="color:#b8b4ac;font-size:11px;font-family:Arial,sans-serif;margin:0">💡 <b>Tips:</b> Access this panel anytime at <code style="color:#c8a45c;background:#1a1a1a;padding:2px 6px;border-radius:3px">?admin=true</code> | PIN: <b style="color:#c8a45c">4271</b></p></div>',True)
+    st.markdown('<div style="background:#252525;border:1px solid #3a3a3a;border-radius:6px;padding:14px;margin:12px 0"><p style="color:#b8b4ac;font-size:11px;font-family:Arial,sans-serif;margin:0">💡 Access: <code style="color:#c8a45c;background:#1a1a1a;padding:2px 6px;border-radius:3px">?admin=true</code> | PIN: <b style="color:#c8a45c">4271</b></p></div>',True)
 
 # ═══════════════════════════════════════════════════════════
 # MAIN
