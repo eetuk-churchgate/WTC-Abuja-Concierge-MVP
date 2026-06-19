@@ -27,13 +27,13 @@ EMAIL_CONFIG = {
 # ═══════════════════════════════════════════════════════════
 # IMAGE HELPER
 # ═══════════════════════════════════════════════════════════
-def get_image_html(filename, width="100%", height="auto"):
+def get_image_html(filename, width="100%", height="170px"):
     p = Path(__file__).parent / "assets" / filename
     if p.exists():
         b64 = base64.b64encode(p.read_bytes()).decode()
         ext = filename.split(".")[-1].lower()
         mime = "image/jpeg" if ext in ["jpg","jpeg"] else "image/png"
-        if height == "auto":
+        if height == "170px":
             return f'<img src="data:{mime};base64,{b64}" style="width:{width};max-width:100%;height:auto;border:1px solid #3a3a3a;border-radius:6px;margin:8px 0;display:block;" loading="lazy">'
         else:
             return f'<img src="data:{mime};base64,{b64}" style="width:{width};max-height:{height};object-fit:contain;border:1px solid #3a3a3a;border-radius:6px;margin:8px 0;display:block;" loading="lazy">'
@@ -223,8 +223,7 @@ st.markdown('<div style="position:fixed;bottom:3px;right:3px;z-index:9999;"><a h
 # ═══════════════════════════════════════════════════════════
 def idle():
     update_activity()
-    st.markdown(get_image_html("exterior.jpg", "100%", "auto"), True)
-    st.markdown("<br>"*2,True)
+    st.markdown(get_image_html("exterior.jpg", "100%", "170px"), True)
     _,c,_=st.columns([1,2,1])
     with c:
         st.markdown('<p style="text-align:center;color:#c8a45c;letter-spacing:5px;font-size:12px;font-family:Arial,sans-serif">WORLD TRADE CENTER</p>',True)
@@ -303,7 +302,7 @@ def route():
     with c2: st.markdown(f'<p style="color:#e8e4dc;font-size:17px;margin-top:8px;font-family:Arial,sans-serif">{rt["title"]} <span style="color:#8a8680;font-size:12px">— {si+1}/{total}</span></p>',True)
     st.progress((si+1)/total)
     st.markdown(f'<h2 style="color:#e8e4dc;font-size:26px;margin:18px 0 8px;font-family:Georgia,serif">{s["t"]}</h2>',True)
-    if "img" in s: st.markdown(get_image_html(s["img"]), True)
+    if "img" in s: st.markdown(get_image_html(s["img"], "100%", "160px"), True)
     if "b" in s: st.markdown(f'<p style="color:#b8b4ac;font-size:15px;line-height:1.7;font-family:Arial,sans-serif">{s["b"]}</p>',True)
     
     # INSPECTION TYPE SELECTION
