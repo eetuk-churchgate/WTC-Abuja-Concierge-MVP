@@ -39,6 +39,14 @@ def get_image_html(filename, width="100%", height="auto"):
             return f'<img src="data:{mime};base64,{b64}" style="width:{width};max-height:{height};object-fit:contain;border:1px solid #3a3a3a;border-radius:6px;margin:8px 0;display:block;" loading="lazy">'
     return ""
 
+def get_video_html(filename, width="100%"):
+    p = Path(__file__).parent / "assets" / filename
+    if p.exists():
+        b64 = base64.b64encode(p.read_bytes()).decode()
+        return f'<video controls style="width:{width};max-width:100%;border:1px solid #3a3a3a;border-radius:6px;margin:8px 0;"><source src="data:video/mp4;base64,{b64}" type="video/mp4"></video>'
+    return ""
+
+
 # ═══════════════════════════════════════════════════════════
 # TURSO DATABASE
 # ═══════════════════════════════════════════════════════════
@@ -275,16 +283,10 @@ ROUTES={
         {"t":"At the centre of business, government and diplomacy","b":"Constitution Avenue in the CBD — between Maitama and Asokoro.","p":["Constitution Avenue","CBD Abuja","Between Maitama & Asokoro","Near NNPC Towers","Near Petroleum Ministry"]},
         {"t":"Why the Location Matters","b":"A CBD address that works:","p":["Close to federal institutions","Near diplomatic missions","Near corporate headquarters","Practical for leadership","Reduced travel time"]}]},
     "video":{"title":"Video Walkthrough","screens":[
-        {"t":"Experience WTC Abuja","b":"Watch a premium walkthrough of the completed development.","video":True},
-        {"t":"360° Virtual Tour","b":"Explore WTC Abuja interactively.","tour":True}]},
-    "inspection":{"title":"Request a Private Inspection","screens":[
-        {"t":"What type of inspection interests you?","b":"Select the area you'd like to see in person. A member of our team will contact you to arrange a private walkthrough.","inspection_types":[
-            ("💼","Office Leasing","Tour available office floors and floorplates"),
-            ("🏠","Executive Residence","View available apartments and penthouses"),
-            ("🛡️","Security & Infrastructure","Walk through security layers and plant rooms"),
-            ("🏊","Clubhouse & Amenities","Tour the pool, gym, spa, and lounges"),
-            ("🏛️","Full Development","Complete tour of all facilities")
-        ]}]}
+        {"t":"Experience WTC Abuja","video_file":"walkthrough.mp4","b":"Watch a premium walkthrough of the completed development — offices, residences, clubhouse, and surrounding infrastructure."},
+        {"t":"360° Virtual Tour","video_file":"tour-360.mp4","b":"Explore WTC Abuja interactively. See every angle of the development."},
+        {"t":"Office Tour","video_file":"office-tour.mp4","b":"Tour the Grade A office spaces and floorplates."},
+        {"t":"Residence Tour","video_file":"residence-tour.mp4","b":"View the executive residences and clubhouse amenities."}]},
 }
 
 def route():
@@ -333,8 +335,8 @@ def route():
             st.markdown(f'<div style="background:#252525;border:2px solid {fp["color"]};border-radius:8px;padding:24px;text-align:center"><div style="font-size:2rem;color:{fp["color"]};font-weight:700;margin-bottom:8px">{fp["size"]}</div><div style="color:#e8e4dc;font-size:1.1rem;font-family:Georgia,serif;margin-bottom:6px">{fp["use"]}</div><div style="color:#8a8680;font-size:0.9rem;font-family:Arial,sans-serif">Ideal for: {fp["occupier"]}</div></div>',True)
     
     # VIDEO
-    if "video" in s and s["video"]:
-        st.markdown('<div style="background:#252525;border:1px solid #333;border-radius:8px;padding:20px;text-align:center;margin:10px 0"><p style="color:#8a8680;font-size:14px;font-family:Arial,sans-serif">🎬 Video walkthrough will appear here. Add your video URL to display.</p></div>',True)
+    if "video_file" in s:
+        st.markdown(get_video_html(s["video_file"]), True)
     
     # 360 TOUR
     if "tour" in s and s["tour"]:
