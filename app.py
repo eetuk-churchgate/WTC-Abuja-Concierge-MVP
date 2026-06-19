@@ -57,20 +57,26 @@ class DB:
         self.c.commit()
     def all(self,n=200): return [dict(r) for r in self.c.execute("SELECT * FROM leads ORDER BY submitted DESC LIMIT ?",[n]).fetchall()]
     def stats(self):
-        r=self.c.execute("SELECT COUNT(*) as t,SUM(inspection) as i,SUM(marketing) as m FROM leads").fetchone()
-        return dict(r) if r else {'t':0,'i':0,'m':0}
-    def csv(self):
-        rows = self.all(9999)
-        if not rows: return ""
-        o = io.StringIO()
-        fields = ['submitted','first_name','last_name','email','phone','company','job_title','materials','inspection','marketing']
-        w = csv.DictWriter(o, fieldnames=fields, extrasaction='ignore')
-        w.writeheader()
-        for r in rows:
-            r['inspection'] = 'Yes' if r.get('inspection') else 'No'
-            r['marketing'] = 'Yes' if r.get('marketing') else 'No'
-            w.writerow(r)
-        return o.getvalue()
+        # Try Turso first
+        try:
+            r = self._turso_query("SELECT COUNT(*) as t, COALESCE(SUM(inspection),0) as i, COALESCE(SUM(marketing),0) as m FROM leads")
+            if r and len(r) > 0:
+                row = r[0]
+                return {
+                    't': int(row.get('t') or row.get('T') or 0),
+                    'i': int(row.get('i') or row.get('I') or 0),
+                    'm': int(row.get('m') or row.get('M') or 0)
+                }
+        except:
+            pass
+        # Fallback to local SQLite
+        try:
+            r = self.local.execute("SELECT COUNT(*) as t, COALESCE(SUM(inspection),0) as i, COALESCE(SUM(marketing),0) as m FROM leads").fetchone()
+            if r:
+                return {'t': int(r['t'] or 0), 'i': int(r['i'] or 0), 'm': int(r['m'] or 0)}
+        except:
+            pass
+        return {'t': 0, 'i': 0, 'm': 0}
 
 # ═══════════════════════════════════════════════════════════
 # EMAIL
