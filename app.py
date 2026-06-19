@@ -318,25 +318,58 @@ def admin():
                 if p=="4271": st.session_state.adm=True; st.rerun()
                 else: st.error("Invalid PIN")
         return
-    s=db.stats(); l=db.all(100); t=s.get('t',0); i=s.get('i',0); m=s.get('m',0)
-    c1,c2,c3=st.columns([2.5,1,1])
+    
+    s=db.stats()
+    l=db.all(100)
+    t=s.get('t',0)
+    i=s.get('i',0)
+    m=s.get('m',0)
+    
+    c1,c2=st.columns([3,1])
     with c1: st.markdown('<h2 style="color:#e8e4dc;margin:12px 0;font-family:Georgia,serif">Admin Panel — WTC Abuja Concierge</h2>',True)
     with c2:
-        csv_data=db.csv()
-        if csv_data: st.download_button("📥 Download CSV",csv_data,f"wtc_leads_{datetime.now().strftime('%Y%m%d_%H%M')}.csv","text/csv",use_container_width=True)
-    with c3:
         if st.button("🚪 Logout",key="ao",use_container_width=True): st.session_state.adm=False; go("idle"); st.rerun()
-    st.markdown("<br>",True)
-    c1,c2,c3,c4,c5=st.columns(5)
-    c1.metric("Total Leads",t); c2.metric("Inspections",i); c3.metric("Opt-Ins",m); c4.metric("Digital Packs",t-i); c5.metric("DB","SQLite ✅")
-    st.markdown(f'<p style="color:#8a8680;font-size:11px;font-family:Arial,sans-serif;margin:4px 0">📅 <b style="color:#c8a45c">NOG Energy Week 2026</b> | 💾 <b style="color:#c8a45c">data/wtc_abuja.db</b> | 🕐 {datetime.now().strftime("%d %b %Y, %H:%M")}</p>',True)
-    st.markdown("<br>",True)
-    st.markdown('<h3 style="color:#e8e4dc;font-family:Georgia,serif">Recent Leads</h3>',True)
+    
+    # Stats row - 4 columns only (removed the text one)
+    c1,c2,c3,c4=st.columns(4)
+    c1.metric("Total Leads",t)
+    c2.metric("Inspections",i)
+    c3.metric("Opt-Ins",m)
+    c4.metric("Digital Packs",t-i)
+    
+    # Download CSV
+    csv_data=db.csv()
+    if csv_data:
+        st.download_button("📥 Download CSV",csv_data,f"wtc_leads_{datetime.now().strftime('%Y%m%d_%H%M')}.csv","text/csv")
+    
+    st.markdown(f'<p style="color:#8a8680;font-size:11px;font-family:Arial,sans-serif;margin:8px 0">📅 Campaign: <b style="color:#c8a45c">NOG Energy Week 2026</b> | 💾 Database: <b style="color:#c8a45c">SQLite (wtc_abuja.db)</b> | 🕐 {datetime.now().strftime("%d %b %Y, %H:%M")}</p>',True)
+    
+    st.markdown('<h3 style="color:#e8e4dc;font-family:Georgia,serif;margin-top:20px">Recent Leads</h3>',True)
+    
     if l:
-        td=[{"Time":r.get("submitted","")[:16],"Name":f"{r.get('first_name','')} {r.get('last_name','')}","Company":r.get("company",""),"Email":r.get("email",""),"Phone":r.get("phone",""),"Materials":(lambda x:", ".join(x[:3]) if isinstance(x,list) else "")(json.loads(r.get("materials","[]")) if isinstance(r.get("materials"),str) else r.get("materials",[])),"Inspection":"✅" if r.get("inspection") else "—","Opt-In":"✅" if r.get("marketing") else "—"} for r in l]
+        td=[]
+        for r in l:
+            try:
+                mat=json.loads(r.get("materials","[]")) if isinstance(r.get("materials"),str) else r.get("materials",[])
+                mat=", ".join(mat[:3])
+            except:
+                mat=""
+            td.append({
+                "Time":r.get("submitted","")[:16],
+                "Name":f"{r.get('first_name','')} {r.get('last_name','')}",
+                "Company":r.get("company",""),
+                "Email":r.get("email",""),
+                "Phone":r.get("phone",""),
+                "Materials":mat,
+                "Inspection":"✅" if r.get("inspection") else "—",
+                "Opt-In":"✅" if r.get("marketing") else "—"
+            })
         st.dataframe(td,use_container_width=True,hide_index=True,height=400)
-    else: st.info("No leads yet.")
-    st.markdown('<div style="background:#252525;border:1px solid #3a3a3a;border-radius:6px;padding:14px;margin:12px 0"><p style="color:#b8b4ac;font-size:11px;font-family:Arial,sans-serif;margin:0">💡 Backup <code style="color:#c8a45c;background:#1a1a1a;padding:2px 6px;border-radius:3px">data/wtc_abuja.db</code> | Access: <code style="color:#c8a45c;background:#1a1a1a;padding:2px 6px;border-radius:3px">?admin=true</code> | PIN: 4271</p></div>',True)
+        st.markdown(f'<p style="color:#6b6762;font-size:10px;font-family:Arial,sans-serif;margin-top:4px">Showing {len(td)} of {t} total leads.</p>',True)
+    else:
+        st.info("No leads captured yet. Leads appear here when visitors submit the form on the tablet.")
+    
+    st.markdown('<div style="background:#252525;border:1px solid #3a3a3a;border-radius:6px;padding:14px;margin:12px 0"><p style="color:#b8b4ac;font-size:11px;font-family:Arial,sans-serif;margin:0">💡 <b>Tips:</b> Access this panel anytime at <code style="color:#c8a45c;background:#1a1a1a;padding:2px 6px;border-radius:3px">?admin=true</code> | PIN: <b style="color:#c8a45c">4271</b></p></div>',True)
 
 # ═══════════════════════════════════════════════════════════
 # MAIN
