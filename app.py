@@ -1,5 +1,5 @@
 import streamlit as st
-import sqlite3, json, uuid, csv, io, smtplib, ssl, base64
+import sqlite3, json, uuid, csv, io, smtplib, ssl, base64, os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.image import MIMEImage
@@ -13,6 +13,13 @@ try:
     EMAIL_PASSWORD = st.secrets["EMAIL_PASSWORD"]
 except:
     EMAIL_PASSWORD = "jrho ryew uguj nbsm"
+
+try:
+    TURSO_URL = st.secrets["TURSO_URL"]
+    TURSO_TOKEN = st.secrets["TURSO_TOKEN"]
+except:
+    TURSO_URL = None
+    TURSO_TOKEN = None
 
 EMAIL_CONFIG = {
     "smtp_server": "smtp.gmail.com",
@@ -29,57 +36,74 @@ EMAIL_CONFIG = {
 }
 
 # ═══════════════════════════════════════════════════════════
-# LOGO
+# DATABASE - Turso Cloud
 # ═══════════════════════════════════════════════════════════
-def get_logo_base64():
-    p = Path(__file__).parent / "assets" / "wtc-logo.jpg"
-    if p.exists():
-        with open(p, "rb") as f: return base64.b64encode(f.read()).decode()
-    return None
-LOGO_B64 = get_logo_base64()
+def turso_query(sql, params=None):
+    if not TURSO_URL or not TURSO_TOKEN:
+        return []
+    try:
+        import httpx
+        url = TURSO_URL.replace("libsql://", "https://") + "/v2/pipeline"
+        r = httpx.post(url,
+            headers={"Authorization": f"Bearer {TURSO_TOKEN}"},
+            json={"requests":[{"type":"execute","stmt":{"sql":sql,"args":params or []}}]},
+            timeout=10)
+        if r.status_code == 200:
+            results = r.json().get("results", [])
+            if results:
+                rows_data = results[0].get("response", {}).get("result", {}).get("rows", [])
+                cols_data = results[0].get("response", {}).get("result", {}).get("cols", [])
+                cols = [c["name"] for c in cols_data]
+                parsed = []
+                for row in rows_data:
+                    d = {}
+                    for i, col in enumerate(cols):
+                        d[col] = row[i].get("value") if i < len(row) else None
+                    parsed.append(d)
+                return parsed
+        return []
+    except:
+        return []
 
-def logo_html(w="180px"):
-    if LOGO_B64: return f'<img src="data:image/jpeg;base64,{LOGO_B64}" style="width:{w};margin:0 auto;display:block;filter:brightness(1.1);">'
-    return ""
+def save_lead(d):
+    lid = str(uuid.uuid4())
+    now = datetime.now().isoformat()
+    mats = json.dumps(d.get('mt', []))
+    tags = json.dumps(d.get('tg', []))
+    ins = 1 if d.get('ins') else 0
+    mk = 1 if d.get('mk') else 1
+    turso_query(
+        "INSERT INTO leads(id,first_name,last_name,email,phone,company,job_title,timing,materials,tags,inspection,marketing,campaign,device_id,submitted) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        [lid, d.get('fn',''), d.get('ln',''), d.get('em',''), d.get('ph',''),
+         d.get('co',''), d.get('jt',''), d.get('ti',''), mats, tags, ins, mk,
+         'NOG Energy Week 2026', st.session_state.get('did',''), now]
+    )
+    return True
+
+def get_all_leads(n=200):
+    return turso_query("SELECT * FROM leads ORDER BY submitted DESC LIMIT ?", [n])
+
+def get_stats():
+    r = turso_query("SELECT COUNT(*) as total, COALESCE(SUM(inspection),0) as inspections, COALESCE(SUM(marketing),0) as optins FROM leads")
+    if r and len(r) > 0:
+        row = r[0]
+        return {'t': int(row.get('total') or 0), 'i': int(row.get('inspections') or 0), 'm': int(row.get('optins') or 0)}
+    return {'t': 0, 'i': 0, 'm': 0}
+
+def export_csv():
+    rows = get_all_leads(9999)
+    if not rows: return ""
+    o = io.StringIO()
+    w = csv.DictWriter(o, fieldnames=['submitted','first_name','last_name','email','phone','company','job_title','materials','inspection','marketing'], extrasaction='ignore')
+    w.writeheader()
+    for r in rows:
+        r['inspection'] = 'Yes' if r.get('inspection') else 'No'
+        r['marketing'] = 'Yes' if r.get('marketing') else 'No'
+        w.writerow(r)
+    return o.getvalue()
 
 # ═══════════════════════════════════════════════════════════
-# DATABASE
-# ═══════════════════════════════════════════════════════════
-class DB:
-    def __init__(self):
-        p = Path(__file__).parent / "data"; p.mkdir(exist_ok=True)
-        self.c = sqlite3.connect(str(p/"wtc_abuja.db"), check_same_thread=False)
-        self.c.row_factory = sqlite3.Row
-        self.c.executescript("CREATE TABLE IF NOT EXISTS leads(id TEXT PRIMARY KEY,first_name TEXT,last_name TEXT,email TEXT,phone TEXT,company TEXT,job_title TEXT,timing TEXT,materials TEXT DEFAULT'[]',tags TEXT DEFAULT'[]',inspection INTEGER DEFAULT 0,marketing INTEGER DEFAULT 1,submitted TEXT DEFAULT(datetime('now')));")
-        self.c.commit()
-    def save(self,d):
-        self.c.execute("INSERT INTO leads VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",[str(uuid.uuid4()),d.get('fn',''),d.get('ln',''),d.get('em',''),d.get('ph',''),d.get('co',''),d.get('jt',''),d.get('ti',''),json.dumps(d.get('mt',[])),json.dumps(d.get('tg',[])),1 if d.get('ins') else 0,1 if d.get('mk') else 1,datetime.now().isoformat()])
-        self.c.commit()
-    def all(self,n=200): return [dict(r) for r in self.c.execute("SELECT * FROM leads ORDER BY submitted DESC LIMIT ?",[n]).fetchall()]
-    def stats(self):
-        # Try Turso first
-        try:
-            r = self._turso_query("SELECT COUNT(*) as t, COALESCE(SUM(inspection),0) as i, COALESCE(SUM(marketing),0) as m FROM leads")
-            if r and len(r) > 0:
-                row = r[0]
-                return {
-                    't': int(row.get('t') or row.get('T') or 0),
-                    'i': int(row.get('i') or row.get('I') or 0),
-                    'm': int(row.get('m') or row.get('M') or 0)
-                }
-        except:
-            pass
-        # Fallback to local SQLite
-        try:
-            r = self.local.execute("SELECT COUNT(*) as t, COALESCE(SUM(inspection),0) as i, COALESCE(SUM(marketing),0) as m FROM leads").fetchone()
-            if r:
-                return {'t': int(r['t'] or 0), 'i': int(r['i'] or 0), 'm': int(r['m'] or 0)}
-        except:
-            pass
-        return {'t': 0, 'i': 0, 'm': 0}
-
-# ═══════════════════════════════════════════════════════════
-# EMAIL
+# EMAIL SENDER
 # ═══════════════════════════════════════════════════════════
 def send_lead_email(ld):
     try:
@@ -87,22 +111,19 @@ def send_lead_email(ld):
         msg=MIMEMultipart('related')
         msg['From']=f"WTC Abuja Concierge <{EMAIL_CONFIG['sender_email']}>"
         msg['To']=", ".join(EMAIL_CONFIG['recipients'])
-        msg['Subject']=f"{'🔑 INSPECTION REQUEST' if ins else 'New Lead'} — {fn} {ln} | {co}"
-        mh="".join(f'<tr><td style="padding:6px 8px;color:#c8a45c;font-size:13px;">✦</td><td style="padding:6px 8px;color:#e8e4dc;font-size:13px;">{m}</td></tr>' for m in mt) or '<tr><td style="padding:6px 8px;color:#8a8680;font-size:13px;" colspan="2">No materials</td></tr>'
+        msg['Subject']=f"{'🔑 INSPECTION' if ins else 'New Lead'} — {fn} {ln} | {co}"
+        mh="".join(f'<tr><td style="padding:6px 8px;color:#c8a45c;">✦</td><td style="padding:6px 8px;color:#e8e4dc;">{m}</td></tr>' for m in mt) or '<tr><td colspan="2" style="color:#8a8680;">No materials</td></tr>'
         tm={"immediate":"⚡ Immediate","0-3_months":"📅 0–3 Months","3-6_months":"📅 3–6 Months","6-12_months":"📅 6–12 Months","future":"🔮 Future"}
         td=tm.get(ti,ti) if ti else "Not specified"
-        pb="""<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px 0;"><tr><td style="background:linear-gradient(135deg,#a88838,#c8a45c);padding:14px 20px;border-radius:4px;text-align:center;"><p style="color:#1a1a1a;font-size:14px;font-weight:700;margin:0;letter-spacing:1px;font-family:Arial,sans-serif;">🔑 PRIORITY — PRIVATE INSPECTION REQUESTED</p></td></tr></table>""" if ins else ""
-        html=f"""<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#1a1a1a;font-family:Arial,Helvetica,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a1a;padding:30px 20px;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#1e1e1e;border:1px solid #333;border-radius:8px;overflow:hidden;"><tr><td style="background:#252525;padding:35px 40px 25px;text-align:center;border-bottom:2px solid #c8a45c;"><p style="color:#c8a45c;font-size:10px;letter-spacing:5px;margin:0 0 10px;text-transform:uppercase;">World Trade Center</p><h1 style="color:#e8e4dc;font-size:26px;font-weight:600;margin:0 0 8px;font-family:Georgia,serif;">WTC Abuja</h1><p style="color:#c8a45c;font-size:14px;margin:0;">New Lead Notification</p></td></tr><tr><td style="padding:30px 40px;">{pb}<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;"><tr><td width="50%" style="padding:12px 10px;border-bottom:1px solid #2a2a2a;"><p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 5px;">Name</p><p style="color:#f0ede8;font-size:17px;font-weight:600;margin:0;font-family:Georgia,serif;">{fn} {ln}</p></td><td width="50%" style="padding:12px 10px;border-bottom:1px solid #2a2a2a;"><p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 5px;">Company</p><p style="color:#f0ede8;font-size:17px;font-weight:600;margin:0;font-family:Georgia,serif;">{co}</p></td></tr><tr><td style="padding:12px 10px;border-bottom:1px solid #2a2a2a;"><p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 5px;">Title</p><p style="color:#e8e4dc;font-size:15px;margin:0;">{jt or 'Not provided'}</p></td><td style="padding:12px 10px;border-bottom:1px solid #2a2a2a;"><p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 5px;">Timing</p><p style="color:#e8e4dc;font-size:15px;margin:0;">{td}</p></td></tr></table><table width="100%" cellpadding="0" cellspacing="0" style="background:#252525;border:1px solid #333;border-radius:6px;margin:0 0 20px;"><tr><td style="padding:18px 22px;"><p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 12px;">Contact</p><table cellpadding="0" cellspacing="0"><tr><td style="padding:3px 0;">✉️</td><td style="padding:3px 0;padding-left:10px;"><a href="mailto:{em}" style="color:#c8a45c;text-decoration:none;font-size:14px;">{em}</a></td></tr><tr><td style="padding:3px 0;">📱</td><td style="padding:3px 0;padding-left:10px;"><a href="tel:{ph}" style="color:#c8a45c;text-decoration:none;font-size:14px;">{ph}</a></td></tr></table></td></tr></table><table width="100%" cellpadding="0" cellspacing="0" style="background:#252525;border:1px solid #333;border-radius:6px;margin:0 0 20px;"><tr><td style="padding:18px 22px;"><p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 10px;">Materials</p><table width="100%">{mh}</table></td></tr></table><table width="100%" cellpadding="0" cellspacing="0"><tr><td width="50%" style="padding:0 5px 0 0;"><table width="100%" cellpadding="0" cellspacing="0" style="background:{'#c8a45c' if ins else '#333'};border-radius:4px;"><tr><td style="padding:10px 14px;text-align:center;"><p style="color:{'#1a1a1a' if ins else '#8a8680'};font-size:11px;font-weight:700;margin:0;letter-spacing:1px;">🔑 INSPECTION: {'YES' if ins else 'NO'}</p></td></tr></table></td><td width="50%" style="padding:0 0 0 5px;"><table width="100%" cellpadding="0" cellspacing="0" style="background:{'#c8a45c' if mk else '#333'};border-radius:4px;"><tr><td style="padding:10px 14px;text-align:center;"><p style="color:{'#1a1a1a' if mk else '#8a8680'};font-size:11px;font-weight:700;margin:0;letter-spacing:1px;">📬 MARKETING: {'OPT-IN' if mk else 'OUT'}</p></td></tr></table></td></tr></table></td></tr><tr><td style="background:#252525;padding:20px 40px;text-align:center;border-top:1px solid #333;"><p style="color:#6b6762;font-size:10px;margin:0 0 3px;">Captured via WTC Abuja Concierge App</p><p style="color:#6b6762;font-size:10px;margin:0 0 8px;">{datetime.now().strftime('%d %B %Y, %H:%M')} · NOG Energy Week 2026</p><p style="color:#c8a45c;font-size:9px;margin:0;letter-spacing:3px;">WORLD TRADE CENTER ABUJA</p></td></tr></table></td></tr></table></body></html>"""
+        pb="""<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px 0;"><tr><td style="background:linear-gradient(135deg,#a88838,#c8a45c);padding:14px 20px;border-radius:4px;text-align:center;"><p style="color:#1a1a1a;font-size:14px;font-weight:700;margin:0;letter-spacing:1px;">🔑 PRIORITY — INSPECTION REQUESTED</p></td></tr></table>""" if ins else ""
+        html=f"""<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#1a1a1a;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a1a;padding:30px 20px;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#1e1e1e;border:1px solid #333;border-radius:8px;overflow:hidden;"><tr><td style="background:#252525;padding:35px 40px 25px;text-align:center;border-bottom:2px solid #c8a45c;"><p style="color:#c8a45c;font-size:10px;letter-spacing:5px;margin:0 0 10px;text-transform:uppercase;">World Trade Center</p><h1 style="color:#e8e4dc;font-size:26px;font-weight:600;margin:0 0 8px;font-family:Georgia,serif;">WTC Abuja</h1><p style="color:#c8a45c;font-size:14px;margin:0;">New Lead Notification</p></td></tr><tr><td style="padding:30px 40px;">{pb}<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;"><tr><td width="50%" style="padding:12px 10px;border-bottom:1px solid #2a2a2a;"><p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 5px;">Name</p><p style="color:#f0ede8;font-size:17px;font-weight:600;margin:0;font-family:Georgia,serif;">{fn} {ln}</p></td><td width="50%" style="padding:12px 10px;border-bottom:1px solid #2a2a2a;"><p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 5px;">Company</p><p style="color:#f0ede8;font-size:17px;font-weight:600;margin:0;font-family:Georgia,serif;">{co}</p></td></tr><tr><td style="padding:12px 10px;border-bottom:1px solid #2a2a2a;"><p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 5px;">Title</p><p style="color:#e8e4dc;font-size:15px;margin:0;">{jt or 'Not provided'}</p></td><td style="padding:12px 10px;border-bottom:1px solid #2a2a2a;"><p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 5px;">Timing</p><p style="color:#e8e4dc;font-size:15px;margin:0;">{td}</p></td></tr></table><p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;">Contact</p><p style="color:#c8a45c;font-size:14px;margin:3px 0;">✉️ {em}</p><p style="color:#c8a45c;font-size:14px;margin:3px 0;">📱 {ph}</p><table width="100%" cellpadding="0" cellspacing="0" style="background:#252525;border:1px solid #333;border-radius:6px;margin:15px 0;"><tr><td style="padding:18px 22px;"><p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 10px;">Materials</p><table width="100%">{mh}</table></td></tr></table><table width="100%" cellpadding="0" cellspacing="0"><tr><td width="50%" style="padding:0 5px 0 0;"><table width="100%" cellpadding="0" cellspacing="0" style="background:{'#c8a45c' if ins else '#333'};border-radius:4px;"><tr><td style="padding:10px 14px;text-align:center;"><p style="color:{'#1a1a1a' if ins else '#8a8680'};font-size:11px;font-weight:700;margin:0;">🔑 INSPECTION: {'YES' if ins else 'NO'}</p></td></tr></table></td><td width="50%" style="padding:0 0 0 5px;"><table width="100%" cellpadding="0" cellspacing="0" style="background:{'#c8a45c' if mk else '#333'};border-radius:4px;"><tr><td style="padding:10px 14px;text-align:center;"><p style="color:{'#1a1a1a' if mk else '#8a8680'};font-size:11px;font-weight:700;margin:0;">📬 MARKETING: {'OPT-IN' if mk else 'OUT'}</p></td></tr></table></td></tr></table></td></tr><tr><td style="background:#252525;padding:20px 40px;text-align:center;border-top:1px solid #333;"><p style="color:#6b6762;font-size:10px;margin:0 0 3px;">Captured via WTC Abuja Concierge App</p><p style="color:#6b6762;font-size:10px;margin:0 0 8px;">{datetime.now().strftime('%d %B %Y, %H:%M')} · NOG Energy Week 2026</p><p style="color:#c8a45c;font-size:9px;margin:0;letter-spacing:3px;">WORLD TRADE CENTER ABUJA</p></td></tr></table></td></tr></table></body></html>"""
         msg.attach(MIMEText(html,'html'))
-        lp=Path(__file__).parent/"assets"/"wtc-logo.jpg"
-        if lp.exists():
-            with open(lp,'rb') as f:
-                img=MIMEImage(f.read()); img.add_header('Content-ID','<wtc-logo>'); img.add_header('Content-Disposition','inline',filename='wtc-logo.jpg'); msg.attach(img)
         ctx=ssl.create_default_context()
         with smtplib.SMTP(EMAIL_CONFIG['smtp_server'],EMAIL_CONFIG['smtp_port']) as srv:
             srv.starttls(context=ctx); srv.login(EMAIL_CONFIG['sender_email'],EMAIL_CONFIG['sender_password']); srv.sendmail(EMAIL_CONFIG['sender_email'],EMAIL_CONFIG['recipients'],msg.as_string())
         return True
-    except: return False
+    except:
+        return False
 
 # ═══════════════════════════════════════════════════════════
 # SESSION STATE
@@ -111,52 +132,23 @@ for k,v in [("pg","idle"),("rt",None),("sc",0),("fd",{}),("adm",False),("did",st
     if k not in st.session_state: st.session_state[k]=v
 
 # ═══════════════════════════════════════════════════════════
-# PAGE CONFIG - Favicon fix for Streamlit Cloud
+# PAGE CONFIG - WTC Logo as Browser Tab Icon Only
 # ═══════════════════════════════════════════════════════════
-favicon_path = Path(__file__).parent / "assets" / "wtc-logo.jpg"
-
-# Streamlit Cloud needs the file in a specific location
-if favicon_path.exists():
-    try:
-        st.set_page_config(
-            page_title="WTC Abuja Concierge",
-            page_icon=str(favicon_path),
-            layout="wide",
-            initial_sidebar_state="collapsed"
-        )
-    except:
-        # Fallback - copy to root for Streamlit Cloud
-        import shutil
-        root_fav = Path(__file__).parent / "favicon.jpg"
-        shutil.copy(favicon_path, root_fav)
-        st.set_page_config(
-            page_title="WTC Abuja Concierge",
-            page_icon=str(root_fav),
-            layout="wide",
-            initial_sidebar_state="collapsed"
-        )
-else:
-    st.set_page_config(
-        page_title="WTC Abuja Concierge",
-        page_icon="🏛️",
-        layout="wide",
-        initial_sidebar_state="collapsed"
-    )
+fp=Path(__file__).parent/"assets"/"wtc-logo.jpg"
+st.set_page_config("WTC Abuja Concierge",str(fp) if fp.exists() else "🏛️","wide","collapsed")
 
 st.markdown("""<style>
 #MainMenu,footer,header,.stDeployButton,[data-testid="stToolbar"]{display:none!important}
 .stApp{background:#1a1a1a!important}
 .stMainBlockContainer,.main,div[data-testid="stVerticalBlock"]{background:#1a1a1a!important;gap:0!important}
 .stMarkdown,.stMarkdown p,.stMarkdown h1,.stMarkdown h2,.stMarkdown h3,.stMarkdown span,.stMarkdown div,p,h1,h2,h3,h4,label,span{color:#f0ede8!important}
-.stTextInput input,.stSelectbox select,.stTextInput textarea{background:#2a2a2a!important;color:#f0ede8!important;border:1px solid #4a4a4a!important;border-radius:4px!important;padding:10px 14px!important;font-size:15px!important}
+.stTextInput input,.stSelectbox select{background:#2a2a2a!important;color:#f0ede8!important;border:1px solid #4a4a4a!important;border-radius:4px!important;padding:10px 14px!important;font-size:15px!important}
 .stTextInput input:focus{border-color:#c8a45c!important;box-shadow:0 0 0 3px rgba(200,164,92,0.15)!important}
 .stTextInput input::placeholder{color:#6b6762!important}
 .stTextInput label,.stSelectbox label,.stCheckbox label{color:#b8b4ac!important;font-size:13px!important;font-family:Arial,sans-serif!important}
 .stCheckbox label span{color:#b8b4ac!important;font-size:13px!important}
-.stSelectbox>div>div{background:#2a2a2a!important;color:#f0ede8!important;border-color:#4a4a4a!important}
 .stButton>button{background:linear-gradient(135deg,#a88838,#c8a45c)!important;color:#1a1a1a!important;border:none!important;border-radius:4px!important;padding:14px 28px!important;font-weight:600!important;font-size:14px!important;text-transform:uppercase!important;letter-spacing:1px!important;transition:all .15s!important;font-family:Arial,sans-serif!important;cursor:pointer!important}
 .stButton>button:hover{background:linear-gradient(135deg,#c8a45c,#d4b56e)!important;transform:translateY(-1px)!important;box-shadow:0 4px 20px rgba(200,164,92,.3)!important}
-.stButton>button:active{transform:scale(0.98)!important}
 [data-testid="stMetricValue"]{color:#c8a45c!important;font-size:2rem!important;font-weight:700!important}
 [data-testid="stMetricLabel"]{color:#8a8680!important;font-size:.75rem!important}
 [data-testid="stDataFrame"]{background:#1e1e1e!important;border:1px solid #333!important;border-radius:4px!important}
@@ -164,16 +156,13 @@ st.markdown("""<style>
 [data-testid="stDataFrame"] td{background:#1a1a1a!important;color:#b8b4ac!important;font-size:13px!important;padding:10px 12px!important;border-bottom:1px solid #2a2a2a!important}
 .stProgress>div>div>div{background:#c8a45c!important}
 .stProgress>div>div{background:#2a2a2a!important}
-.stAlert{border-radius:4px!important}
-.stAlert p{color:#e8c8c8!important}
 .stDownloadButton>button{background:#252525!important;color:#c8a45c!important;border:1px solid #c8a45c!important;border-radius:4px!important;padding:10px 20px!important;font-weight:500!important}
-.stDownloadButton>button:hover{background:rgba(200,164,92,.1)!important;color:#d4b56e!important;border-color:#d4b56e!important}
+.stDownloadButton>button:hover{background:rgba(200,164,92,.1)!important;color:#d4b56e!important}
 hr{border-color:#333!important;margin:20px 0!important}
-div[data-testid="stRadio"]{display:none!important}
 </style>""",unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════
-# FAST NAVIGATION HELPER
+# NAVIGATION
 # ═══════════════════════════════════════════════════════════
 def go(pg,rt=None,sc=0):
     st.session_state.pg=pg; st.session_state.rt=rt; st.session_state.sc=sc; st.session_state.la=datetime.now()
@@ -188,11 +177,10 @@ st.markdown('<div style="position:fixed;bottom:3px;right:3px;z-index:9999;"><a h
 # IDLE
 # ═══════════════════════════════════════════════════════════
 def idle():
-    st.markdown("<br>"*3,True)
+    st.markdown("<br>"*4,True)
     _,c,_=st.columns([1,2,1])
     with c:
-        st.markdown(logo_html("220px"),True)
-        st.markdown('<p style="text-align:center;color:#c8a45c;letter-spacing:5px;font-size:12px;font-family:Arial,sans-serif;margin-top:10px">WORLD TRADE CENTER</p>',True)
+        st.markdown('<p style="text-align:center;color:#c8a45c;letter-spacing:5px;font-size:12px;font-family:Arial,sans-serif">WORLD TRADE CENTER</p>',True)
         st.markdown('<h1 style="text-align:center;color:#e8e4dc;font-size:56px;line-height:1.1;margin:6px 0;font-family:Georgia,serif">World Trade Center<br>Abuja</h1>',True)
         st.markdown('<hr style="width:60px;border:1px solid #c8a45c;margin:20px auto">',True)
         st.markdown('<p style="text-align:center;color:#b8b4ac;font-size:18px;font-family:Arial,sans-serif">Grade A offices and executive residences in the capital.</p>',True)
@@ -207,9 +195,8 @@ def idle():
 # HOME
 # ═══════════════════════════════════════════════════════════
 def home():
-    st.markdown(logo_html("130px"),True)
-    st.markdown('<p style="text-align:center;color:#8a8680;font-size:11px;letter-spacing:4px;font-family:Arial,sans-serif;margin-top:10px">WORLD TRADE CENTER ABUJA</p>',True)
-    st.markdown('<h2 style="text-align:center;color:#e8e4dc;font-size:32px;margin:6px 0 25px 0;font-family:Georgia,serif">What are you interested in?</h2>',True)
+    st.markdown('<p style="text-align:center;color:#8a8680;font-size:11px;letter-spacing:4px;font-family:Arial,sans-serif;margin-top:30px">WORLD TRADE CENTER ABUJA</p>',True)
+    st.markdown('<h2 style="text-align:center;color:#e8e4dc;font-size:32px;margin:6px 0 30px 0;font-family:Georgia,serif">What are you interested in?</h2>',True)
     routes=[("🏛️","Overview","WTC Abuja at a glance","overview"),("💼","Office Space","Grade A offices and floorplates","office"),("🏠","Executive Residences","Apartments and accommodation","residences"),("📍","Location","Constitution Avenue, CBD Abuja","location"),("🛡️","Security & Continuity","Access, CCTV, infrastructure","security"),("🔑","Request a Private Inspection","Office, residence or full walkthrough","convert_i"),("📋","Send Me the Digital Pack","Prospectus and materials","convert_d")]
     for row in range(0,7,3):
         cols=st.columns(3)
@@ -220,12 +207,12 @@ def home():
             with cols[i]:
                 st.markdown(f'<div style="background:#252525;border:1px solid #3a3a3a;border-radius:6px;padding:22px 18px;margin:4px;min-height:165px"><div style="font-size:1.8rem;margin-bottom:10px">{icon}</div><div style="color:#e8e4dc;font-size:1.05rem;font-weight:600;margin-bottom:5px;font-family:Georgia,serif">{title}</div><div style="color:#8a8680;font-size:0.78rem;font-family:Arial,sans-serif;line-height:1.4">{desc}</div></div>',True)
                 if st.button("Select →",key=f"btn_{key}",use_container_width=True):
-                    if key.startswith("convert"): go("convert",None); st.session_state.fd={"pf":["Request a Private Inspection"] if "i" in key else ["Corporate Prospectus"]}
+                    if key.startswith("convert"): go("convert"); st.session_state.fd={"pf":["Request a Private Inspection"] if "i" in key else ["Corporate Prospectus"]}
                     else: go("route",key)
                     st.rerun()
 
 # ═══════════════════════════════════════════════════════════
-# CONTENT ROUTES
+# ROUTES
 # ═══════════════════════════════════════════════════════════
 ROUTES={"overview":{"title":"Overview","screens":[{"t":"A completed Grade A address in Abuja's CBD","b":"World Trade Center Abuja is a completed and operational Grade A development on Constitution Avenue in the heart of Abuja's Central Business District.","p":["Completed and operational","Constitution Avenue, CBD Abuja","Offices, residences and amenities","Professionally managed environment"]},{"t":"One address. Multiple uses. One controlled environment.","b":"WTC Abuja integrates business, living, and leisure within a secure, professionally managed perimeter.","p":["Offices","Residences","Clubhouse","Security perimeter","CBD Location"]},{"t":"The Proof","b":"A working, operational building — not a promise.","h":[("33,180 m²","Office GLA"),("1,440 m²","Typical Floorplate"),("120","Executive Residences"),("500+","CCTV Cameras"),("CBD Address","Near NNPC & Petroleum Ministry")]}]},"office":{"title":"Office Space","screens":[{"t":"Grade A offices for serious occupiers","b":"Completed, operational office space in Abuja's CBD, with flexible floorplates, secure access, and professional building management.","p":["33,180 m² total GLA","1,440 m² typical floorplate","~83% efficiency","130 m² to full-floor","Professional FM"]},{"t":"Floorplate Options","b":"Flexible space configurations:","h":[("130 m²","Representative office"),("230 m²","Single office suite"),("360 m²","Project team/embassy"),("720 m²","Larger corporate office"),("1,440 m²","Full-floor headquarters")]},{"t":"Built for Continuity","b":"The building is not a promise. It is running.","p":["10 MVA on-site power","8×1,250 kVA generators","Daikin VRV cooling","4 ISPs","Schindler lifts","Honeywell BMS"]}]},"residences":{"title":"Executive Residences","screens":[{"t":"Executive accommodation inside the same secure development","b":"Secure accommodation for senior executives, expatriates, and visiting leadership within the same controlled development as the offices.","p":["120 residences","1–6 bedroom range","Furnished/unfurnished","Private clubhouse access","Secure CBD location"]},{"t":"Residence Types","b":"Accommodation for different needs:","h":[("1-Bedroom","Executive singles"),("2-Bedroom","Couples, diplomatic staff"),("3-Bedroom","Families, senior execs"),("Penthouses & Villas","VIPs, leadership")]},{"t":"Simpler accommodation planning","b":"For energy-sector organisations with rotating staff — your team lives within the same secure development as your offices.","p":["Reduced daily movement","Same development as offices","Easier planning for expats","Secure for families"]},{"t":"Private amenities for daily life","b":"The Clubhouse offers:","p":["Fitness — Technogym","Wellness — Pool, spa, sauna","Sport — Tennis & squash","Business — Meeting rooms","Family — Café, crèche"]}]},"security":{"title":"Security & Continuity","screens":[{"t":"Security governed as an operating system","b":"Security at WTC Abuja is a framework of trained personnel, defined procedures, and integrated technology.","p":["Trained personnel","Defined procedures","Integrated technology","Professional management"]},{"t":"Security Layers","b":"Four integrated layers of protection:","h":[("Surveillance","500+ HD CCTV · 24/7 control room"),("Access Control","Honeywell · Access-controlled lifts"),("Vehicle & Perimeter","Bollards · Under-vehicle surveillance"),("Personnel","Manned guards · MOPOL · Fire Service")]},{"t":"Operational continuity built in","b":"Every critical system has redundancy.","p":["10 MVA on-site power","8×1,250 kVA generators","Twice building peak load","Daikin VRV cooling","4 ISPs","Fire & life safety"]}]},"location":{"title":"Location","screens":[{"t":"At the centre of business, government and diplomacy","b":"WTC Abuja occupies Constitution Avenue in the CBD — between Maitama and Asokoro, minutes from NNPC Towers and the Ministry of Petroleum Resources.","p":["Constitution Avenue","CBD Abuja","Between Maitama & Asokoro","Near NNPC Towers","Near Petroleum Ministry"]},{"t":"Why the Location Matters","b":"A CBD address that works:","p":["Close to federal institutions","Near diplomatic missions","Near corporate headquarters","Practical for leadership","Reduced travel time"]}]}}
 
@@ -263,11 +250,10 @@ def route():
             st.rerun()
 
 # ═══════════════════════════════════════════════════════════
-# CONVERSION FORM
+# CONVERSION
 # ═══════════════════════════════════════════════════════════
 def convert():
-    st.markdown(logo_html("110px"),True)
-    st.markdown('<h2 style="color:#e8e4dc;font-size:26px;margin:12px 0;font-family:Georgia,serif">What would you like us to send you?</h2>',True)
+    st.markdown('<h2 style="color:#e8e4dc;font-size:26px;margin:20px 0;font-family:Georgia,serif">What would you like us to send you?</h2>',True)
     materials=["Corporate Prospectus","Office Floorplates","Residence Floorplans","Security & Continuity Brief","Clubhouse Overview","Location Overview","Request a Private Inspection","WTC Abuja Updates & Private Invitations"]
     selected=[]
     st.markdown('<p style="color:#c8a45c;font-size:12px;font-family:Arial,sans-serif;margin:8px 0;letter-spacing:1px">SELECT MATERIALS</p>',True)
@@ -287,11 +273,12 @@ def convert():
         if st.button("← Back",key="cvbk",use_container_width=True): go("route" if st.session_state.rt else "home"); st.rerun()
     with c3:
         if st.button("Submit →",key="cvsb",use_container_width=True,type="primary"):
-            if not fn or not ln or not em or not ph or not co: st.error("Please fill all required fields (*)")
+            if not fn or not ln or not em or not ph or not co: st.error("Fill all required fields")
             else:
                 tm={"Office Floorplates":"Office Leasing","Corporate Prospectus":"Office Leasing","Residence Floorplans":"Executive Residences","Security & Continuity Brief":"Security & Continuity","Clubhouse Overview":"Clubhouse","Location Overview":"Location","Request a Private Inspection":"Private Inspection","WTC Abuja Updates & Private Invitations":"Newsletter"}
-                db.save({"fn":fn,"ln":ln,"em":em,"ph":ph,"co":co,"jt":jt,"ti":ti,"mt":selected,"tg":list(set(tm.get(m,m) for m in selected)),"ins":"Request a Private Inspection" in selected,"mk":mk})
-                send_lead_email({"fn":fn,"ln":ln,"em":em,"ph":ph,"co":co,"jt":jt,"ti":ti,"mt":selected,"ins":"Request a Private Inspection" in selected,"mk":mk})
+                ld={"fn":fn,"ln":ln,"em":em,"ph":ph,"co":co,"jt":jt,"ti":ti,"mt":selected,"tg":list(set(tm.get(m,m) for m in selected)),"ins":"Request a Private Inspection" in selected,"mk":mk}
+                save_lead(ld)
+                send_lead_email(ld)
                 st.session_state.ct="inspection" if "Request a Private Inspection" in selected else "digital_pack"
                 st.session_state.fd={}; go("confirm"); st.rerun()
 
@@ -299,12 +286,11 @@ def convert():
 # CONFIRMATION
 # ═══════════════════════════════════════════════════════════
 def confirm():
-    cf={"inspection":("🔑","Inspection Requested","Your private inspection request has been received. The WTC Abuja team will contact you to confirm timing and requirements."),"digital_pack":("📋","Thank You","Your selected WTC Abuja materials will be sent shortly. A member of the team may follow up based on your enquiry."),"updates":("📬","You're Subscribed","You have been added to WTC Abuja Updates & Private Invitations. You can opt out at any time.")}
+    cf={"inspection":("🔑","Inspection Requested","Your private inspection request has been received. The WTC Abuja team will contact you to confirm timing."),"digital_pack":("📋","Thank You","Your selected materials will be sent shortly. A team member may follow up.")}
     ic,hl,ms=cf.get(st.session_state.ct,cf["digital_pack"])
-    st.markdown("<br>"*3,True)
+    st.markdown("<br>"*4,True)
     _,c,_=st.columns([1,2,1])
     with c:
-        st.markdown(logo_html("140px"),True)
         st.markdown(f'<div style="text-align:center"><div style="width:65px;height:65px;border-radius:50%;background:rgba(200,164,92,0.08);border:2px solid #c8a45c;display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:18px auto">{ic}</div><h2 style="color:#e8e4dc;font-size:26px;margin-bottom:8px;font-family:Georgia,serif">{hl}</h2><p style="color:#b8b4ac;font-size:15px;font-family:Arial,sans-serif;line-height:1.6">{ms}</p></div>',True)
         st.markdown("<br>",True)
         a,b=st.columns(2)
@@ -321,67 +307,37 @@ def admin():
         st.markdown("<br>"*5,True)
         _,c,_=st.columns([1,1,1])
         with c:
-            st.markdown(logo_html("140px"),True)
-            st.markdown('<h2 style="text-align:center;color:#e8e4dc;margin-top:12px;font-family:Georgia,serif">Admin Access</h2>',True)
+            st.markdown('<h2 style="text-align:center;color:#e8e4dc;font-family:Georgia,serif">Admin Access</h2>',True)
             p=st.text_input("PIN","",type="password",key="ap",placeholder="4-digit PIN")
             if st.button("Access Admin Panel",key="ag",use_container_width=True,type="primary"):
                 if p=="4271": st.session_state.adm=True; st.rerun()
                 else: st.error("Invalid PIN")
         return
     
-    s=db.stats()
-    l=db.all(100)
+    try: s=get_stats(); l=get_all_leads(100)
+    except: s={'t':0,'i':0,'m':0}; l=[]
     
-    # SAFE values - convert everything to int, default 0
-    t=int(s.get('t') or 0)
-    i=int(s.get('i') or 0)
-    m=int(s.get('m') or 0)
-    dp=t-i if t>=i else 0
+    t=int(s.get('t',0)); i=int(s.get('i',0)); m=int(s.get('m',0)); dp=t-i if t>=i else 0
     
     c1,c2=st.columns([3,1])
     with c1: st.markdown('<h2 style="color:#e8e4dc;margin:12px 0;font-family:Georgia,serif">Admin Panel — WTC Abuja Concierge</h2>',True)
     with c2:
         if st.button("🚪 Logout",key="ao",use_container_width=True): st.session_state.adm=False; go("idle"); st.rerun()
     
-    # 4 stat columns
     col1,col2,col3,col4=st.columns(4)
-    with col1: st.metric("Total Leads",t)
-    with col2: st.metric("Inspections",i)
-    with col3: st.metric("Opt-Ins",m)
-    with col4: st.metric("Digital Packs",dp)
+    col1.metric("Total Leads",t); col2.metric("Inspections",i); col3.metric("Opt-Ins",m); col4.metric("Digital Packs",dp)
     
-    # Download CSV
-    csv_data=db.csv()
-    if csv_data:
-        st.download_button("📥 Download CSV",csv_data,f"wtc_leads_{datetime.now().strftime('%Y%m%d_%H%M')}.csv","text/csv")
+    csv_data=export_csv()
+    if csv_data: st.download_button("📥 Download CSV",csv_data,f"wtc_leads_{datetime.now().strftime('%Y%m%d_%H%M')}.csv","text/csv")
     
-    st.markdown(f'<p style="color:#8a8680;font-size:11px;font-family:Arial,sans-serif;margin:8px 0">📅 Campaign: <b style="color:#c8a45c">NOG Energy Week 2026</b> | 💾 Database: <b style="color:#c8a45c">SQLite</b> | 🕐 {datetime.now().strftime("%d %b %Y, %H:%M")}</p>',True)
-    
+    st.markdown(f'<p style="color:#8a8680;font-size:11px;font-family:Arial,sans-serif;margin:8px 0">📅 <b style="color:#c8a45c">NOG Energy Week 2026</b> | 💾 <b style="color:#c8a45c">Turso Cloud</b> | 🕐 {datetime.now().strftime("%d %b %Y, %H:%M")}</p>',True)
     st.markdown('<h3 style="color:#e8e4dc;font-family:Georgia,serif;margin-top:20px">Recent Leads</h3>',True)
     
     if l:
-        td=[]
-        for r in l:
-            try:
-                mat_raw=r.get("materials","[]")
-                if isinstance(mat_raw,str): mat_raw=json.loads(mat_raw)
-                mat=", ".join(mat_raw[:3]) if mat_raw else ""
-            except:
-                mat=""
-            td.append({
-                "Time":str(r.get("submitted",""))[:16] if r.get("submitted") else "",
-                "Name":f"{r.get('first_name','')} {r.get('last_name','')}".strip(),
-                "Company":str(r.get("company","")),
-                "Email":str(r.get("email","")),
-                "Phone":str(r.get("phone","")),
-                "Materials":mat,
-                "Inspection":"✅" if r.get("inspection") else "—",
-                "Opt-In":"✅" if r.get("marketing") else "—"
-            })
+        td=[{"Time":str(r.get("submitted",""))[:16],"Name":f"{r.get('first_name','')} {r.get('last_name','')}".strip(),"Company":str(r.get("company","")),"Email":str(r.get("email","")),"Phone":str(r.get("phone","")),"Inspection":"✅" if r.get("inspection") else "—","Opt-In":"✅" if r.get("marketing") else "—"} for r in l]
         st.dataframe(td,use_container_width=True,hide_index=True,height=400)
-        st.markdown(f'<p style="color:#6b6762;font-size:10px;font-family:Arial,sans-serif;margin-top:4px">Showing {len(td)} of {t} total leads.</p>',True)
     else:
-        st.info("No leads captured yet. Leads appear here when visitors submit the form.")
+        st.info("No leads yet. Submit a test lead from the main app.")
     
     st.markdown('<div style="background:#252525;border:1px solid #3a3a3a;border-radius:6px;padding:14px;margin:12px 0"><p style="color:#b8b4ac;font-size:11px;font-family:Arial,sans-serif;margin:0">💡 Access: <code style="color:#c8a45c;background:#1a1a1a;padding:2px 6px;border-radius:3px">?admin=true</code> | PIN: <b style="color:#c8a45c">4271</b></p></div>',True)
 
