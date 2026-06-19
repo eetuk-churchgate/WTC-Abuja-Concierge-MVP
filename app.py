@@ -23,6 +23,8 @@ EMAIL_CONFIG = {
         "eetuk@churchgate.com",
         "vinay@wtcabuja.com",
         "eorimolade@churchgate.com",
+        "akarim@churchgate.com",
+        "tradeservices@wtcabuja.com",
     ]
 }
 
