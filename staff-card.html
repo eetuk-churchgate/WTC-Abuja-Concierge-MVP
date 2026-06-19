@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>WTC Abuja Concierge — Staff Reference Card</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: #1a1a1a;
+            font-family: Arial, Helvetica, sans-serif;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .card {
+            width: 700px;
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+        
+        /* ── HEADER ── */
+        .header {
+            background: #252525;
+            padding: 30px 35px 25px;
+            text-align: center;
+            border-bottom: 3px solid #c8a45c;
+        }
+        
+        .header-brand {
+            color: #c8a45c;
+            font-size: 10px;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        
+        .header h1 {
+            color: #e8e4dc;
+            font-size: 28px;
+            font-weight: 600;
+            font-family: Georgia, 'Times New Roman', serif;
+            margin-bottom: 4px;
+        }
+        
+        .header-sub {
+            color: #c8a45c;
+            font-size: 14px;
+            font-weight: 400;
+        }
+        
+        /* ── EVENT BADGE ── */
+        .event-badge {
+            display: inline-block;
+            background: rgba(200,164,92,0.12);
+            border: 1px solid #c8a45c;
+            border-radius: 4px;
+            padding: 6px 16px;
+            margin-top: 12px;
+            color: #c8a45c;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        
+        /* ── BODY ── */
+        .body {
+            padding: 30px 35px;
+        }
+        
+        /* ── SECTION ── */
+        .section {
+            margin-bottom: 25px;
+        }
+        
+        .section-title {
+            color: #c8a45c;
+            font-size: 10px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        
+        /* ── INFO ROW ── */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: #252525;
+            border: 1px solid #2a2a2a;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        
+        .info-label {
+            color: #8a8680;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .info-value {
+            color: #f0ede8;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            text-align: right;
+        }
+        
+        .info-value.gold {
+            color: #c8a45c;
+        }
+        
+        .info-value.pin {
+            font-size: 22px;
+            letter-spacing: 8px;
+        }
+        
+        /* ── BADGES ── */
+        .badge-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            background: #252525;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 10px 16px;
+            flex: 1;
+            min-width: 140px;
+            text-align: center;
+        }
+        
+        .badge-icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+        
+        .badge-text {
+            color: #b8b4ac;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+        
+        .badge-text b {
+            color: #e8e4dc;
+        }
+        
+        /* ── CHECKLIST ── */
+        .checklist {
+            list-style: none;
+        }
+        
+        .checklist li {
+            color: #b8b4ac;
+            font-size: 12px;
+            padding: 7px 0;
+            border-bottom: 1px solid #1f1f1f;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .checklist li::before {
+            content: "☐";
+            color: #c8a45c;
+            font-size: 16px;
+        }
+        
+        /* ── ALERT BOX ── */
+        .alert {
+            background: rgba(200,164,92,0.08);
+            border: 1px solid rgba(200,164,92,0.3);
+            border-radius: 6px;
+            padding: 14px 18px;
+            margin-top: 15px;
+        }
+        
+        .alert p {
+            color: #b8b4ac;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+        
+        .alert b {
+            color: #c8a45c;
+        }
+        
+        /* ── FOOTER ── */
+        .footer {
+            background: #252525;
+            padding: 16px 35px;
+            text-align: center;
+            border-top: 1px solid #333;
+        }
+        
+        .footer p {
+            color: #6b6762;
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        
+        /* ── PRINT STYLES ── */
+        @media print {
+            body { background: #1a1a1a; padding: 0; }
+            .card { box-shadow: none; border: none; width: 100%; max-width: 700px; }
+            @page { margin: 10mm; size: A4; }
+        }
+        
+        /* ── QR CODE PLACEHOLDER ── */
+        .qr-mini {
+            width: 60px;
+            height: 60px;
+            background: #333;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: #8a8680;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    
+    <!-- ── HEADER ── -->
+    <div class="header">
+        <p class="header-brand">World Trade Center</p>
+        <h1>WTC Abuja Concierge</h1>
+        <p class="header-sub">Staff Reference Card</p>
+        <div class="event-badge">NOG Energy Week 2026 • July 5–9</div>
+    </div>
+    
+    <!-- ── BODY ── -->
+    <div class="body">
+        
+        <!-- QUICK LINKS -->
+        <div class="section">
+            <p class="section-title">🔗 Quick Links</p>
+            
+            <div class="info-row">
+                <span class="info-label">App URL (Tablet)</span>
+                <span class="info-value gold">wtcabuja-concierge.streamlit.app</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">Admin Panel</span>
+                <span class="info-value gold">?admin=true</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">Admin PIN</span>
+                <span class="info-value pin gold">4271</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">QR Code (Visitor Phones)</span>
+                <span class="info-value gold">qrco.de/bgslSm</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">Emergency Contact</span>
+                <span class="info-value">eetuk@churchgate.com</span>
+            </div>
+        </div>
+        
+        <!-- WHAT THE APP DOES -->
+        <div class="section">
+            <p class="section-title">📱 App Purpose</p>
+            <div class="badge-row">
+                <div class="badge">
+                    <div class="badge-icon">🎯</div>
+                    <div class="badge-text">Attract & hold<br>visitor attention</div>
+                </div>
+                <div class="badge">
+                    <div class="badge-icon">📋</div>
+                    <div class="badge-text">Explain<br><b>WTC Abuja</b></div>
+                </div>
+                <div class="badge">
+                    <div class="badge-icon">📥</div>
+                    <div class="badge-text">Capture clean<br><b>leads</b></div>
+                </div>
+                <div class="badge">
+                    <div class="badge-icon">📱</div>
+                    <div class="badge-text">QR-to-phone<br><b>no queue</b></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- APP FEATURES -->
+        <div class="section">
+            <p class="section-title">🧭 App Routes</p>
+            <div class="badge-row">
+                <div class="badge"><div class="badge-text">🏛️ <b>Overview</b><br>3 screens</div></div>
+                <div class="badge"><div class="badge-text">💼 <b>Office Space</b><br>3 screens</div></div>
+                <div class="badge"><div class="badge-text">🏠 <b>Residences</b><br>4 screens</div></div>
+                <div class="badge"><div class="badge-text">📍 <b>Location</b><br>2 screens</div></div>
+                <div class="badge"><div class="badge-text">🛡️ <b>Security</b><br>3 screens</div></div>
+                <div class="badge"><div class="badge-text">📋 <b>Digital Pack</b><br>Conversion</div></div>
+            </div>
+        </div>
+        
+        <!-- DAILY CHECKLIST -->
+        <div class="section">
+            <p class="section-title">✅ Nightly Routine (After Event Each Day)</p>
+            <ul class="checklist">
+                <li>Open Admin Panel (?admin=true, PIN: 4271)</li>
+                <li>Click <b>"📥 Download CSV"</b> — save as wtc_leads_day1.csv</li>
+                <li>Verify lead count matches expected</li>
+                <li>Import CSV into Freshsales CRM</li>
+                <li>Check email inbox for lead notifications</li>
+            </ul>
+        </div>
+        
+        <!-- TROUBLESHOOTING -->
+        <div class="section">
+            <p class="section-title">🛠️ Troubleshooting</p>
+            
+            <div class="info-row">
+                <span class="info-label">App frozen / blank</span>
+                <span class="info-value" style="font-size:12px;">Refresh browser (F5 or pull down)</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">No internet</span>
+                <span class="info-value" style="font-size:12px;">Switch to backup 4G hotspot</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">iPad fails</span>
+                <span class="info-value" style="font-size:12px;">Use backup iPad (pre-configured)</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">Leads not showing</span>
+                <span class="info-value" style="font-size:12px;">Check admin panel — data in Turso Cloud</span>
+            </div>
+        </div>
+        
+        <!-- ALERT -->
+        <div class="alert">
+            <p>
+                <b>⚠️ IMPORTANT:</b> The tablet is primarily an <b>attract/explore</b> device. 
+                Visitors should scan the <b>QR code on the printed stand</b> to fill the form 
+                on their own phone — this prevents queues at the tablet. 
+                The tablet form is a <b>secondary fallback</b> only.
+            </p>
+        </div>
+        
+    </div>
+    
+    <!-- ── FOOTER ── -->
+    <div class="footer">
+        <p>World Trade Center Abuja • NOG Energy Week 2026 • July 5–9</p>
+    </div>
+
+</div>
+
+</body>
+</html>
