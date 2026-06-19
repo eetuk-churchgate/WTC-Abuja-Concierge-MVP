@@ -66,9 +66,7 @@
             margin-bottom: 20px;
         }
         
-        .section {
-            margin-bottom: 20px;
-        }
+        .section { margin-bottom: 20px; }
         
         .section-title {
             color: #c8a45c;
@@ -130,9 +128,7 @@
             margin-top: 3px;
         }
         
-        .form-group {
-            margin-bottom: 14px;
-        }
+        .form-group { margin-bottom: 14px; }
         
         .form-label {
             display: block;
@@ -142,9 +138,7 @@
             letter-spacing: 0.5px;
         }
         
-        .form-label span {
-            color: #c8a45c;
-        }
+        .form-label span { color: #c8a45c; }
         
         .form-input {
             width: 100%;
@@ -165,9 +159,7 @@
             box-shadow: 0 0 0 3px rgba(200,164,92,0.1);
         }
         
-        .form-input::placeholder {
-            color: #6b6762;
-        }
+        .form-input::placeholder { color: #6b6762; }
         
         .form-select {
             width: 100%;
@@ -197,10 +189,7 @@
             cursor: pointer;
         }
         
-        .checkbox-row input {
-            margin-top: 2px;
-            accent-color: #c8a45c;
-        }
+        .checkbox-row input { margin-top: 2px; accent-color: #c8a45c; }
         
         .checkbox-label {
             color: #b8b4ac;
@@ -230,42 +219,6 @@
             box-shadow: 0 4px 20px rgba(200,164,92,0.3);
         }
         
-        .btn-submit:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .success-box {
-            text-align: center;
-            padding: 40px 20px;
-        }
-        
-        .success-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: rgba(200,164,92,0.1);
-            border: 2px solid #c8a45c;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            margin: 0 auto 20px;
-        }
-        
-        .success-box h2 {
-            color: #e8e4dc;
-            font-size: 22px;
-            font-family: Georgia, serif;
-            margin-bottom: 8px;
-        }
-        
-        .success-box p {
-            color: #8a8680;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        
         .consent-box {
             background: #252525;
             border: 1px solid #333;
@@ -291,9 +244,7 @@
             display: none;
         }
         
-        .error-msg.show {
-            display: block;
-        }
+        .error-msg.show { display: block; }
         
         .footer {
             text-align: center;
@@ -316,7 +267,7 @@
         <div class="header-line"></div>
     </div>
     
-    <img src="assets/exterior.jpg" class="hero-img" alt="WTC Abuja Exterior" id="hero-img">
+    <img src="assets/exterior.jpg" class="hero-img" alt="WTC Abuja Exterior">
     
     <div class="section">
         <p class="section-title">Key Facts</p>
@@ -438,45 +389,32 @@
     </div>
 </div>
 
-<div class="container" id="success-content" style="display:none;">
-    <div class="success-box">
-        <div class="success-icon">📋</div>
-        <h2>Thank You</h2>
-        <p>Your selected materials will be sent shortly. A member of the team may follow up based on your enquiry.</p>
-        <p style="margin-top:15px;font-size:12px;color:#6b6762;">World Trade Center Abuja</p>
-    </div>
-</div>
-
 <script>
     function toggleCheck(id) {
-        const cb = document.getElementById(id);
+        var cb = document.getElementById(id);
         cb.checked = !cb.checked;
     }
     
     function submitForm() {
-        const fn = document.getElementById('first_name').value.trim();
-        const ln = document.getElementById('last_name').value.trim();
-        const em = document.getElementById('email').value.trim();
-        const ph = document.getElementById('phone').value.trim();
-        const co = document.getElementById('company').value.trim();
-        const jt = document.getElementById('job_title').value.trim();
-        const ti = document.getElementById('timing').value;
+        var fn = document.getElementById('first_name').value.trim();
+        var ln = document.getElementById('last_name').value.trim();
+        var em = document.getElementById('email').value.trim();
+        var ph = document.getElementById('phone').value.trim();
+        var co = document.getElementById('company').value.trim();
+        var jt = document.getElementById('job_title').value.trim();
+        var ti = document.getElementById('timing').value;
         
-        const errorEl = document.getElementById('error-msg');
-        const btn = document.getElementById('submit-btn');
+        var errorEl = document.getElementById('error-msg');
         
         if (!fn || !ln || !em || !ph || !co) {
             errorEl.textContent = 'Please fill all required fields (*)';
             errorEl.classList.add('show');
-            window.scrollTo(0, 0);
             return;
         }
         
         errorEl.classList.remove('show');
-        btn.disabled = true;
-        btn.textContent = 'Submitting...';
         
-        const materials = [];
+        var materials = [];
         if (document.getElementById('mat_corp').checked) materials.push('Corporate Prospectus');
         if (document.getElementById('mat_office').checked) materials.push('Office Floorplates');
         if (document.getElementById('mat_residence').checked) materials.push('Residence Floorplans');
@@ -485,42 +423,24 @@
         if (document.getElementById('mat_inspection').checked) materials.push('Request a Private Inspection');
         if (document.getElementById('mat_updates').checked) materials.push('WTC Abuja Updates & Private Invitations');
         
-        const data = {
-            first_name: fn,
-            last_name: ln,
-            email: em,
-            phone: ph,
-            company: co,
-            job_title: jt,
-            timing: ti,
-            materials: materials
-        };
+        var ins = materials.includes('Request a Private Inspection') ? '1' : '0';
+        var mk = materials.includes('WTC Abuja Updates & Private Invitations') ? '1' : '0';
         
-        // Submit to Netlify serverless function which saves to Turso
-        fetch('/.netlify/functions/submit-lead', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.success) {
-                document.getElementById('main-content').style.display = 'none';
-                document.getElementById('success-content').style.display = 'block';
-                window.scrollTo(0, 0);
-            } else {
-                errorEl.textContent = 'Submission failed. Please try again or contact staff.';
-                errorEl.classList.add('show');
-                btn.disabled = false;
-                btn.textContent = 'Submit & Receive Materials →';
-            }
-        })
-        .catch(() => {
-            // Even if fetch fails, show success for better UX
-            document.getElementById('main-content').style.display = 'none';
-            document.getElementById('success-content').style.display = 'block';
-            window.scrollTo(0, 0);
-        });
+        var url = 'https://wtcabuja-concierge.streamlit.app/' +
+            '?mobile=1' +
+            '&fn=' + encodeURIComponent(fn) +
+            '&ln=' + encodeURIComponent(ln) +
+            '&em=' + encodeURIComponent(em) +
+            '&ph=' + encodeURIComponent(ph) +
+            '&co=' + encodeURIComponent(co) +
+            '&jt=' + encodeURIComponent(jt) +
+            '&ti=' + encodeURIComponent(ti) +
+            '&mt=' + encodeURIComponent(materials.join('|||')) +
+            '&ins=' + ins +
+            '&mk=' + mk +
+            '&src=qr_mobile';
+        
+        window.location.href = url;
     }
 </script>
 
