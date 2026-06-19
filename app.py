@@ -30,7 +30,8 @@ EMAIL_CONFIG = {
 def turso_query(sql, params=None):
     if not TURSO_URL or not TURSO_TOKEN: return []
     try:
-        url = TURSO_URL.replace("libsql://", "https://") + "/v2/pipeline"
+        parts = TURSO_URL.replace("libsql://", "")
+        url = f"https://{parts}/v2/pipeline"
         body = json.dumps({"requests":[{"type":"execute","stmt":{"sql":sql,"args":params or []}}]}).encode()
         req = urllib.request.Request(url, data=body, headers={
             "Authorization": f"Bearer {TURSO_TOKEN}",
@@ -40,15 +41,18 @@ def turso_query(sql, params=None):
             data = json.loads(resp.read().decode())
             results = data.get("results",[])
             if results:
-                r = results[0].get("response",{}).get("result",{})
-                cols = [c["name"] for c in r.get("cols",[])]
-                rows = []
-                for row in r.get("rows",[]):
-                    d = {}
-                    for i, col in enumerate(cols):
-                        d[col] = row[i].get("value") if i < len(row) else None
-                    rows.append(d)
-                return rows
+                result = results[0]
+                if result.get("type") == "ok":
+                    r = result.get("response",{}).get("result",{})
+                    cols = [c["name"] for c in r.get("cols",[])]
+                    rows = []
+                    for row in r.get("rows",[]):
+                        d = {}
+                        for i, col_name in enumerate(cols):
+                            cell = row[i] if i < len(row) else {}
+                            d[col_name] = cell.get("value") if isinstance(cell, dict) else cell
+                        rows.append(d)
+                    return rows
         return []
     except Exception as e:
         st.error(f"DB Error: {e}")
