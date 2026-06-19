@@ -170,7 +170,9 @@ def go(pg,rt=None,sc=0):
 # ═══════════════════════════════════════════════════════════
 # ADMIN ACCESS
 # ═══════════════════════════════════════════════════════════
-if "admin" in st.query_params: st.session_state.pg="admin"; st.session_state.adm=True; st.query_params.clear()
+if "admin" in st.query_params:
+    st.session_state.pg = "admin"
+    st.query_params.clear()
 st.markdown('<div style="position:fixed;bottom:3px;right:3px;z-index:9999;"><a href="?admin=true" style="color:#1a1a1a;text-decoration:none;font-size:7px;">·</a></div>',True)
 
 # ═══════════════════════════════════════════════════════════
