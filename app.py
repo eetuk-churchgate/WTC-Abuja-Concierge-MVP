@@ -495,7 +495,205 @@ def admin():
     st.markdown('<div style="background:#252525;border:1px solid #3a3a3a;border-radius:6px;padding:14px;margin:12px 0"><p style="color:#b8b4ac;font-size:11px;font-family:Arial,sans-serif;margin:0">💡 Access: <code style="color:#c8a45c;background:#1a1a1a;padding:2px 6px;border-radius:3px">?admin=true</code> | PIN: <b style="color:#c8a45c">4271</b></p></div>',True)
 
 # ═══════════════════════════════════════════════════════════
-# MAIN
+# HANDLE MOBILE LANDING PAGE SUBMISSIONS
+# ═══════════════════════════════════════════════════════════
+if "mobile" in st.query_params:
+    try:
+        fn = st.query_params.get("fn", [""])[0] if isinstance(st.query_params.get("fn"), list) else st.query_params.get("fn", "")
+        ln = st.query_params.get("ln", [""])[0] if isinstance(st.query_params.get("ln"), list) else st.query_params.get("ln", "")
+        em = st.query_params.get("em", [""])[0] if isinstance(st.query_params.get("em"), list) else st.query_params.get("em", "")
+        ph = st.query_params.get("ph", [""])[0] if isinstance(st.query_params.get("ph"), list) else st.query_params.get("ph", "")
+        co = st.query_params.get("co", [""])[0] if isinstance(st.query_params.get("co"), list) else st.query_params.get("co", "")
+        jt = st.query_params.get("jt", [""])[0] if isinstance(st.query_params.get("jt"), list) else st.query_params.get("jt", "")
+        ti = st.query_params.get("ti", [""])[0] if isinstance(st.query_params.get("ti"), list) else st.query_params.get("ti", "")
+        mt_raw = st.query_params.get("mt", [""])[0] if isinstance(st.query_params.get("mt"), list) else st.query_params.get("mt", "")
+        mt = mt_raw.split("|||") if mt_raw else []
+        ins_raw = st.query_params.get("ins", ["0"])[0] if isinstance(st.query_params.get("ins"), list) else st.query_params.get("ins", "0")
+        mk_raw = st.query_params.get("mk", ["1"])[0] if isinstance(st.query_params.get("mk"), list) else st.query_params.get("mk", "1")
+        ins = ins_raw == "1"
+        mk = mk_raw == "1"
+        src = "qr_mobile"
+        
+        if fn and ln and em and ph and co:
+            tm = {"Office Floorplates":"Office Leasing","Corporate Prospectus":"Office Leasing","Residence Floorplans":"Executive Residences","Security & Continuity Brief":"Security & Continuity","Clubhouse Overview":"Clubhouse","Location Overview":"Location","Request a Private Inspection":"Private Inspection","WTC Abuja Updates & Private Invitations":"Newsletter"}
+            tags = list(set(tm.get(m,m) for m in mt))
+            ld = {"fn":fn,"ln":ln,"em":em,"ph":ph,"co":co,"jt":jt,"ti":ti,"mt":mt,"tg":tags,"ins":ins,"mk":mk,"src":src,"qual":{},"inspection_type":""}
+            save_lead(ld)
+            send_lead_email(ld)
+            st.session_state.ct = "inspection" if ins else "digital_pack"
+            st.session_state.pg = "confirm"
+            st.query_params.clear()
+            st.rerun()
+    except:
+        st.query_params.clear()
+
+# ═══════════════════════════════════════════════════════════
+# HANDLE MOBILE LANDING PAGE SUBMISSIONS
+# ═══════════════════════════════════════════════════════════
+if "mobile" in st.query_params:
+    try:
+        fn = st.query_params.get("fn", [""])[0] if isinstance(st.query_params.get("fn"), list) else st.query_params.get("fn", "")
+        ln = st.query_params.get("ln", [""])[0] if isinstance(st.query_params.get("ln"), list) else st.query_params.get("ln", "")
+        em = st.query_params.get("em", [""])[0] if isinstance(st.query_params.get("em"), list) else st.query_params.get("em", "")
+        ph = st.query_params.get("ph", [""])[0] if isinstance(st.query_params.get("ph"), list) else st.query_params.get("ph", "")
+        co = st.query_params.get("co", [""])[0] if isinstance(st.query_params.get("co"), list) else st.query_params.get("co", "")
+        jt = st.query_params.get("jt", [""])[0] if isinstance(st.query_params.get("jt"), list) else st.query_params.get("jt", "")
+        ti = st.query_params.get("ti", [""])[0] if isinstance(st.query_params.get("ti"), list) else st.query_params.get("ti", "")
+        mt_raw = st.query_params.get("mt", [""])[0] if isinstance(st.query_params.get("mt"), list) else st.query_params.get("mt", "")
+        mt = mt_raw.split("|||") if mt_raw else []
+        ins_raw = st.query_params.get("ins", ["0"])[0] if isinstance(st.query_params.get("ins"), list) else st.query_params.get("ins", "0")
+        mk_raw = st.query_params.get("mk", ["1"])[0] if isinstance(st.query_params.get("mk"), list) else st.query_params.get("mk", "1")
+        ins = ins_raw == "1"
+        mk = mk_raw == "1"
+        src = "qr_mobile"
+        
+        if fn and ln and em and ph and co:
+            tm = {"Office Floorplates":"Office Leasing","Corporate Prospectus":"Office Leasing","Residence Floorplans":"Executive Residences","Security & Continuity Brief":"Security & Continuity","Clubhouse Overview":"Clubhouse","Location Overview":"Location","Request a Private Inspection":"Private Inspection","WTC Abuja Updates & Private Invitations":"Newsletter"}
+            tags = list(set(tm.get(m,m) for m in mt))
+            ld = {"fn":fn,"ln":ln,"em":em,"ph":ph,"co":co,"jt":jt,"ti":ti,"mt":mt,"tg":tags,"ins":ins,"mk":mk,"src":src,"qual":{},"inspection_type":""}
+            save_lead(ld)
+            send_lead_email(ld)
+            st.session_state.ct = "inspection" if ins else "digital_pack"
+            st.session_state.pg = "confirm"
+            st.query_params.clear()
+            st.rerun()
+    except:
+        st.query_params.clear()
+
+# ═══════════════════════════════════════════════════════════
+# HANDLE MOBILE LANDING PAGE SUBMISSIONS
+# ═══════════════════════════════════════════════════════════
+if "mobile" in st.query_params:
+    try:
+        fn = st.query_params.get("fn", [""])[0] if isinstance(st.query_params.get("fn"), list) else st.query_params.get("fn", "")
+        ln = st.query_params.get("ln", [""])[0] if isinstance(st.query_params.get("ln"), list) else st.query_params.get("ln", "")
+        em = st.query_params.get("em", [""])[0] if isinstance(st.query_params.get("em"), list) else st.query_params.get("em", "")
+        ph = st.query_params.get("ph", [""])[0] if isinstance(st.query_params.get("ph"), list) else st.query_params.get("ph", "")
+        co = st.query_params.get("co", [""])[0] if isinstance(st.query_params.get("co"), list) else st.query_params.get("co", "")
+        jt = st.query_params.get("jt", [""])[0] if isinstance(st.query_params.get("jt"), list) else st.query_params.get("jt", "")
+        ti = st.query_params.get("ti", [""])[0] if isinstance(st.query_params.get("ti"), list) else st.query_params.get("ti", "")
+        mt_raw = st.query_params.get("mt", [""])[0] if isinstance(st.query_params.get("mt"), list) else st.query_params.get("mt", "")
+        mt = mt_raw.split("|||") if mt_raw else []
+        ins_raw = st.query_params.get("ins", ["0"])[0] if isinstance(st.query_params.get("ins"), list) else st.query_params.get("ins", "0")
+        mk_raw = st.query_params.get("mk", ["1"])[0] if isinstance(st.query_params.get("mk"), list) else st.query_params.get("mk", "1")
+        ins = ins_raw == "1"
+        mk = mk_raw == "1"
+        src = "qr_mobile"
+        
+        if fn and ln and em and ph and co:
+            tm = {"Office Floorplates":"Office Leasing","Corporate Prospectus":"Office Leasing","Residence Floorplans":"Executive Residences","Security & Continuity Brief":"Security & Continuity","Clubhouse Overview":"Clubhouse","Location Overview":"Location","Request a Private Inspection":"Private Inspection","WTC Abuja Updates & Private Invitations":"Newsletter"}
+            tags = list(set(tm.get(m,m) for m in mt))
+            ld = {"fn":fn,"ln":ln,"em":em,"ph":ph,"co":co,"jt":jt,"ti":ti,"mt":mt,"tg":tags,"ins":ins,"mk":mk,"src":src,"qual":{},"inspection_type":""}
+            save_lead(ld)
+            send_lead_email(ld)
+            st.session_state.ct = "inspection" if ins else "digital_pack"
+            st.session_state.pg = "confirm"
+            st.query_params.clear()
+            st.rerun()
+    except:
+        st.query_params.clear()
+
+# ═══════════════════════════════════════════════════════════
+# HANDLE MOBILE LANDING PAGE SUBMISSIONS
+# ═══════════════════════════════════════════════════════════
+if "mobile" in st.query_params:
+    try:
+        fn = st.query_params.get("fn", [""])[0] if isinstance(st.query_params.get("fn"), list) else st.query_params.get("fn", "")
+        ln = st.query_params.get("ln", [""])[0] if isinstance(st.query_params.get("ln"), list) else st.query_params.get("ln", "")
+        em = st.query_params.get("em", [""])[0] if isinstance(st.query_params.get("em"), list) else st.query_params.get("em", "")
+        ph = st.query_params.get("ph", [""])[0] if isinstance(st.query_params.get("ph"), list) else st.query_params.get("ph", "")
+        co = st.query_params.get("co", [""])[0] if isinstance(st.query_params.get("co"), list) else st.query_params.get("co", "")
+        jt = st.query_params.get("jt", [""])[0] if isinstance(st.query_params.get("jt"), list) else st.query_params.get("jt", "")
+        ti = st.query_params.get("ti", [""])[0] if isinstance(st.query_params.get("ti"), list) else st.query_params.get("ti", "")
+        mt_raw = st.query_params.get("mt", [""])[0] if isinstance(st.query_params.get("mt"), list) else st.query_params.get("mt", "")
+        mt = mt_raw.split("|||") if mt_raw else []
+        ins_raw = st.query_params.get("ins", ["0"])[0] if isinstance(st.query_params.get("ins"), list) else st.query_params.get("ins", "0")
+        mk_raw = st.query_params.get("mk", ["1"])[0] if isinstance(st.query_params.get("mk"), list) else st.query_params.get("mk", "1")
+        ins = ins_raw == "1"
+        mk = mk_raw == "1"
+        src = "qr_mobile"
+        
+        if fn and ln and em and ph and co:
+            tm = {"Office Floorplates":"Office Leasing","Corporate Prospectus":"Office Leasing","Residence Floorplans":"Executive Residences","Security & Continuity Brief":"Security & Continuity","Clubhouse Overview":"Clubhouse","Location Overview":"Location","Request a Private Inspection":"Private Inspection","WTC Abuja Updates & Private Invitations":"Newsletter"}
+            tags = list(set(tm.get(m,m) for m in mt))
+            ld = {"fn":fn,"ln":ln,"em":em,"ph":ph,"co":co,"jt":jt,"ti":ti,"mt":mt,"tg":tags,"ins":ins,"mk":mk,"src":src,"qual":{},"inspection_type":""}
+            save_lead(ld)
+            send_lead_email(ld)
+            st.session_state.ct = "inspection" if ins else "digital_pack"
+            st.session_state.pg = "confirm"
+            st.query_params.clear()
+            st.rerun()
+    except:
+        st.query_params.clear()
+
+# ═══════════════════════════════════════════════════════════
+# HANDLE MOBILE LANDING PAGE SUBMISSIONS
+# ═══════════════════════════════════════════════════════════
+if "mobile" in st.query_params:
+    try:
+        fn = st.query_params.get("fn", [""])[0] if isinstance(st.query_params.get("fn"), list) else st.query_params.get("fn", "")
+        ln = st.query_params.get("ln", [""])[0] if isinstance(st.query_params.get("ln"), list) else st.query_params.get("ln", "")
+        em = st.query_params.get("em", [""])[0] if isinstance(st.query_params.get("em"), list) else st.query_params.get("em", "")
+        ph = st.query_params.get("ph", [""])[0] if isinstance(st.query_params.get("ph"), list) else st.query_params.get("ph", "")
+        co = st.query_params.get("co", [""])[0] if isinstance(st.query_params.get("co"), list) else st.query_params.get("co", "")
+        jt = st.query_params.get("jt", [""])[0] if isinstance(st.query_params.get("jt"), list) else st.query_params.get("jt", "")
+        ti = st.query_params.get("ti", [""])[0] if isinstance(st.query_params.get("ti"), list) else st.query_params.get("ti", "")
+        mt_raw = st.query_params.get("mt", [""])[0] if isinstance(st.query_params.get("mt"), list) else st.query_params.get("mt", "")
+        mt = mt_raw.split("|||") if mt_raw else []
+        ins_raw = st.query_params.get("ins", ["0"])[0] if isinstance(st.query_params.get("ins"), list) else st.query_params.get("ins", "0")
+        mk_raw = st.query_params.get("mk", ["1"])[0] if isinstance(st.query_params.get("mk"), list) else st.query_params.get("mk", "1")
+        ins = ins_raw == "1"
+        mk = mk_raw == "1"
+        src = "qr_mobile"
+        
+        if fn and ln and em and ph and co:
+            tm = {"Office Floorplates":"Office Leasing","Corporate Prospectus":"Office Leasing","Residence Floorplans":"Executive Residences","Security & Continuity Brief":"Security & Continuity","Clubhouse Overview":"Clubhouse","Location Overview":"Location","Request a Private Inspection":"Private Inspection","WTC Abuja Updates & Private Invitations":"Newsletter"}
+            tags = list(set(tm.get(m,m) for m in mt))
+            ld = {"fn":fn,"ln":ln,"em":em,"ph":ph,"co":co,"jt":jt,"ti":ti,"mt":mt,"tg":tags,"ins":ins,"mk":mk,"src":src,"qual":{},"inspection_type":""}
+            save_lead(ld)
+            send_lead_email(ld)
+            st.session_state.ct = "inspection" if ins else "digital_pack"
+            st.session_state.pg = "confirm"
+            st.query_params.clear()
+            st.rerun()
+    except:
+        st.query_params.clear()
+
+# ═══════════════════════════════════════════════════════════
+# HANDLE MOBILE LANDING PAGE SUBMISSIONS
+# ═══════════════════════════════════════════════════════════
+if "mobile" in st.query_params:
+    try:
+        fn = st.query_params.get("fn", [""])[0] if isinstance(st.query_params.get("fn"), list) else st.query_params.get("fn", "")
+        ln = st.query_params.get("ln", [""])[0] if isinstance(st.query_params.get("ln"), list) else st.query_params.get("ln", "")
+        em = st.query_params.get("em", [""])[0] if isinstance(st.query_params.get("em"), list) else st.query_params.get("em", "")
+        ph = st.query_params.get("ph", [""])[0] if isinstance(st.query_params.get("ph"), list) else st.query_params.get("ph", "")
+        co = st.query_params.get("co", [""])[0] if isinstance(st.query_params.get("co"), list) else st.query_params.get("co", "")
+        jt = st.query_params.get("jt", [""])[0] if isinstance(st.query_params.get("jt"), list) else st.query_params.get("jt", "")
+        ti = st.query_params.get("ti", [""])[0] if isinstance(st.query_params.get("ti"), list) else st.query_params.get("ti", "")
+        mt_raw = st.query_params.get("mt", [""])[0] if isinstance(st.query_params.get("mt"), list) else st.query_params.get("mt", "")
+        mt = mt_raw.split("|||") if mt_raw else []
+        ins_raw = st.query_params.get("ins", ["0"])[0] if isinstance(st.query_params.get("ins"), list) else st.query_params.get("ins", "0")
+        mk_raw = st.query_params.get("mk", ["1"])[0] if isinstance(st.query_params.get("mk"), list) else st.query_params.get("mk", "1")
+        ins = ins_raw == "1"
+        mk = mk_raw == "1"
+        src = "qr_mobile"
+        
+        if fn and ln and em and ph and co:
+            tm = {"Office Floorplates":"Office Leasing","Corporate Prospectus":"Office Leasing","Residence Floorplans":"Executive Residences","Security & Continuity Brief":"Security & Continuity","Clubhouse Overview":"Clubhouse","Location Overview":"Location","Request a Private Inspection":"Private Inspection","WTC Abuja Updates & Private Invitations":"Newsletter"}
+            tags = list(set(tm.get(m,m) for m in mt))
+            ld = {"fn":fn,"ln":ln,"em":em,"ph":ph,"co":co,"jt":jt,"ti":ti,"mt":mt,"tg":tags,"ins":ins,"mk":mk,"src":src,"qual":{},"inspection_type":""}
+            save_lead(ld)
+            send_lead_email(ld)
+            st.session_state.ct = "inspection" if ins else "digital_pack"
+            st.session_state.pg = "confirm"
+            st.query_params.clear()
+            st.rerun()
+    except:
+        st.query_params.clear()
+
+# ═══════════════════════════════════════════════════════════
+# AUTO-RESET CHECK
 # ═══════════════════════════════════════════════════════════
 active_typing = st.session_state.pg == "convert" and (
     st.session_state.get("fn","") != "" or 
