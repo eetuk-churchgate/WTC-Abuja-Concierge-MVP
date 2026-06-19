@@ -101,10 +101,37 @@ for k,v in [("pg","idle"),("rt",None),("sc",0),("fd",{}),("adm",False),("did",st
     if k not in st.session_state: st.session_state[k]=v
 
 # ═══════════════════════════════════════════════════════════
-# PAGE CONFIG
+# PAGE CONFIG - Favicon fix for Streamlit Cloud
 # ═══════════════════════════════════════════════════════════
-fp=Path(__file__).parent/"assets"/"wtc-logo.jpg"
-st.set_page_config("WTC Abuja Concierge",str(fp) if fp.exists() else "🏛️","wide","collapsed")
+favicon_path = Path(__file__).parent / "assets" / "wtc-logo.jpg"
+
+# Streamlit Cloud needs the file in a specific location
+if favicon_path.exists():
+    try:
+        st.set_page_config(
+            page_title="WTC Abuja Concierge",
+            page_icon=str(favicon_path),
+            layout="wide",
+            initial_sidebar_state="collapsed"
+        )
+    except:
+        # Fallback - copy to root for Streamlit Cloud
+        import shutil
+        root_fav = Path(__file__).parent / "favicon.jpg"
+        shutil.copy(favicon_path, root_fav)
+        st.set_page_config(
+            page_title="WTC Abuja Concierge",
+            page_icon=str(root_fav),
+            layout="wide",
+            initial_sidebar_state="collapsed"
+        )
+else:
+    st.set_page_config(
+        page_title="WTC Abuja Concierge",
+        page_icon="🏛️",
+        layout="wide",
+        initial_sidebar_state="collapsed"
+    )
 
 st.markdown("""<style>
 #MainMenu,footer,header,.stDeployButton,[data-testid="stToolbar"]{display:none!important}
