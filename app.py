@@ -17,7 +17,7 @@ EMAIL_CONFIG = {
     "recipients": [
         "eetuk@churchgate.com",
         "vinay@wtcabuja.com",
-        "eorimolade@wtcabuja.com",
+        "eorimolade@churchgate.com",
     ]
 }
 
@@ -32,6 +32,11 @@ def get_logo_base64():
     return None
 
 LOGO_B64 = get_logo_base64()
+
+def logo_html(width="180px"):
+    if LOGO_B64:
+        return f'<img src="data:image/jpeg;base64,{LOGO_B64}" style="width:{width};margin:0 auto;display:block;filter:brightness(1.1);">'
+    return ""
 
 # ═══════════════════════════════════════════════════════════
 # DATABASE
@@ -94,10 +99,10 @@ class DB:
 db = DB()
 
 # ═══════════════════════════════════════════════════════════
-# EMAIL SENDER
+# EMAIL SENDER - Premium Branded Template
 # ═══════════════════════════════════════════════════════════
 def send_lead_email(lead_data):
-    """Send lead notification to all recipients."""
+    """Send premium branded lead notification."""
     try:
         fn = lead_data.get('fn','')
         ln = lead_data.get('ln','')
@@ -110,48 +115,179 @@ def send_lead_email(lead_data):
         ins = lead_data.get('ins', False)
         mk = lead_data.get('mk', True)
         
-        msg = MIMEMultipart()
-        msg['From'] = EMAIL_CONFIG['sender_email']
+        msg = MIMEMultipart('related')
+        msg['From'] = f"WTC Abuja Concierge <{EMAIL_CONFIG['sender_email']}>"
         msg['To'] = ", ".join(EMAIL_CONFIG['recipients'])
         
         if ins:
-            msg['Subject'] = f"🔑 NEW INSPECTION REQUEST — {fn} {ln} from {co}"
+            msg['Subject'] = f"🔑 INSPECTION REQUEST — {fn} {ln} | {co}"
         else:
-            msg['Subject'] = f"📋 New Lead — {fn} {ln} from {co}"
+            msg['Subject'] = f"New Lead — {fn} {ln} | {co}"
         
-        body = f"""
-╔═══════════════════════════════════════════╗
-║     WTC ABUJA — NEW LEAD NOTIFICATION     ║
-╚═══════════════════════════════════════════╝
-
-NAME:       {fn} {ln}
-COMPANY:    {co}
-TITLE:      {jt or 'Not provided'}
-EMAIL:      {em}
-PHONE:      {ph}
-TIMING:     {ti or 'Not specified'}
-
-───────────────────────────────────────────
-REQUESTED MATERIALS:
-───────────────────────────────────────────
-{chr(10).join(f'  ✓ {m}' for m in mt)}
-
-───────────────────────────────────────────
-INSPECTION REQUESTED: {'✅ YES — PRIORITY' if ins else '❌ No'}
-MARKETING OPT-IN:     {'✅ Yes' if mk else '❌ No'}
-───────────────────────────────────────────
-
-SUBMITTED: {datetime.now().strftime('%d %B %Y, %H:%M')}
-CAMPAIGN:  NOG Energy Week 2026
-DEVICE:    {st.session_state.get('did','Unknown')}
-
-───────────────────────────────────────────
-This lead was captured via the WTC Abuja 
-Concierge App at NOG Energy Week 2026.
-───────────────────────────────────────────
+        # Materials list
+        materials_html = ""
+        for m in mt:
+            materials_html += f'<tr><td style="padding:6px 8px;color:#c8a45c;font-size:13px;">✦</td><td style="padding:6px 8px;color:#e8e4dc;font-size:13px;">{m}</td></tr>'
+        
+        if not materials_html:
+            materials_html = '<tr><td style="padding:6px 8px;color:#8a8680;font-size:13px;" colspan="2">No materials selected</td></tr>'
+        
+        # Timing display
+        timing_map = {
+            "immediate": "⚡ Immediate",
+            "0-3_months": "📅 0–3 Months",
+            "3-6_months": "📅 3–6 Months",
+            "6-12_months": "📅 6–12 Months",
+            "future": "🔮 Future / Exploratory"
+        }
+        timing_display = timing_map.get(ti, ti) if ti else "Not specified"
+        
+        # Priority banner
+        priority_banner = ""
+        if ins:
+            priority_banner = """
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px 0;">
+                <tr>
+                    <td style="background:linear-gradient(135deg,#a88838,#c8a45c);padding:14px 20px;border-radius:4px;text-align:center;">
+                        <p style="color:#1a1a1a;font-size:14px;font-weight:700;margin:0;letter-spacing:1px;font-family:Arial,sans-serif;">🔑 PRIORITY — PRIVATE INSPECTION REQUESTED</p>
+                    </td>
+                </tr>
+            </table>
+            """
+        
+        html_body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+        <body style="margin:0;padding:0;background:#1a1a1a;font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
+            
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a1a;padding:30px 20px;">
+                <tr>
+                    <td align="center">
+                        
+                        <!-- Main Card -->
+                        <table width="600" cellpadding="0" cellspacing="0" style="background:#1e1e1e;border:1px solid #333;border-radius:8px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+                            
+                            <!-- Header -->
+                            <tr>
+                                <td style="background:#252525;padding:35px 40px 25px 40px;text-align:center;border-bottom:2px solid #c8a45c;">
+                                    <p style="color:#c8a45c;font-size:10px;letter-spacing:5px;margin:0 0 10px 0;text-transform:uppercase;font-family:Arial,sans-serif;">World Trade Center</p>
+                                    <h1 style="color:#e8e4dc;font-size:26px;font-weight:600;margin:0 0 8px 0;line-height:1.3;font-family:Georgia,'Times New Roman',serif;">WTC Abuja</h1>
+                                    <p style="color:#c8a45c;font-size:14px;font-weight:400;margin:0;font-family:Arial,sans-serif;">New Lead Notification</p>
+                                </td>
+                            </tr>
+                            
+                            <!-- Body -->
+                            <tr>
+                                <td style="padding:30px 40px;">
+                                    
+                                    {priority_banner}
+                                    
+                                    <!-- Lead Details -->
+                                    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px 0;">
+                                        <tr>
+                                            <td width="50%" style="padding:12px 10px;border-bottom:1px solid #2a2a2a;">
+                                                <p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 5px 0;font-family:Arial,sans-serif;">Name</p>
+                                                <p style="color:#f0ede8;font-size:17px;font-weight:600;margin:0;font-family:Georgia,serif;">{fn} {ln}</p>
+                                            </td>
+                                            <td width="50%" style="padding:12px 10px;border-bottom:1px solid #2a2a2a;">
+                                                <p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 5px 0;font-family:Arial,sans-serif;">Company</p>
+                                                <p style="color:#f0ede8;font-size:17px;font-weight:600;margin:0;font-family:Georgia,serif;">{co}</p>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:12px 10px;border-bottom:1px solid #2a2a2a;">
+                                                <p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 5px 0;font-family:Arial,sans-serif;">Title</p>
+                                                <p style="color:#e8e4dc;font-size:15px;margin:0;">{jt or 'Not provided'}</p>
+                                            </td>
+                                            <td style="padding:12px 10px;border-bottom:1px solid #2a2a2a;">
+                                                <p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 5px 0;font-family:Arial,sans-serif;">Timing</p>
+                                                <p style="color:#e8e4dc;font-size:15px;margin:0;">{timing_display}</p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    
+                                    <!-- Contact Box -->
+                                    <table width="100%" cellpadding="0" cellspacing="0" style="background:#252525;border:1px solid #333;border-radius:6px;margin:0 0 20px 0;">
+                                        <tr>
+                                            <td style="padding:18px 22px;">
+                                                <p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 12px 0;font-family:Arial,sans-serif;">Contact Information</p>
+                                                <table cellpadding="0" cellspacing="0">
+                                                    <tr><td style="padding:3px 0;"><span style="color:#8a8680;font-size:13px;">✉️</span></td><td style="padding:3px 0;padding-left:10px;"><a href="mailto:{em}" style="color:#c8a45c;text-decoration:none;font-size:14px;">{em}</a></td></tr>
+                                                    <tr><td style="padding:3px 0;"><span style="color:#8a8680;font-size:13px;">📱</span></td><td style="padding:3px 0;padding-left:10px;"><a href="tel:{ph}" style="color:#c8a45c;text-decoration:none;font-size:14px;">{ph}</a></td></tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    
+                                    <!-- Materials Box -->
+                                    <table width="100%" cellpadding="0" cellspacing="0" style="background:#252525;border:1px solid #333;border-radius:6px;margin:0 0 20px 0;">
+                                        <tr>
+                                            <td style="padding:18px 22px;">
+                                                <p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 10px 0;font-family:Arial,sans-serif;">Requested Materials</p>
+                                                <table width="100%" cellpadding="0" cellspacing="0">
+                                                    {materials_html}
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    
+                                    <!-- Status Badges -->
+                                    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 10px 0;">
+                                        <tr>
+                                            <td width="50%" style="padding:0 5px 0 0;">
+                                                <table width="100%" cellpadding="0" cellspacing="0" style="background:{'#c8a45c' if ins else '#333'};border-radius:4px;">
+                                                    <tr>
+                                                        <td style="padding:10px 14px;text-align:center;">
+                                                            <p style="color:{'#1a1a1a' if ins else '#8a8680'};font-size:11px;font-weight:700;margin:0;letter-spacing:1px;font-family:Arial,sans-serif;">🔑 INSPECTION: {'YES' if ins else 'NO'}</p>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                            <td width="50%" style="padding:0 0 0 5px;">
+                                                <table width="100%" cellpadding="0" cellspacing="0" style="background:{'#c8a45c' if mk else '#333'};border-radius:4px;">
+                                                    <tr>
+                                                        <td style="padding:10px 14px;text-align:center;">
+                                                            <p style="color:{'#1a1a1a' if mk else '#8a8680'};font-size:11px;font-weight:700;margin:0;letter-spacing:1px;font-family:Arial,sans-serif;">📬 MARKETING: {'OPT-IN' if mk else 'OUT'}</p>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    
+                                </td>
+                            </tr>
+                            
+                            <!-- Footer -->
+                            <tr>
+                                <td style="background:#252525;padding:20px 40px;text-align:center;border-top:1px solid #333;">
+                                    <p style="color:#6b6762;font-size:10px;margin:0 0 3px 0;font-family:Arial,sans-serif;">Captured via WTC Abuja Concierge App</p>
+                                    <p style="color:#6b6762;font-size:10px;margin:0 0 8px 0;font-family:Arial,sans-serif;">{datetime.now().strftime('%d %B %Y, %H:%M')} · NOG Energy Week 2026</p>
+                                    <p style="color:#c8a45c;font-size:9px;margin:0;letter-spacing:3px;font-family:Arial,sans-serif;">WORLD TRADE CENTER ABUJA</p>
+                                </td>
+                            </tr>
+                            
+                        </table>
+                        
+                    </td>
+                </tr>
+            </table>
+            
+        </body>
+        </html>
         """
         
-        msg.attach(MIMEText(body, 'plain'))
+        msg.attach(MIMEText(html_body, 'html'))
+        
+        # Attach WTC logo
+        logo_path = Path(__file__).parent / "assets" / "wtc-logo.jpg"
+        if logo_path.exists():
+            with open(logo_path, 'rb') as f:
+                img = MIMEImage(f.read())
+                img.add_header('Content-ID', '<wtc-logo>')
+                img.add_header('Content-Disposition', 'inline', filename='wtc-logo.jpg')
+                msg.attach(img)
         
         context = ssl.create_default_context()
         with smtplib.SMTP(EMAIL_CONFIG['smtp_server'], EMAIL_CONFIG['smtp_port']) as server:
@@ -161,7 +297,7 @@ Concierge App at NOG Energy Week 2026.
         
         return True
     except Exception as e:
-        st.error(f"Email failed: {e}")
+        print(f"Email error: {e}")
         return False
 
 # ═══════════════════════════════════════════════════════════
@@ -172,64 +308,53 @@ for k,v in [("pg","idle"),("rt",None),("sc",0),("fd",{}),("adm",False),
     if k not in st.session_state: st.session_state[k]=v
 
 # ═══════════════════════════════════════════════════════════
-# PAGE CONFIG & STYLING
+# PAGE CONFIG - With WTC Logo as Favicon
 # ═══════════════════════════════════════════════════════════
-st.set_page_config(
-    page_title="WTC Abuja Concierge",
-    page_icon="🏛️",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+favicon_path = Path(__file__).parent / "assets" / "wtc-logo.jpg"
+if favicon_path.exists():
+    st.set_page_config(
+        page_title="WTC Abuja Concierge",
+        page_icon=str(favicon_path),
+        layout="wide",
+        initial_sidebar_state="collapsed"
+    )
+else:
+    st.set_page_config(
+        page_title="WTC Abuja Concierge",
+        page_icon="🏛️",
+        layout="wide",
+        initial_sidebar_state="collapsed"
+    )
 
+# ═══════════════════════════════════════════════════════════
+# STYLING
+# ═══════════════════════════════════════════════════════════
 st.markdown("""<style>
-/* === HIDE STREAMLIT BRANDING === */
-#MainMenu, footer, header, .stDeployButton, [data-testid="stToolbar"] {display:none!important}
-
-/* === GLOBAL BACKGROUND === */
-.stApp {background:#1a1a1a!important}
-.stMainBlockContainer,.main,div[data-testid="stVerticalBlock"] {background:#1a1a1a!important;gap:0!important}
-
-/* === ALL TEXT LIGHT === */
-.stMarkdown,.stMarkdown p,.stMarkdown h1,.stMarkdown h2,.stMarkdown h3,.stMarkdown span,.stMarkdown div,p,h1,h2,h3,h4,label,span {color:#f0ede8!important}
-
-/* === INPUT FIELDS === */
-.stTextInput input,.stSelectbox select,.stTextInput textarea {background:#2a2a2a!important;color:#f0ede8!important;border:1px solid #4a4a4a!important;border-radius:4px!important;padding:10px 14px!important;font-size:15px!important}
-.stTextInput input:focus {border-color:#c8a45c!important;box-shadow:0 0 0 3px rgba(200,164,92,0.15)!important}
-.stTextInput input::placeholder {color:#6b6762!important}
-.stTextInput label,.stSelectbox label,.stCheckbox label {color:#b8b4ac!important;font-size:13px!important;font-family:Arial,sans-serif!important}
-.stCheckbox label span {color:#b8b4ac!important;font-size:13px!important}
-
-/* === BUTTONS - BRASS GOLD === */
-.stButton>button {background:linear-gradient(135deg,#a88838,#c8a45c)!important;color:#1a1a1a!important;border:none!important;border-radius:4px!important;padding:14px 28px!important;font-weight:600!important;font-size:14px!important;text-transform:uppercase!important;letter-spacing:1px!important;transition:all .3s!important;font-family:Arial,sans-serif!important;cursor:pointer!important}
-.stButton>button:hover {background:linear-gradient(135deg,#c8a45c,#d4b56e)!important;transform:translateY(-1px)!important;box-shadow:0 4px 20px rgba(200,164,92,.3)!important}
-
-/* === METRICS === */
-[data-testid="stMetricValue"] {color:#c8a45c!important;font-size:2rem!important;font-weight:700!important}
-[data-testid="stMetricLabel"] {color:#8a8680!important;font-size:.75rem!important}
-
-/* === DATAFRAME === */
-[data-testid="stDataFrame"] {background:#1e1e1e!important;border:1px solid #333!important;border-radius:4px!important}
-[data-testid="stDataFrame"] th {background:#252525!important;color:#8a8680!important;font-size:11px!important;text-transform:uppercase!important;letter-spacing:1px!important;padding:12px!important;border-bottom:2px solid #333!important}
-[data-testid="stDataFrame"] td {background:#1a1a1a!important;color:#b8b4ac!important;font-size:13px!important;padding:10px 12px!important;border-bottom:1px solid #2a2a2a!important}
-
-/* === PROGRESS === */
-.stProgress>div>div>div {background:#c8a45c!important}
-.stProgress>div>div {background:#2a2a2a!important}
-
-/* === ALERTS === */
-.stAlert {border-radius:4px!important}
-.stAlert p {color:#e8c8c8!important}
-
-/* === DOWNLOAD BUTTON === */
-.stDownloadButton>button {background:#252525!important;color:#c8a45c!important;border:1px solid #c8a45c!important;border-radius:4px!important;padding:10px 20px!important;font-weight:500!important}
-.stDownloadButton>button:hover {background:rgba(200,164,92,.1)!important;color:#d4b56e!important;border-color:#d4b56e!important}
-
-/* === DIVIDERS === */
-hr {border-color:#333!important;margin:20px 0!important}
-
-/* === WTC LOGO === */
-.wtc-logo-img {max-width:180px;margin-bottom:20px;filter:brightness(1.2)}
-</style>""", unsafe_allow_html=True)
+#MainMenu,footer,header,.stDeployButton,[data-testid="stToolbar"]{display:none!important}
+.stApp{background:#1a1a1a!important}
+.stMainBlockContainer,.main,div[data-testid="stVerticalBlock"]{background:#1a1a1a!important;gap:0!important}
+.stMarkdown,.stMarkdown p,.stMarkdown h1,.stMarkdown h2,.stMarkdown h3,.stMarkdown span,.stMarkdown div,p,h1,h2,h3,h4,label,span{color:#f0ede8!important}
+.stTextInput input,.stSelectbox select,.stTextInput textarea{background:#2a2a2a!important;color:#f0ede8!important;border:1px solid #4a4a4a!important;border-radius:4px!important;padding:10px 14px!important;font-size:15px!important}
+.stTextInput input:focus{border-color:#c8a45c!important;box-shadow:0 0 0 3px rgba(200,164,92,0.15)!important}
+.stTextInput input::placeholder{color:#6b6762!important}
+.stTextInput label,.stSelectbox label,.stCheckbox label{color:#b8b4ac!important;font-size:13px!important;font-family:Arial,sans-serif!important}
+.stCheckbox label span{color:#b8b4ac!important;font-size:13px!important}
+.stSelectbox>div>div{background:#2a2a2a!important;color:#f0ede8!important;border-color:#4a4a4a!important}
+.stButton>button{background:linear-gradient(135deg,#a88838,#c8a45c)!important;color:#1a1a1a!important;border:none!important;border-radius:4px!important;padding:14px 28px!important;font-weight:600!important;font-size:14px!important;text-transform:uppercase!important;letter-spacing:1px!important;transition:all .3s!important;font-family:Arial,sans-serif!important;cursor:pointer!important}
+.stButton>button:hover{background:linear-gradient(135deg,#c8a45c,#d4b56e)!important;transform:translateY(-1px)!important;box-shadow:0 4px 20px rgba(200,164,92,.3)!important}
+[data-testid="stMetricValue"]{color:#c8a45c!important;font-size:2rem!important;font-weight:700!important}
+[data-testid="stMetricLabel"]{color:#8a8680!important;font-size:.75rem!important}
+[data-testid="stDataFrame"]{background:#1e1e1e!important;border:1px solid #333!important;border-radius:4px!important}
+[data-testid="stDataFrame"] th{background:#252525!important;color:#8a8680!important;font-size:11px!important;text-transform:uppercase!important;letter-spacing:1px!important;padding:12px!important;border-bottom:2px solid #333!important}
+[data-testid="stDataFrame"] td{background:#1a1a1a!important;color:#b8b4ac!important;font-size:13px!important;padding:10px 12px!important;border-bottom:1px solid #2a2a2a!important}
+.stProgress>div>div>div{background:#c8a45c!important}
+.stProgress>div>div{background:#2a2a2a!important}
+.stAlert{border-radius:4px!important}
+.stAlert p{color:#e8c8c8!important}
+.stDownloadButton>button{background:#252525!important;color:#c8a45c!important;border:1px solid #c8a45c!important;border-radius:4px!important;padding:10px 20px!important;font-weight:500!important}
+.stDownloadButton>button:hover{background:rgba(200,164,92,.1)!important;color:#d4b56e!important;border-color:#d4b56e!important}
+hr{border-color:#333!important;margin:20px 0!important}
+</style>""",unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════
 # ADMIN ACCESS
@@ -242,23 +367,15 @@ if "admin" in st.query_params:
 st.markdown('<div style="position:fixed;bottom:3px;right:3px;z-index:9999;"><a href="?admin=true" style="color:#1a1a1a;text-decoration:none;font-size:7px;" title="Admin">·</a></div>',True)
 
 # ═══════════════════════════════════════════════════════════
-# LOGO HELPER
-# ═══════════════════════════════════════════════════════════
-def logo_html(width="180px"):
-    if LOGO_B64:
-        return f'<img src="data:image/jpeg;base64,{LOGO_B64}" class="wtc-logo-img" style="width:{width};margin:0 auto;display:block;">'
-    return ""
-
-# ═══════════════════════════════════════════════════════════
 # IDLE / ATTRACT
 # ═══════════════════════════════════════════════════════════
 def idle():
-    st.markdown("<br>"*4,True)
+    st.markdown("<br>"*3,True)
     c1,c2,c3=st.columns([1,2,1])
     with c2:
-        st.markdown(logo_html("200px"), True)
-        st.markdown('<p style="text-align:center;color:#c8a45c;letter-spacing:4px;font-size:13px;font-family:Arial,sans-serif">WORLD TRADE CENTER</p>',True)
-        st.markdown('<h1 style="text-align:center;color:#e8e4dc;font-size:54px;line-height:1.1;margin:8px 0">World Trade Center<br>Abuja</h1>',True)
+        st.markdown(logo_html("220px"), True)
+        st.markdown('<p style="text-align:center;color:#c8a45c;letter-spacing:5px;font-size:12px;font-family:Arial,sans-serif;margin-top:10px">WORLD TRADE CENTER</p>',True)
+        st.markdown('<h1 style="text-align:center;color:#e8e4dc;font-size:56px;line-height:1.1;margin:6px 0;font-family:Georgia,serif">World Trade Center<br>Abuja</h1>',True)
         st.markdown('<hr style="width:60px;border:1px solid #c8a45c;margin:20px auto">',True)
         st.markdown('<p style="text-align:center;color:#b8b4ac;font-size:18px;font-family:Arial,sans-serif">Grade A offices and executive residences in the capital.</p>',True)
         st.markdown('<p style="text-align:center;color:#8a8680;font-size:14px;font-family:Arial,sans-serif">Completed. Operational. Available for private inspection.</p>',True)
@@ -267,15 +384,15 @@ def idle():
         with b:
             if st.button("✨ Tap to Explore →",key="idle_go",use_container_width=True,type="primary"):
                 st.session_state.pg="home"; st.rerun()
-        st.markdown('<p style="text-align:center;color:#6b6762;font-size:13px;font-family:Arial,sans-serif;margin-top:30px">Receive the corporate prospectus, floorplates or residence plans</p>',True)
+        st.markdown('<p style="text-align:center;color:#6b6762;font-size:12px;font-family:Arial,sans-serif;margin-top:25px">Receive the corporate prospectus, floorplates or residence plans</p>',True)
 
 # ═══════════════════════════════════════════════════════════
 # HOME
 # ═══════════════════════════════════════════════════════════
 def home():
-    st.markdown(logo_html("140px"), True)
-    st.markdown('<p style="text-align:center;color:#8a8680;font-size:12px;letter-spacing:3px;font-family:Arial,sans-serif;margin-top:15px">WORLD TRADE CENTER ABUJA</p>',True)
-    st.markdown('<h2 style="text-align:center;color:#e8e4dc;font-size:34px;margin:8px 0 30px 0">What are you interested in?</h2>',True)
+    st.markdown(logo_html("130px"), True)
+    st.markdown('<p style="text-align:center;color:#8a8680;font-size:11px;letter-spacing:4px;font-family:Arial,sans-serif;margin-top:10px">WORLD TRADE CENTER ABUJA</p>',True)
+    st.markdown('<h2 style="text-align:center;color:#e8e4dc;font-size:32px;margin:6px 0 25px 0;font-family:Georgia,serif">What are you interested in?</h2>',True)
     routes=[("🏛️","Overview","WTC Abuja at a glance","overview"),("💼","Office Space","Grade A offices and floorplates","office"),("🏠","Executive Residences","Apartments and accommodation","residences"),("📍","Location","Constitution Avenue, CBD Abuja","location"),("🛡️","Security & Continuity","Access, CCTV, infrastructure","security"),("🔑","Request a Private Inspection","Office, residence or full walkthrough","convert_i"),("📋","Send Me the Digital Pack","Prospectus and materials","convert_d")]
     for row in range(0,7,3):
         cols=st.columns(3)
@@ -284,7 +401,7 @@ def home():
             if idx>=7: break
             icon,title,desc,key=routes[idx]
             with cols[i]:
-                st.markdown(f'<div style="background:#252525;border:1px solid #3a3a3a;border-radius:6px;padding:24px 20px;margin:5px;min-height:170px"><div style="font-size:2rem;margin-bottom:12px">{icon}</div><div style="color:#e8e4dc;font-size:1.1rem;font-weight:600;margin-bottom:6px">{title}</div><div style="color:#8a8680;font-size:0.8rem;font-family:Arial,sans-serif">{desc}</div></div>',True)
+                st.markdown(f'<div style="background:#252525;border:1px solid #3a3a3a;border-radius:6px;padding:22px 18px;margin:4px;min-height:165px"><div style="font-size:1.8rem;margin-bottom:10px">{icon}</div><div style="color:#e8e4dc;font-size:1.05rem;font-weight:600;margin-bottom:5px;font-family:Georgia,serif">{title}</div><div style="color:#8a8680;font-size:0.78rem;font-family:Arial,sans-serif;line-height:1.4">{desc}</div></div>',True)
                 if st.button("Select →",key=f"btn_{key}",use_container_width=True):
                     if key.startswith("convert"): st.session_state.pg="convert"; st.session_state.rt=None; st.session_state.fd={"pf":["Request a Private Inspection"] if "i" in key else ["Corporate Prospectus"]}
                     else: st.session_state.pg="route"; st.session_state.rt=key; st.session_state.sc=0
@@ -305,18 +422,18 @@ def route():
             if si==0: st.session_state.pg="home"; st.session_state.rt=None
             else: st.session_state.sc-=1
             st.rerun()
-    with c2: st.markdown(f'<p style="color:#e8e4dc;font-size:18px;margin-top:8px;font-family:Arial,sans-serif">{rt["title"]} <span style="color:#8a8680;font-size:13px">— {si+1}/{total}</span></p>',True)
+    with c2: st.markdown(f'<p style="color:#e8e4dc;font-size:17px;margin-top:8px;font-family:Arial,sans-serif">{rt["title"]} <span style="color:#8a8680;font-size:12px">— {si+1}/{total}</span></p>',True)
     st.progress((si+1)/total)
-    st.markdown(f'<h2 style="color:#e8e4dc;font-size:28px;margin:20px 0 10px">{s["t"]}</h2>',True)
-    if "b" in s: st.markdown(f'<p style="color:#b8b4ac;font-size:16px;line-height:1.7;font-family:Arial,sans-serif">{s["b"]}</p>',True)
+    st.markdown(f'<h2 style="color:#e8e4dc;font-size:26px;margin:18px 0 8px;font-family:Georgia,serif">{s["t"]}</h2>',True)
+    if "b" in s: st.markdown(f'<p style="color:#b8b4ac;font-size:15px;line-height:1.7;font-family:Arial,sans-serif">{s["b"]}</p>',True)
     if "h" in s:
         cols=st.columns(len(s["h"]))
         for i,(num,lab) in enumerate(s["h"]):
-            with cols[i]: st.markdown(f'<div style="background:#252525;border:1px solid #3a3a3a;border-radius:4px;padding:20px;text-align:center;margin:5px"><div style="font-size:1.4rem;color:#c8a45c;font-weight:700">{num}</div><div style="font-size:0.7rem;color:#8a8680;text-transform:uppercase;font-family:Arial,sans-serif;margin-top:4px">{lab}</div></div>',True)
+            with cols[i]: st.markdown(f'<div style="background:#252525;border:1px solid #3a3a3a;border-radius:4px;padding:18px;text-align:center;margin:4px"><div style="font-size:1.3rem;color:#c8a45c;font-weight:700">{num}</div><div style="font-size:0.68rem;color:#8a8680;text-transform:uppercase;font-family:Arial,sans-serif;margin-top:3px">{lab}</div></div>',True)
     if "p" in s:
         cols=st.columns(2)
         for i,p in enumerate(s["p"]):
-            with cols[i%2]: st.markdown(f'<div style="background:#252525;border:1px solid #3a3a3a;border-radius:4px;padding:15px;text-align:center;margin:4px;color:#b8b4ac;font-family:Arial,sans-serif;font-size:14px">{p}</div>',True)
+            with cols[i%2]: st.markdown(f'<div style="background:#252525;border:1px solid #3a3a3a;border-radius:4px;padding:13px;text-align:center;margin:3px;color:#b8b4ac;font-family:Arial,sans-serif;font-size:13px">{p}</div>',True)
     st.markdown("<br>",True)
     c1,c2,c3=st.columns(3)
     with c1:
@@ -332,21 +449,22 @@ def route():
 # CONVERSION FORM
 # ═══════════════════════════════════════════════════════════
 def convert():
-    st.markdown(logo_html("120px"), True)
-    st.markdown('<h2 style="color:#e8e4dc;font-size:28px;margin:15px 0">What would you like us to send you?</h2>',True)
+    st.markdown(logo_html("110px"), True)
+    st.markdown('<h2 style="color:#e8e4dc;font-size:26px;margin:12px 0;font-family:Georgia,serif">What would you like us to send you?</h2>',True)
+    st.markdown('<p style="color:#8a8680;font-size:13px;font-family:Arial,sans-serif;margin-bottom:15px">Select your materials and enter your details below.</p>',True)
     materials=["Corporate Prospectus","Office Floorplates","Residence Floorplans","Security & Continuity Brief","Clubhouse Overview","Location Overview","Request a Private Inspection","WTC Abuja Updates & Private Invitations"]
     selected=[]
-    st.markdown('<p style="color:#c8a45c;font-size:13px;font-family:Arial,sans-serif;margin:10px 0">SELECT MATERIALS:</p>',True)
+    st.markdown('<p style="color:#c8a45c;font-size:12px;font-family:Arial,sans-serif;margin:8px 0;letter-spacing:1px">SELECT MATERIALS</p>',True)
     cols=st.columns(2)
     for i,m in enumerate(materials):
         with cols[i%2]:
             if st.checkbox(m,value=m in st.session_state.fd.get("pf",[]),key=f"cm_{i}"): selected.append(m)
-    st.markdown('<p style="color:#c8a45c;font-size:13px;font-family:Arial,sans-serif;margin:20px 0 10px">YOUR DETAILS:</p>',True)
+    st.markdown('<p style="color:#c8a45c;font-size:12px;font-family:Arial,sans-serif;margin:18px 0 8px;letter-spacing:1px">YOUR DETAILS</p>',True)
     c1,c2=st.columns(2)
-    with c1: fn=st.text_input("First Name *","",key="fn"); em=st.text_input("Email *","",key="em"); co=st.text_input("Company *","",key="co")
-    with c2: ln=st.text_input("Last Name *","",key="ln"); ph=st.text_input("Mobile / WhatsApp *","",key="ph"); jt=st.text_input("Job Title (optional)","",key="jt")
+    with c1: fn=st.text_input("First Name *","",key="fn",placeholder="Your first name"); em=st.text_input("Email *","",key="em",placeholder="your@email.com"); co=st.text_input("Company *","",key="co",placeholder="Your company")
+    with c2: ln=st.text_input("Last Name *","",key="ln",placeholder="Your last name"); ph=st.text_input("Mobile / WhatsApp *","",key="ph",placeholder="+234..."); jt=st.text_input("Job Title (optional)","",key="jt",placeholder="Your title")
     ti=st.selectbox("Timing (optional)",["","Immediate","0–3 months","3–6 months","6–12 months","Future/exploratory"],key="ti")
-    st.markdown('<div style="background:#252525;border:1px solid #3a3a3a;border-radius:4px;padding:12px;margin:15px 0"><p style="color:#b8b4ac;font-size:12px;font-family:Arial,sans-serif;margin:0">By submitting, you agree WTC Abuja may contact you about your enquiry.</p></div>',True)
+    st.markdown('<div style="background:#252525;border:1px solid #3a3a3a;border-radius:4px;padding:11px 14px;margin:12px 0"><p style="color:#b8b4ac;font-size:11px;font-family:Arial,sans-serif;margin:0">By submitting, you agree WTC Abuja may contact you about your enquiry.</p></div>',True)
     mk=st.checkbox("Send me updates, news and private invitations. I can opt out anytime.",True,key="mk")
     c1,c2,c3=st.columns(3)
     with c1:
@@ -371,11 +489,11 @@ def convert():
 def confirm():
     cf={"inspection":("🔑","Inspection Requested","Your private inspection request has been received. The WTC Abuja team will contact you to confirm timing and requirements."),"digital_pack":("📋","Thank You","Your selected WTC Abuja materials will be sent shortly. A member of the team may follow up based on your enquiry."),"updates":("📬","You're Subscribed","You have been added to WTC Abuja Updates & Private Invitations. You can opt out at any time.")}
     ic,hl,ms=cf.get(st.session_state.ct,cf["digital_pack"])
-    st.markdown("<br>"*4,True)
+    st.markdown("<br>"*3,True)
     c1,c2,c3=st.columns([1,2,1])
     with c2:
-        st.markdown(logo_html("150px"), True)
-        st.markdown(f'<div style="text-align:center"><div style="width:70px;height:70px;border-radius:50%;background:rgba(200,164,92,0.1);border:2px solid #c8a45c;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:20px auto">{ic}</div><h2 style="color:#e8e4dc;font-size:28px;margin-bottom:10px">{hl}</h2><p style="color:#b8b4ac;font-size:16px;font-family:Arial,sans-serif;line-height:1.6">{ms}</p></div>',True)
+        st.markdown(logo_html("140px"), True)
+        st.markdown(f'<div style="text-align:center"><div style="width:65px;height:65px;border-radius:50%;background:rgba(200,164,92,0.08);border:2px solid #c8a45c;display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:18px auto">{ic}</div><h2 style="color:#e8e4dc;font-size:26px;margin-bottom:8px;font-family:Georgia,serif">{hl}</h2><p style="color:#b8b4ac;font-size:15px;font-family:Arial,sans-serif;line-height:1.6">{ms}</p></div>',True)
         st.markdown("<br>",True)
         a,b=st.columns(2)
         with a:
@@ -388,31 +506,29 @@ def confirm():
 # ═══════════════════════════════════════════════════════════
 def admin():
     if not st.session_state.adm:
-        st.markdown("<br>"*6,True)
+        st.markdown("<br>"*5,True)
         c1,c2,c3=st.columns([1,1,1])
         with c2:
-            st.markdown(logo_html("150px"), True)
-            st.markdown('<h2 style="text-align:center;color:#e8e4dc;margin-top:15px">Admin Access</h2>',True)
-            st.markdown('<p style="text-align:center;color:#8a8680;font-size:13px;font-family:Arial,sans-serif">Enter your admin PIN to continue</p>',True)
-            p=st.text_input("PIN","",type="password",key="apin",placeholder="Enter 4-digit PIN")
+            st.markdown(logo_html("140px"), True)
+            st.markdown('<h2 style="text-align:center;color:#e8e4dc;margin-top:12px;font-family:Georgia,serif">Admin Access</h2>',True)
+            st.markdown('<p style="text-align:center;color:#8a8680;font-size:12px;font-family:Arial,sans-serif">Enter your admin PIN</p>',True)
+            p=st.text_input("PIN","",type="password",key="apin",placeholder="4-digit PIN")
             if st.button("Access Admin Panel",key="adm_go",use_container_width=True,type="primary"):
                 if p=="4271": st.session_state.adm=True; st.rerun()
-                else: st.error("Invalid PIN. Please try again.")
-            st.markdown('<p style="text-align:center;color:#6b6762;font-size:11px;font-family:Arial,sans-serif;margin-top:10px">Authorized personnel only</p>',True)
+                else: st.error("Invalid PIN")
+            st.markdown('<p style="text-align:center;color:#6b6762;font-size:10px;font-family:Arial,sans-serif;margin-top:8px">Authorized personnel only</p>',True)
         return
     
     s=db.stats(); l=db.all(100)
     
-    # Header
-    c1,c2,c3=st.columns([2,1,1])
-    with c1: st.markdown('<h2 style="color:#e8e4dc;margin:15px 0">📊 Admin Panel — WTC Abuja Concierge</h2>',True)
+    c1,c2,c3=st.columns([2.5,1,1])
+    with c1: st.markdown('<h2 style="color:#e8e4dc;margin:12px 0;font-family:Georgia,serif">Admin Panel — WTC Abuja Concierge</h2>',True)
     with c2:
         csv_data=db.csv()
         if csv_data: st.download_button("📥 Download CSV",csv_data,f"wtc_leads_{datetime.now().strftime('%Y%m%d_%H%M')}.csv","text/csv",use_container_width=True)
     with c3:
         if st.button("🚪 Logout",key="adm_out",use_container_width=True): st.session_state.adm=False; st.session_state.pg="idle"; st.rerun()
     
-    # Stats
     st.markdown("<br>",True)
     c1,c2,c3,c4,c5=st.columns(5)
     c1.metric("Total Leads",s['t'])
@@ -421,34 +537,22 @@ def admin():
     c4.metric("Digital Packs",s['t']-s['i'])
     c5.metric("Database","SQLite ✅")
     
-    # Campaign info
-    st.markdown(f'<p style="color:#8a8680;font-size:12px;font-family:Arial,sans-serif;margin:5px 0">📅 Campaign: <b style="color:#c8a45c">NOG Energy Week 2026</b> | 💾 Database: <b style="color:#c8a45c">data/wtc_abuja.db</b> | 🕐 Last updated: {datetime.now().strftime("%d %b %Y, %H:%M")}</p>',True)
-    
+    st.markdown(f'<p style="color:#8a8680;font-size:11px;font-family:Arial,sans-serif;margin:4px 0">📅 Campaign: <b style="color:#c8a45c">NOG Energy Week 2026</b> | 💾 DB: <b style="color:#c8a45c">data/wtc_abuja.db</b> | 🕐 {datetime.now().strftime("%d %b %Y, %H:%M")}</p>',True)
     st.markdown("<br>",True)
-    st.markdown('<h3 style="color:#e8e4dc">📋 Recent Leads</h3>',True)
+    st.markdown('<h3 style="color:#e8e4dc;font-family:Georgia,serif">Recent Leads</h3>',True)
     
     if l:
         td=[]
         for r in l:
             try: m=json.loads(r.get("materials","[]") if isinstance(r.get("materials"),str) else "[]"); m=", ".join(m[:3])
             except: m=""
-            td.append({
-                "Time":r.get("submitted","")[:16],
-                "Name":f"{r.get('first_name','')} {r.get('last_name','')}",
-                "Company":r.get("company",""),
-                "Email":r.get("email",""),
-                "Phone":r.get("phone",""),
-                "Materials":m,
-                "Inspection":"✅" if r.get("inspection") else "—",
-                "Opt-In":"✅" if r.get("marketing") else "—"
-            })
+            td.append({"Time":r.get("submitted","")[:16],"Name":f"{r.get('first_name','')} {r.get('last_name','')}","Company":r.get("company",""),"Email":r.get("email",""),"Phone":r.get("phone",""),"Materials":m,"Inspection":"✅" if r.get("inspection") else "—","Opt-In":"✅" if r.get("marketing") else "—"})
         st.dataframe(td,use_container_width=True,hide_index=True,height=400)
-        st.markdown(f'<p style="color:#6b6762;font-size:11px;font-family:Arial,sans-serif;margin-top:5px">Showing {len(td)} of {s["t"]} total leads. Download CSV for complete data.</p>',True)
+        st.markdown(f'<p style="color:#6b6762;font-size:10px;font-family:Arial,sans-serif;margin-top:4px">Showing {len(td)} of {s["t"]} total leads. Download CSV for complete dataset.</p>',True)
     else:
-        st.info("📭 No leads captured yet. Leads will appear here when visitors submit the form on the tablet.")
+        st.info("No leads captured yet. Leads appear here when visitors submit the form.")
     
-    st.markdown("<br>",True)
-    st.markdown('<div style="background:#252525;border:1px solid #3a3a3a;border-radius:6px;padding:15px;margin:10px 0"><p style="color:#b8b4ac;font-size:12px;font-family:Arial,sans-serif;margin:0">💡 <b>Quick Tips:</b> Copy <code style="color:#c8a45c;background:#1a1a1a;padding:2px 6px;border-radius:3px">data/wtc_abuja.db</code> to backup all leads. | Access this panel anytime at <code style="color:#c8a45c;background:#1a1a1a;padding:2px 6px;border-radius:3px">?admin=true</code> | PIN: 4271</p></div>',True)
+    st.markdown('<div style="background:#252525;border:1px solid #3a3a3a;border-radius:6px;padding:14px;margin:12px 0"><p style="color:#b8b4ac;font-size:11px;font-family:Arial,sans-serif;margin:0">💡 <b>Tips:</b> Backup <code style="color:#c8a45c;background:#1a1a1a;padding:2px 6px;border-radius:3px">data/wtc_abuja.db</code> | Access: <code style="color:#c8a45c;background:#1a1a1a;padding:2px 6px;border-radius:3px">?admin=true</code> | PIN: 4271</p></div>',True)
 
 # ═══════════════════════════════════════════════════════════
 # MAIN
