@@ -1,5 +1,5 @@
 import streamlit as st
-import json, uuid, csv, io, smtplib, ssl, urllib.request, urllib.error
+import json, uuid, csv, io, smtplib, ssl, urllib.request, urllib.error, base64
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
@@ -23,6 +23,18 @@ EMAIL_CONFIG = {
     "sender_email": "eetuk@churchgate.com", "sender_password": EMAIL_PASSWORD,
     "recipients": ["eetuk@churchgate.com","vinay@wtcabuja.com","eorimolade@churchgate.com","akarim@churchgate.com","tradeservices@wtcabuja.com"]
 }
+
+# ═══════════════════════════════════════════════════════════
+# IMAGE HELPER
+# ═══════════════════════════════════════════════════════════
+def get_image_html(filename, width="100%", height="280px"):
+    p = Path(__file__).parent / "assets" / filename
+    if p.exists():
+        b64 = base64.b64encode(p.read_bytes()).decode()
+        ext = filename.split(".")[-1].lower()
+        mime = "image/jpeg" if ext in ["jpg","jpeg"] else "image/png"
+        return f'<img src="data:{mime};base64,{b64}" style="width:{width};height:{height};object-fit:cover;border:1px solid #3a3a3a;border-radius:6px;margin:8px 0;">'
+    return ""
 
 # ═══════════════════════════════════════════════════════════
 # TURSO DATABASE
@@ -200,7 +212,8 @@ st.markdown('<div style="position:fixed;bottom:3px;right:3px;z-index:9999;"><a h
 # ═══════════════════════════════════════════════════════════
 def idle():
     update_activity()
-    st.markdown("<br>"*4,True)
+    st.markdown(get_image_html("exterior.jpg", "100%", "250px"), True)
+    st.markdown("<br>"*2,True)
     _,c,_=st.columns([1,2,1])
     with c:
         st.markdown('<p style="text-align:center;color:#c8a45c;letter-spacing:5px;font-size:12px;font-family:Arial,sans-serif">WORLD TRADE CENTER</p>',True)
@@ -234,12 +247,12 @@ def home():
 
 ROUTES={
     "overview":{"title":"Overview","screens":[
-        {"t":"A completed Grade A address in Abuja's CBD","b":"World Trade Center Abuja is a completed and operational Grade A development on Constitution Avenue in the heart of Abuja's Central Business District.","p":["Completed and operational","Constitution Avenue, CBD Abuja","Offices, residences and amenities","Professionally managed environment"]},
+        {"t":"A completed Grade A address in Abuja's CBD","img":"exterior.jpg","b":"World Trade Center Abuja is a completed and operational Grade A development on Constitution Avenue in the heart of Abuja's Central Business District.","p":["Completed and operational","Constitution Avenue, CBD Abuja","Offices, residences and amenities","Professionally managed environment"]},
         {"t":"One address. Multiple uses. One controlled environment.","b":"WTC Abuja integrates business, living, and leisure within a secure, professionally managed perimeter.","p":["Offices","Residences","Clubhouse","Security perimeter","CBD Location"]},
         {"t":"The Proof","b":"A working, operational building — not a promise.","h":[("33,180 m²","Office GLA"),("1,440 m²","Typical Floorplate"),("120","Executive Residences"),("500+","CCTV Cameras"),("CBD Address","Near NNPC & Petroleum Ministry")],"ctas":["digital_pack","office","residences"]}]},
     "office":{"title":"Office Space","screens":[
-        {"t":"Grade A offices for serious occupiers","b":"Completed, operational office space in Abuja's CBD.","p":["33,180 m² total GLA","1,440 m² typical floorplate","~83% efficiency","130 m² to full-floor","Professional FM"]},
-        {"t":"Floorplate Options — Tap to Explore","b":"Tap any floorplate size to see details. Selected size is highlighted in gold.","interactive":True,"floorplates":[
+        {"t":"Grade A offices for serious occupiers","img":"lobby.jpg","b":"Completed, operational office space in Abuja's CBD.","p":["33,180 m² total GLA","1,440 m² typical floorplate","~83% efficiency","130 m² to full-floor","Professional FM"]},
+        {"t":"Floorplate Options — Tap to Explore","img":"office-space.jpg","b":"Tap any floorplate size to see details. Selected size is highlighted in gold.","interactive":True,"floorplates":[
             {"size":"130 m²","use":"Representative office or small executive team","occupier":"Small teams, satellite offices","color":"#c8a45c"},
             {"size":"230 m²","use":"Single office suite","occupier":"Professional services, boutique firms","color":"#b4a04c"},
             {"size":"360 m²","use":"Project team, embassy office or regional business unit","occupier":"Embassies, energy project teams","color":"#a09040"},
@@ -247,13 +260,13 @@ ROUTES={
             {"size":"1,440 m²","use":"Full-floor headquarters or major regional operation","occupier":"Major energy companies, banks, multinationals","color":"#787028"}]},
         {"t":"Built for Continuity","b":"The building is running.","p":["10 MVA on-site power","8×1,250 kVA generators","Daikin VRV cooling","4 ISPs","Schindler lifts","Honeywell BMS"]}]},
     "residences":{"title":"Executive Residences","screens":[
-        {"t":"Executive accommodation inside the same secure development","b":"Secure accommodation for senior executives, expatriates, and visiting leadership.","p":["120 residences","1–6 bedroom range","Furnished/unfurnished","Private clubhouse access","Secure CBD location"]},
+        {"t":"Executive accommodation inside the same secure development","img":"residences.jpg","b":"Secure accommodation for senior executives, expatriates, and visiting leadership.","p":["120 residences","1–6 bedroom range","Furnished/unfurnished","Private clubhouse access","Secure CBD location"]},
         {"t":"Residence Types","b":"Accommodation for different needs:","h":[("1-Bedroom","Executive singles"),("2-Bedroom","Couples, diplomatic staff"),("3-Bedroom","Families, senior execs"),("Penthouses & Villas","VIPs, leadership")]},
         {"t":"Simpler accommodation planning","b":"Your team lives within the same secure development as your offices.","p":["Reduced daily movement","Same development as offices","Easier planning for expats","Secure for families"]},
-        {"t":"Private amenities for daily life","b":"The Clubhouse offers:","p":["Fitness — Technogym","Wellness — Pool, spa, sauna","Sport — Tennis & squash","Business — Meeting rooms","Family — Café, crèche"]}]},
+        {"t":"Private amenities for daily life","img":"clubhouse.jpg","b":"The Clubhouse offers:","p":["Fitness — Technogym","Wellness — Pool, spa, sauna","Sport — Tennis & squash","Business — Meeting rooms","Family — Café, crèche"]}]},
     "security":{"title":"Security & Continuity","screens":[
-        {"t":"Security governed as an operating system","b":"Trained personnel, defined procedures, and integrated technology.","p":["Trained personnel","Defined procedures","Integrated technology","Professional management"]},
-        {"t":"Security Layers","b":"Four integrated layers:","h":[("Surveillance","500+ HD CCTV · 24/7 control room"),("Access Control","Honeywell · Access-controlled lifts"),("Vehicle & Perimeter","Bollards · Under-vehicle surveillance"),("Personnel","Manned guards · MOPOL · Fire Service")]},
+        {"t":"Security governed as an operating system","img":"security.jpg","b":"Trained personnel, defined procedures, and integrated technology.","p":["Trained personnel","Defined procedures","Integrated technology","Professional management"]},
+        {"t":"Security Layers","img":"entrance.jpg","b":"Four integrated layers:","h":[("Surveillance","500+ HD CCTV · 24/7 control room"),("Access Control","Honeywell · Access-controlled lifts"),("Vehicle & Perimeter","Bollards · Under-vehicle surveillance"),("Personnel","Manned guards · MOPOL · Fire Service")]},
         {"t":"Operational continuity built in","b":"Every critical system has redundancy.","p":["10 MVA on-site power","8×1,250 kVA generators","Twice building peak load","Daikin VRV cooling","4 ISPs","Fire & life safety"]}]},
     "location":{"title":"Location","screens":[
         {"t":"At the centre of business, government and diplomacy","b":"Constitution Avenue in the CBD — between Maitama and Asokoro.","p":["Constitution Avenue","CBD Abuja","Between Maitama & Asokoro","Near NNPC Towers","Near Petroleum Ministry"]},
@@ -285,6 +298,7 @@ def route():
     with c2: st.markdown(f'<p style="color:#e8e4dc;font-size:17px;margin-top:8px;font-family:Arial,sans-serif">{rt["title"]} <span style="color:#8a8680;font-size:12px">— {si+1}/{total}</span></p>',True)
     st.progress((si+1)/total)
     st.markdown(f'<h2 style="color:#e8e4dc;font-size:26px;margin:18px 0 8px;font-family:Georgia,serif">{s["t"]}</h2>',True)
+    if "img" in s: st.markdown(get_image_html(s["img"]), True)
     if "b" in s: st.markdown(f'<p style="color:#b8b4ac;font-size:15px;line-height:1.7;font-family:Arial,sans-serif">{s["b"]}</p>',True)
     
     # INSPECTION TYPE SELECTION
@@ -478,7 +492,6 @@ def admin():
 # ═══════════════════════════════════════════════════════════
 # MAIN
 # ═══════════════════════════════════════════════════════════
-# Auto-reset: skip if user is actively filling form
 active_typing = st.session_state.pg == "convert" and (
     st.session_state.get("fn","") != "" or 
     st.session_state.get("ln","") != "" or 
