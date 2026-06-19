@@ -9,11 +9,16 @@ from pathlib import Path
 # ═══════════════════════════════════════════════════════════
 # EMAIL CONFIGURATION
 # ═══════════════════════════════════════════════════════════
+try:
+    EMAIL_PASSWORD = st.secrets["EMAIL_PASSWORD"]
+except:
+    EMAIL_PASSWORD = "jrho ryew uguj nbsm"
+
 EMAIL_CONFIG = {
     "smtp_server": "smtp.gmail.com",
     "smtp_port": 587,
     "sender_email": "eetuk@churchgate.com",
-    "sender_password": "jrho ryew uguj nbsm",
+    "sender_password": EMAIL_PASSWORD,
     "recipients": [
         "eetuk@churchgate.com",
         "vinay@wtcabuja.com",
@@ -22,7 +27,7 @@ EMAIL_CONFIG = {
 }
 
 # ═══════════════════════════════════════════════════════════
-# WTC LOGO - Load and encode
+# WTC LOGO
 # ═══════════════════════════════════════════════════════════
 def get_logo_base64():
     logo_path = Path(__file__).parent / "assets" / "wtc-logo.jpg"
@@ -99,10 +104,9 @@ class DB:
 db = DB()
 
 # ═══════════════════════════════════════════════════════════
-# EMAIL SENDER - Premium Branded Template
+# EMAIL SENDER
 # ═══════════════════════════════════════════════════════════
 def send_lead_email(lead_data):
-    """Send premium branded lead notification."""
     try:
         fn = lead_data.get('fn','')
         ln = lead_data.get('ln','')
@@ -124,15 +128,12 @@ def send_lead_email(lead_data):
         else:
             msg['Subject'] = f"New Lead — {fn} {ln} | {co}"
         
-        # Materials list
         materials_html = ""
         for m in mt:
             materials_html += f'<tr><td style="padding:6px 8px;color:#c8a45c;font-size:13px;">✦</td><td style="padding:6px 8px;color:#e8e4dc;font-size:13px;">{m}</td></tr>'
-        
         if not materials_html:
             materials_html = '<tr><td style="padding:6px 8px;color:#8a8680;font-size:13px;" colspan="2">No materials selected</td></tr>'
         
-        # Timing display
         timing_map = {
             "immediate": "⚡ Immediate",
             "0-3_months": "📅 0–3 Months",
@@ -142,7 +143,6 @@ def send_lead_email(lead_data):
         }
         timing_display = timing_map.get(ti, ti) if ti else "Not specified"
         
-        # Priority banner
         priority_banner = ""
         if ins:
             priority_banner = """
@@ -159,31 +159,21 @@ def send_lead_email(lead_data):
         <!DOCTYPE html>
         <html>
         <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-        <body style="margin:0;padding:0;background:#1a1a1a;font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
-            
+        <body style="margin:0;padding:0;background:#1a1a1a;font-family:Arial,Helvetica,sans-serif;">
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a1a;padding:30px 20px;">
                 <tr>
                     <td align="center">
-                        
-                        <!-- Main Card -->
                         <table width="600" cellpadding="0" cellspacing="0" style="background:#1e1e1e;border:1px solid #333;border-radius:8px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
-                            
-                            <!-- Header -->
                             <tr>
                                 <td style="background:#252525;padding:35px 40px 25px 40px;text-align:center;border-bottom:2px solid #c8a45c;">
                                     <p style="color:#c8a45c;font-size:10px;letter-spacing:5px;margin:0 0 10px 0;text-transform:uppercase;font-family:Arial,sans-serif;">World Trade Center</p>
-                                    <h1 style="color:#e8e4dc;font-size:26px;font-weight:600;margin:0 0 8px 0;line-height:1.3;font-family:Georgia,'Times New Roman',serif;">WTC Abuja</h1>
+                                    <h1 style="color:#e8e4dc;font-size:26px;font-weight:600;margin:0 0 8px 0;line-height:1.3;font-family:Georgia,serif;">WTC Abuja</h1>
                                     <p style="color:#c8a45c;font-size:14px;font-weight:400;margin:0;font-family:Arial,sans-serif;">New Lead Notification</p>
                                 </td>
                             </tr>
-                            
-                            <!-- Body -->
                             <tr>
                                 <td style="padding:30px 40px;">
-                                    
                                     {priority_banner}
-                                    
-                                    <!-- Lead Details -->
                                     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px 0;">
                                         <tr>
                                             <td width="50%" style="padding:12px 10px;border-bottom:1px solid #2a2a2a;">
@@ -206,8 +196,6 @@ def send_lead_email(lead_data):
                                             </td>
                                         </tr>
                                     </table>
-                                    
-                                    <!-- Contact Box -->
                                     <table width="100%" cellpadding="0" cellspacing="0" style="background:#252525;border:1px solid #333;border-radius:6px;margin:0 0 20px 0;">
                                         <tr>
                                             <td style="padding:18px 22px;">
@@ -219,47 +207,30 @@ def send_lead_email(lead_data):
                                             </td>
                                         </tr>
                                     </table>
-                                    
-                                    <!-- Materials Box -->
                                     <table width="100%" cellpadding="0" cellspacing="0" style="background:#252525;border:1px solid #333;border-radius:6px;margin:0 0 20px 0;">
                                         <tr>
                                             <td style="padding:18px 22px;">
                                                 <p style="color:#8a8680;font-size:10px;text-transform:uppercase;letter-spacing:2px;margin:0 0 10px 0;font-family:Arial,sans-serif;">Requested Materials</p>
-                                                <table width="100%" cellpadding="0" cellspacing="0">
-                                                    {materials_html}
-                                                </table>
+                                                <table width="100%" cellpadding="0" cellspacing="0">{materials_html}</table>
                                             </td>
                                         </tr>
                                     </table>
-                                    
-                                    <!-- Status Badges -->
                                     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 10px 0;">
                                         <tr>
                                             <td width="50%" style="padding:0 5px 0 0;">
                                                 <table width="100%" cellpadding="0" cellspacing="0" style="background:{'#c8a45c' if ins else '#333'};border-radius:4px;">
-                                                    <tr>
-                                                        <td style="padding:10px 14px;text-align:center;">
-                                                            <p style="color:{'#1a1a1a' if ins else '#8a8680'};font-size:11px;font-weight:700;margin:0;letter-spacing:1px;font-family:Arial,sans-serif;">🔑 INSPECTION: {'YES' if ins else 'NO'}</p>
-                                                        </td>
-                                                    </tr>
+                                                    <tr><td style="padding:10px 14px;text-align:center;"><p style="color:{'#1a1a1a' if ins else '#8a8680'};font-size:11px;font-weight:700;margin:0;letter-spacing:1px;font-family:Arial,sans-serif;">🔑 INSPECTION: {'YES' if ins else 'NO'}</p></td></tr>
                                                 </table>
                                             </td>
                                             <td width="50%" style="padding:0 0 0 5px;">
                                                 <table width="100%" cellpadding="0" cellspacing="0" style="background:{'#c8a45c' if mk else '#333'};border-radius:4px;">
-                                                    <tr>
-                                                        <td style="padding:10px 14px;text-align:center;">
-                                                            <p style="color:{'#1a1a1a' if mk else '#8a8680'};font-size:11px;font-weight:700;margin:0;letter-spacing:1px;font-family:Arial,sans-serif;">📬 MARKETING: {'OPT-IN' if mk else 'OUT'}</p>
-                                                        </td>
-                                                    </tr>
+                                                    <tr><td style="padding:10px 14px;text-align:center;"><p style="color:{'#1a1a1a' if mk else '#8a8680'};font-size:11px;font-weight:700;margin:0;letter-spacing:1px;font-family:Arial,sans-serif;">📬 MARKETING: {'OPT-IN' if mk else 'OUT'}</p></td></tr>
                                                 </table>
                                             </td>
                                         </tr>
                                     </table>
-                                    
                                 </td>
                             </tr>
-                            
-                            <!-- Footer -->
                             <tr>
                                 <td style="background:#252525;padding:20px 40px;text-align:center;border-top:1px solid #333;">
                                     <p style="color:#6b6762;font-size:10px;margin:0 0 3px 0;font-family:Arial,sans-serif;">Captured via WTC Abuja Concierge App</p>
@@ -267,20 +238,16 @@ def send_lead_email(lead_data):
                                     <p style="color:#c8a45c;font-size:9px;margin:0;letter-spacing:3px;font-family:Arial,sans-serif;">WORLD TRADE CENTER ABUJA</p>
                                 </td>
                             </tr>
-                            
                         </table>
-                        
                     </td>
                 </tr>
             </table>
-            
         </body>
         </html>
         """
         
         msg.attach(MIMEText(html_body, 'html'))
         
-        # Attach WTC logo
         logo_path = Path(__file__).parent / "assets" / "wtc-logo.jpg"
         if logo_path.exists():
             with open(logo_path, 'rb') as f:
@@ -308,7 +275,7 @@ for k,v in [("pg","idle"),("rt",None),("sc",0),("fd",{}),("adm",False),
     if k not in st.session_state: st.session_state[k]=v
 
 # ═══════════════════════════════════════════════════════════
-# PAGE CONFIG - With WTC Logo as Favicon
+# PAGE CONFIG - WTC Logo as Browser Tab Icon
 # ═══════════════════════════════════════════════════════════
 favicon_path = Path(__file__).parent / "assets" / "wtc-logo.jpg"
 if favicon_path.exists():
@@ -519,7 +486,11 @@ def admin():
             st.markdown('<p style="text-align:center;color:#6b6762;font-size:10px;font-family:Arial,sans-serif;margin-top:8px">Authorized personnel only</p>',True)
         return
     
-    s=db.stats(); l=db.all(100)
+    s=db.stats()
+    l=db.all(100)
+    t=s.get('t',0)
+    i=s.get('i',0)
+    m=s.get('m',0)
     
     c1,c2,c3=st.columns([2.5,1,1])
     with c1: st.markdown('<h2 style="color:#e8e4dc;margin:12px 0;font-family:Georgia,serif">Admin Panel — WTC Abuja Concierge</h2>',True)
@@ -531,10 +502,10 @@ def admin():
     
     st.markdown("<br>",True)
     c1,c2,c3,c4,c5=st.columns(5)
-    c1.metric("Total Leads",s['t'])
-    c2.metric("Inspections",s['i'])
-    c3.metric("Opt-Ins",s['m'])
-    c4.metric("Digital Packs",s['t']-s['i'])
+    c1.metric("Total Leads",t)
+    c2.metric("Inspections",i)
+    c3.metric("Opt-Ins",m)
+    c4.metric("Digital Packs",t-i)
     c5.metric("Database","SQLite ✅")
     
     st.markdown(f'<p style="color:#8a8680;font-size:11px;font-family:Arial,sans-serif;margin:4px 0">📅 Campaign: <b style="color:#c8a45c">NOG Energy Week 2026</b> | 💾 DB: <b style="color:#c8a45c">data/wtc_abuja.db</b> | 🕐 {datetime.now().strftime("%d %b %Y, %H:%M")}</p>',True)
@@ -544,11 +515,11 @@ def admin():
     if l:
         td=[]
         for r in l:
-            try: m=json.loads(r.get("materials","[]") if isinstance(r.get("materials"),str) else "[]"); m=", ".join(m[:3])
-            except: m=""
-            td.append({"Time":r.get("submitted","")[:16],"Name":f"{r.get('first_name','')} {r.get('last_name','')}","Company":r.get("company",""),"Email":r.get("email",""),"Phone":r.get("phone",""),"Materials":m,"Inspection":"✅" if r.get("inspection") else "—","Opt-In":"✅" if r.get("marketing") else "—"})
+            try: mat=json.loads(r.get("materials","[]") if isinstance(r.get("materials"),str) else "[]"); mat=", ".join(mat[:3])
+            except: mat=""
+            td.append({"Time":r.get("submitted","")[:16],"Name":f"{r.get('first_name','')} {r.get('last_name','')}","Company":r.get("company",""),"Email":r.get("email",""),"Phone":r.get("phone",""),"Materials":mat,"Inspection":"✅" if r.get("inspection") else "—","Opt-In":"✅" if r.get("marketing") else "—"})
         st.dataframe(td,use_container_width=True,hide_index=True,height=400)
-        st.markdown(f'<p style="color:#6b6762;font-size:10px;font-family:Arial,sans-serif;margin-top:4px">Showing {len(td)} of {s["t"]} total leads. Download CSV for complete dataset.</p>',True)
+        st.markdown(f'<p style="color:#6b6762;font-size:10px;font-family:Arial,sans-serif;margin-top:4px">Showing {len(td)} of {t} total leads. Download CSV for complete dataset.</p>',True)
     else:
         st.info("No leads captured yet. Leads appear here when visitors submit the form.")
     
