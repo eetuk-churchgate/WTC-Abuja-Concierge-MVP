@@ -60,13 +60,17 @@ class DB:
         r=self.c.execute("SELECT COUNT(*) as t,SUM(inspection) as i,SUM(marketing) as m FROM leads").fetchone()
         return dict(r) if r else {'t':0,'i':0,'m':0}
     def csv(self):
-        rows=self.all(9999)
+        rows = self.all(9999)
         if not rows: return ""
-        o=io.StringIO(); w=csv.DictWriter(o,fieldnames=['submitted','first_name','last_name','email','phone','company','job_title','materials','inspection','marketing'])
+        o = io.StringIO()
+        fields = ['submitted','first_name','last_name','email','phone','company','job_title','materials','inspection','marketing']
+        w = csv.DictWriter(o, fieldnames=fields, extrasaction='ignore')
         w.writeheader()
-        for r in rows: r['inspection']='Yes' if r.get('inspection') else 'No'; r['marketing']='Yes' if r.get('marketing') else 'No'; w.writerow(r)
+        for r in rows:
+            r['inspection'] = 'Yes' if r.get('inspection') else 'No'
+            r['marketing'] = 'Yes' if r.get('marketing') else 'No'
+            w.writerow(r)
         return o.getvalue()
-db=DB()
 
 # ═══════════════════════════════════════════════════════════
 # EMAIL
