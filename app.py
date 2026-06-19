@@ -442,13 +442,14 @@ def admin():
                 else: st.error("Invalid PIN")
         return
     
-    s=get_stats()
-    l=get_all_leads(100)
-    src_stats=get_source_stats()
-    if not s: s={'t':0,'i':0,'m':0}
-    if not l: l=[]
-    if not src_stats: src_stats=[]
-    except: s={'t':0,'i':0,'m':0}; l=[]; src_stats=[]
+    try:
+        s=get_stats()
+        l=get_all_leads(100)
+        src_stats=get_source_stats()
+    except:
+        s={'t':0,'i':0,'m':0}
+        l=[]
+        src_stats=[]
     
     t=int(s.get('t',0)); i=int(s.get('i',0)); m=int(s.get('m',0)); dp=t-i if t>=i else 0
     
