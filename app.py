@@ -65,12 +65,23 @@ def save_lead(d):
     tags = json.dumps(d.get('tg',[]))
     ins = 1 if d.get('ins') else 0
     mk = 1 if d.get('mk') else 1
-    turso_query("INSERT INTO leads(id,first_name,last_name,email,phone,company,job_title,timing,materials,tags,inspection,marketing,campaign,device_id,submitted) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-        [lid,d.get('fn',''),d.get('ln',''),d.get('em',''),d.get('ph',''),d.get('co',''),d.get('jt',''),d.get('ti',''),mats,tags,ins,mk,'NOG Energy Week 2026',st.session_state.get('did',''),now])
+    fn = d.get('fn','').replace("'","''")
+    ln = d.get('ln','').replace("'","''")
+    em = d.get('em','').replace("'","''")
+    ph = d.get('ph','').replace("'","''")
+    co = d.get('co','').replace("'","''")
+    jt = d.get('jt','').replace("'","''")
+    ti = d.get('ti','').replace("'","''")
+    did = st.session_state.get('did','')
+    
+    sql = f"""INSERT INTO leads(id,first_name,last_name,email,phone,company,job_title,timing,materials,tags,inspection,marketing,campaign,device_id,submitted) 
+    VALUES('{lid}','{fn}','{ln}','{em}','{ph}','{co}','{jt}','{ti}','{mats}','{tags}',{ins},{mk},'NOG Energy Week 2026','{did}','{now}')"""
+    
+    turso_query(sql)
     return True
 
 def get_all_leads(n=200):
-    return turso_query("SELECT * FROM leads ORDER BY submitted DESC LIMIT ?",[n])
+    return turso_query(f"SELECT * FROM leads ORDER BY submitted DESC LIMIT {n}")
 
 def get_stats():
     r = turso_query("SELECT COUNT(*) as total, COALESCE(SUM(inspection),0) as inspections, COALESCE(SUM(marketing),0) as optins FROM leads")
