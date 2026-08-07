@@ -11812,7 +11812,6 @@ def ai_recruitment_agent():
                                         except:
                                             pass
                                     
-                                    # Always use deep analysis
                                     if job_jd:
                                         res = ai_agent.deep_analyze_candidate(cv_text, job_jd)
                                     else:
@@ -11820,7 +11819,6 @@ def ai_recruitment_agent():
                                     
                                     if isinstance(res, dict):
                                         st.session_state[f"pipe_analysis_{idx}"] = res
-                                        # Also save score to database
                                         try:
                                             db._patch("candidates", {
                                                 "ai_score": int(res.get('overall_score', 0)),
@@ -11831,15 +11829,12 @@ def ai_recruitment_agent():
                                         st.rerun()
                             else:
                                 st.warning("⚠️ No CV text available for analysis")
-                                    if isinstance(res, dict):
-                                        st.session_state[f"pipe_analysis_{idx}"] = res
-                                        st.rerun()
                         
                         # Show analysis results
                         if f"pipe_analysis_{idx}" in st.session_state:
                             res = st.session_state[f"pipe_analysis_{idx}"]
                             st.markdown("---")
-                            st.markdown("#### 🔬 Deep Analysis")
+                            st.markdown("#### 🔬 Groq AI Deep Analysis")
                             s1, s2, s3, s4 = st.columns(4)
                             s1.metric("Overall", f"{res.get('overall_score', 0)}%")
                             s2.metric("Skills", f"{res.get('skills_score', 0)}%")
@@ -11847,7 +11842,7 @@ def ai_recruitment_agent():
                             s4.metric("Confidence", f"{res.get('confidence', 0)}%")
                             
                             if res.get('verbatim_flags', 0) > 30:
-                                st.warning(f"🚨 Verbatim risk: {res.get('verbatim_flags', 0):.0f}%")
+                                st.warning(f"🚨 Verbatim Risk: {res.get('verbatim_flags', 0):.0f}%")
                             
                             c1, c2 = st.columns(2)
                             with c1:
@@ -11858,49 +11853,16 @@ def ai_recruitment_agent():
                                 st.markdown("**⚠️ Gaps**")
                                 for g in res.get('gaps_identified', [])[:3]:
                                     st.markdown(f"- {g}")
+                            
+                            if res.get('interview_questions'):
+                                st.markdown("**🎯 AI-Generated Interview Questions**")
+                                for q_idx, q in enumerate(res.get('interview_questions', [])[:3]):
+                                    st.markdown(f"**{q_idx+1}.** {q}")
+                            
+                            if res.get('recommendation'):
+                                st.markdown(f"**💡 Recommendation:** {res.get('recommendation')}")
                             
                             if st.button("🗑️ Clear Analysis", key=f"clr_pipe_{idx}"):
-                                del st.session_state[f"pipe_analysis_{idx}"]
-                                st.rerun()
-                            if st.button("🔍 Deep Analysis", key=f"deep_pipe_{idx}", use_container_width=True):
-                                if cv_text and len(cv_text) > 50:
-                                    with st.spinner("Analyzing..."):
-                                        job_jd = ""
-                                        if job_id_val and job_id_val != 'None':
-                                            for r in all_reqs:
-                                                if r.get('req_id') == job_id_val:
-                                                    job_jd = r.get('jd', '')
-                                                    break
-                                        res = ai_agent.deep_analyze_candidate(cv_text, job_jd) if job_jd else ai_agent.score_candidate_advanced(cv_text, ai_agent.analyze_jd(cv_text[:500]))
-                                        if isinstance(res, dict):
-                                            st.session_state[f"pipe_analysis_{idx}"] = res
-                                            st.rerun()
-                        
-                        # Show analysis
-                        if f"pipe_analysis_{idx}" in st.session_state:
-                            res = st.session_state[f"pipe_analysis_{idx}"]
-                            st.markdown("---")
-                            st.markdown("#### 🔬 Deep Analysis")
-                            s1, s2, s3, s4 = st.columns(4)
-                            s1.metric("Overall", f"{res.get('overall_score', 0)}%")
-                            s2.metric("Skills", f"{res.get('skills_score', 0)}%")
-                            s3.metric("Experience", f"{res.get('experience_score', 0)}%")
-                            s4.metric("Confidence", f"{res.get('confidence', 0)}%")
-                            
-                            if res.get('verbatim_flags', 0) > 30:
-                                st.warning(f"🚨 Verbatim risk: {res.get('verbatim_flags', 0):.0f}%")
-                            
-                            c1, c2 = st.columns(2)
-                            with c1:
-                                st.markdown("**✅ Strengths**")
-                                for s in res.get('key_strengths', [])[:3]:
-                                    st.markdown(f"- {s}")
-                            with c2:
-                                st.markdown("**⚠️ Gaps**")
-                                for g in res.get('gaps_identified', [])[:3]:
-                                    st.markdown(f"- {g}")
-                            
-                            if st.button("🗑️ Clear", key=f"clr_pipe_{idx}"):
                                 del st.session_state[f"pipe_analysis_{idx}"]
                                 st.rerun()
             else:
