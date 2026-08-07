@@ -9166,30 +9166,342 @@ CV: {cv_text[:3000]}"""
     
     def chat(self, message, context=""):
         if not self.use_groq:
-            return get_smart_response(message, [], pd.DataFrame())
+            return "I'm currently running in offline mode. Please check the GROQ_API_KEY configuration."
+        
         try:
+            system_prompt = f"""You are an intelligent AI Recruitment Assistant for Churchgate Group, a major real estate and infrastructure company in Nigeria. 
+
+You have access to the current recruitment pipeline. Be conversational, helpful, and provide specific insights based on the data available to you.
+
+Current Pipeline Context:
+{context[:2000]}
+
+Guidelines:
+- Be natural and conversational, like a helpful HR colleague
+- Reference specific candidates and scores when relevant
+- Provide actionable recommendations
+- If asked about candidates, analyze their scores and profiles
+- If asked to compare, give detailed comparisons
+- If asked for interview questions, make them role-specific
+- If you don't have enough data, be honest about it
+- Never say "I can only help with top candidates, comparisons..." - that's too restrictive
+- You CAN help with: candidate analysis, hiring strategy, interview prep, offer negotiations, onboarding tips, recruitment best practices, job description writing, salary benchmarking, and more"""
+
             messages = [
-                {"role": "system", "content": f"You are an expert HR/Recruitment AI for Churchgate Group. Be helpful, professional, and concise. Pipeline context: {context[:1500]}"},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": message}
             ]
+            
             result = self._groq_chat(messages, temperature=0.7, max_tokens=1000)
-            return result if result else get_smart_response(message, [], pd.DataFrame())
-        except:
-            return get_smart_response(message, [], pd.DataFrame())
+            
+            if result and len(result) > 20:
+                return result
+            else:
+                print(f"DEBUG CHAT: Groq returned empty or short response: {result}")
+                return "I received your message but couldn't generate a proper response. Please try again or rephrase your question."
+                
+        except Exception as e:
+            print(f"DEBUG CHAT ERROR: {str(e)[:200]}")
+            return f"I encountered a technical issue: {str(e)[:100]}. Please try again."
 
 
 def get_smart_response(message, screened_candidates, all_candidates):
+    """Smart fallback with broad knowledge - used when Groq is unavailable"""
     msg_lower = message.lower()
-    if 'top' in msg_lower or 'best' in msg_lower:
-        return "I recommend interviewing Tier 1 candidates (score 85%+). Check the dashboard for top performers."
+    
+    # GREETINGS
+    if any(word in msg_lower for word in ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good afternoon']):
+        return "Hello! 👋 I'm your Churchgate Group HR & Recruitment Assistant. I can discuss candidates, hiring strategies, HR policies, interview techniques, or general business topics. What would you like to explore today?"
+    
+    # THANK YOU / APPRECIATION
+    elif any(word in msg_lower for word in ['thanks', 'thank you', 'appreciate']):
+        return "You're welcome! 😊 I'm here whenever you need recruitment or HR assistance. Feel free to ask me anything."
+    
+    # HOW ARE YOU
+    elif 'how are you' in msg_lower:
+        return "I'm running at full capacity and ready to help! 💪 How can I assist with your recruitment or HR needs today?"
+    
+    # WHAT CAN YOU DO / HELP
+    elif any(word in msg_lower for word in ['what can you', 'what do you', 'help me with', 'capabilities']):
+        return """I can assist with a wide range of topics:
+
+**🎯 Recruitment:**
+• Candidate screening & analysis
+• Interview question generation
+• Job description writing
+• Salary benchmarking
+• Recruitment strategy
+
+**👥 HR Topics:**
+• Employee onboarding best practices
+• Performance management
+• HR policy guidance
+• Training & development
+• Employee engagement
+
+**💼 Business Topics:**
+• Team management
+• Leadership development
+• Organizational structure
+• Workplace culture
+• Diversity & inclusion
+
+**📊 General:**
+• Career advice
+• Industry trends
+• Professional development
+• Any questions you have!
+
+What specific area interests you?"""
+    
+    # TOP CANDIDATES
+    elif 'top' in msg_lower or 'best' in msg_lower:
+        if screened_candidates is not None and len(screened_candidates) > 0:
+            resp = "🏆 **Top Candidates in Your Pipeline:**\n\n"
+            sorted_cands = screened_candidates.sort_values('ai_score', ascending=False).head(5)
+            for i, (_, c) in enumerate(sorted_cands.iterrows()):
+                score = int(c.get('ai_score', 0))
+                tier = c.get('ai_tier', 'N/A')
+                name = f"{c.get('first_name','')} {c.get('last_name','')}"
+                position = c.get('current_position', 'N/A')
+                emoji = "🌟" if score >= 85 else "👍" if score >= 70 else "🔶"
+                resp += f"{i+1}. {emoji} **{name}** — {score}% ({tier}) — {position}\n"
+            resp += "\n💡 I recommend interviewing candidates with 85%+ scores first."
+            return resp
+        return "No candidates have been screened yet. Head to the AI Screening tab to analyze your applicants!"
+    
+    # COMPARE
     elif 'compare' in msg_lower:
-        return "Use Deep Analysis for detailed comparison with skills gap matrix and radar charts."
-    elif 'interview' in msg_lower or 'question' in msg_lower:
-        return "Ask about relevant experience, present a real scenario, and discuss career goals."
-    elif 'offer' in msg_lower:
-        return "Go to Offer Letters tab to create professional offer letters with all terms."
+        if screened_candidates is not None and len(screened_candidates) >= 2:
+            resp = "📊 **Candidate Comparison:**\n\n"
+            for _, c in screened_candidates.sort_values('ai_score', ascending=False).head(5).iterrows():
+                resp += f"**{c.get('first_name','')} {c.get('last_name','')}**: {int(c.get('ai_score',0))}% | Tier: {c.get('ai_tier','')}\n"
+            resp += "\n💡 Tier 1 candidates have the strongest skill match and should be prioritized."
+            return resp
+        return "I need at least 2 screened candidates for a meaningful comparison."
+    
+    # INTERVIEW QUESTIONS
+    elif any(word in msg_lower for word in ['interview', 'question']):
+        return """📋 **Effective Interview Questions:**
+
+**Technical/Role-Specific:**
+1. "Describe the most challenging project you've led and its outcome."
+2. "How do you approach problem-solving when faced with limited resources?"
+3. "What tools and technologies are you most proficient with?"
+
+**Behavioral:**
+4. "Tell me about a time you had to manage a difficult stakeholder."
+5. "How do you handle constructive criticism?"
+6. "Describe a situation where you had to adapt quickly to change."
+
+**Cultural Fit:**
+7. "What type of work environment helps you thrive?"
+8. "How do you contribute to team culture?"
+9. "Why are you interested in joining Churchgate Group?"
+
+**Leadership (for senior roles):**
+10. "How do you develop and mentor team members?"
+11. "Describe your leadership philosophy."
+12. "How do you make difficult decisions under pressure?"
+
+💡 Pro tip: Use the Deep Analysis feature on individual candidates for AI-generated questions tailored to their CV!"""
+    
+    # OFFER LETTER
+    elif any(word in msg_lower for word in ['offer', 'draft', 'letter']):
+        return """📝 **Offer Letter Guidance:**
+
+**Key Components of a Professional Offer:**
+1. Position title and department
+2. Start date and reporting structure
+3. Salary and compensation package
+4. Probation period (typically 3-6 months)
+5. Benefits overview (HMO, pension, leave)
+6. Offer expiry date
+
+**Churchgate Group Standards:**
+• All offers must be approved by HR Director
+• Salary ranges must align with grade levels
+• Probation period: 3 months (standard), 6 months (senior)
+• Benefits: HMO coverage, Pension plan, Annual leave
+
+📌 Use the **Offer Letters tab** in Recruitment Hub to generate official PDFs with Churchgate branding."""
+    
+    # SCREENING / SCORING
+    elif any(word in msg_lower for word in ['screen', 'score', 'scoring', 'analyze']):
+        return """📊 **AI Screening Process:**
+
+**How It Works:**
+• The Groq AI (Llama 3.1 70B) analyzes each CV against job requirements
+• Scoring criteria: Skills (30%), Experience (25%), Education (10%), CV Quality (10%), Communication (10%), Keywords (5%)
+• Verbatim/plagiarism detection flags copied content
+• Results: Tier 1 (85%+) → Tier 2 (70-84%) → Tier 3 (50-69%) → Tier 4 (<50%)
+
+**How to Screen:**
+1. Go to **AI Screening tab** for bulk screening
+2. Or click **'AI Screen Now'** on individual candidates
+3. Use **'Screen All'** for the entire pipeline
+
+Need help interpreting scores? Just ask!"""
+    
+    # ONBOARDING
+    elif 'onboard' in msg_lower:
+        return """🎯 **Onboarding Best Practices:**
+
+**Pre-Boarding (Before Day 1):**
+• Send welcome email with schedule
+• Prepare workstation and access cards
+• Assign an onboarding buddy
+• Set up email and system accounts
+
+**First Week:**
+• HR orientation and office tour
+• Team welcome lunch/meeting
+• Review job expectations and goals
+• Complete compliance training
+
+**First 30-60-90 Days:**
+• Regular check-ins with manager
+• Training and development plan
+• Performance expectations review
+• Cultural integration activities
+
+📌 Churchgate Group uses a structured 90-day onboarding program with milestone checkpoints."""
+    
+    # HR POLICIES
+    elif any(word in msg_lower for word in ['policy', 'policies', 'hr policy', 'leave', 'benefit']):
+        return """📋 **Churchgate Group HR Policies Overview:**
+
+**Leave Policy:**
+• Annual Leave: 20 working days
+• Sick Leave: 12 days per year
+• Maternity Leave: 12 weeks (fully paid)
+• Paternity Leave: 2 weeks
+
+**Benefits:**
+• Comprehensive HMO coverage
+• Contributory Pension Scheme
+• Training & Development support
+• Performance bonuses
+
+**Working Hours:**
+• Monday-Friday: 8:00 AM - 5:00 PM
+• Hybrid options available for eligible roles
+
+For specific policy details, contact the HR department at hr@churchgate.com"""
+    
+    # SALARY / COMPENSATION
+    elif any(word in msg_lower for word in ['salary', 'compensation', 'pay', 'wage', 'remuneration']):
+        return """💰 **Compensation Guidance:**
+
+**Churchgate Group Philosophy:**
+• Competitive market-aligned salaries
+• Performance-based increments
+• Annual salary review cycle
+• Grade-level salary bands
+
+**Salary Benchmarking Tips:**
+• Research industry standards for Nigeria
+• Consider experience level and certifications
+• Factor in location (Lagos vs Abuja)
+• Account for specialized skills premium
+
+For specific salary band information, consult the HR compensation matrix or discuss with the HR Director."""
+    
+    # DIVERSITY & INCLUSION
+    elif any(word in msg_lower for word in ['diversity', 'inclusion', 'd&i', 'equal opportunity']):
+        return """🌍 **Diversity & Inclusion at Churchgate Group:**
+
+Churchgate Group is an equal opportunity employer committed to:
+• Merit-based hiring and promotion
+• Gender balance across all levels
+• Inclusive workplace culture
+• Zero tolerance for discrimination
+• Accessibility accommodations
+
+**Our Commitment:**
+All employment decisions are based on merit, competence, and business needs regardless of gender, ethnicity, religion, age, or background.
+
+We believe diverse teams drive innovation and better business outcomes."""
+    
+    # TRAINING / DEVELOPMENT
+    elif any(word in msg_lower for word in ['training', 'development', 'learning', 'skill', 'career growth']):
+        return """📚 **Learning & Development:**
+
+**Churchgate Group invests in:**
+• Technical skills training
+• Leadership development programs
+• Professional certification support
+• Mentorship opportunities
+• Cross-functional exposure
+
+**Career Growth Path:**
+• Entry → Junior → Mid-Level → Senior → Manager → Director → Executive
+• Promotion based on performance and potential
+• Annual development planning with managers
+
+💡 Encourage employees to discuss development goals during performance reviews."""
+    
+    # PERFORMANCE MANAGEMENT
+    elif any(word in msg_lower for word in ['performance', 'review', 'appraisal', 'kpi', 'evaluation']):
+        return """📈 **Performance Management:**
+
+**Churchgate Group Approach:**
+• Quarterly performance check-ins
+• Annual comprehensive review
+• 360-degree feedback for managers
+• Goal setting (OKRs/KPIs)
+• Development planning
+
+**Best Practices:**
+• Provide regular constructive feedback
+• Document achievements and areas for improvement
+• Set SMART goals (Specific, Measurable, Achievable, Relevant, Time-bound)
+• Recognize and reward high performance
+
+📌 Performance reviews should be a two-way conversation, not just evaluation."""
+    
+    # CHURCHGATE GROUP INFO
+    elif any(word in msg_lower for word in ['churchgate', 'company', 'about us', 'who are you']):
+        return """🏢 **About Churchgate Group:**
+
+Churchgate Group is a premier real estate and infrastructure development company operating across Nigeria and West Africa.
+
+**Key Facts:**
+• Headquarters: Churchgate Towers, Victoria Island, Lagos
+• Operations: 3 regions, 16 subsidiaries
+• Team: 200+ professionals
+• Legacy: 50+ years of excellence
+• Focus: Real estate, facilities management, trade services
+
+**Our Values:**
+• Excellence in everything we do
+• Integrity and transparency
+• Innovation and continuous improvement
+• People-first culture
+• Sustainable development
+
+**Certifications:**
+• EDGE Certified
+• WTCA Premier Accredited
+
+📧 careers@churchgate.com | hris@churchgate.com"""
+    
+    # GENERAL / FALLBACK
     else:
-        return "I can help with screening, interviews, offers, and analytics. What do you need?"
+        return f"""Thank you for your question about "{message[:50]}..."
+
+I'm currently operating with my built-in knowledge base. While I can discuss many HR and recruitment topics, connecting to Groq AI would give me access to deeper analysis of your specific candidates and pipeline.
+
+**In the meantime, I can help with:**
+• Candidate screening and analysis
+• Interview questions and techniques
+• HR policies and best practices
+• Offer letters and onboarding
+• Performance management
+• Training and development
+• General business and career topics
+
+What would you like to explore? I'm here to help! 😊"""
 
 
 class LinkedInParser:
@@ -9237,49 +9549,62 @@ def extract_text_from_cv_url(cv_url):
         import requests as req
         import io
         
-        response = req.get(cv_url, timeout=30)
+        # Handle Supabase storage URLs
+        response = req.get(cv_url, timeout=30, headers={'User-Agent': 'Mozilla/5.0'})
         if response.status_code != 200:
+            print(f"CV download failed: HTTP {response.status_code}")
             return None
         
+        content_type = response.headers.get('content-type', '').lower()
         file_content = io.BytesIO(response.content)
         
+        extracted_text = ""
+        
         # Try PDF
-        try:
-            from pypdf import PdfReader
-            pdf_reader = PdfReader(file_content)
-            text = ""
-            for page in pdf_reader.pages:
-                extracted = page.extract_text()
-                if extracted:
-                    text += extracted + "\n"
-            if text.strip() and len(text.strip()) > 50:
-                return text.strip()
-        except:
-            pass
+        if 'pdf' in content_type or cv_url.lower().endswith('.pdf'):
+            try:
+                from pypdf import PdfReader
+                pdf_reader = PdfReader(file_content)
+                for page in pdf_reader.pages:
+                    text = page.extract_text()
+                    if text:
+                        extracted_text += text + "\n"
+                if extracted_text.strip() and len(extracted_text.strip()) > 50:
+                    print(f"✅ PDF extracted: {len(extracted_text)} chars")
+                    return extracted_text.strip()
+            except Exception as e:
+                print(f"PDF extraction error: {str(e)[:100]}")
         
         # Try DOCX
-        try:
-            import docx
-            file_content.seek(0)
-            doc = docx.Document(file_content)
-            text = "\n".join([p.text for p in doc.paragraphs])
-            if text.strip() and len(text.strip()) > 50:
-                return text.strip()
-        except:
-            pass
+        if 'docx' in content_type or 'word' in content_type or cv_url.lower().endswith('.docx'):
+            try:
+                import docx
+                file_content.seek(0)
+                doc = docx.Document(file_content)
+                extracted_text = "\n".join([p.text for p in doc.paragraphs])
+                if extracted_text.strip() and len(extracted_text.strip()) > 50:
+                    print(f"✅ DOCX extracted: {len(extracted_text)} chars")
+                    return extracted_text.strip()
+            except Exception as e:
+                print(f"DOCX extraction error: {str(e)[:100]}")
         
         # Try plain text
-        try:
-            file_content.seek(0)
-            text = response.content.decode('utf-8', errors='ignore')
-            if text.strip() and len(text.strip()) > 50:
-                return text.strip()
-        except:
-            pass
+        if not extracted_text or len(extracted_text.strip()) < 50:
+            try:
+                file_content.seek(0)
+                text = response.content.decode('utf-8', errors='ignore')
+                # Remove binary garbage
+                text = ''.join(c for c in text if c.isprintable() or c in '\n\r\t')
+                if text.strip() and len(text.strip()) > 50:
+                    print(f"✅ Text extracted: {len(text)} chars")
+                    return text.strip()
+            except:
+                pass
         
+        print(f"❌ Could not extract text from CV: {cv_url[:50]}...")
         return None
     except Exception as e:
-        print(f"CV extraction error: {str(e)[:100]}")
+        print(f"CV extraction error: {str(e)[:200]}")
         return None
 
 
@@ -9929,18 +10254,34 @@ APPLY NOW: {public_url}
                     status_text = ""
                 
                 with st.expander(f"{status_icon} {job['ref']} - {job['title']} | {job['department']} | {status_text}", expanded=False):
-                    # Count actual applications for this job
+                    # Count actual applications for this job (match both REQ and JOB formats)
                     try:
                         all_candidates = db.get_all_candidates()
-                        job_applications = all_candidates[all_candidates['job_id'] == job['ref']] if not all_candidates.empty and 'job_id' in all_candidates.columns else pd.DataFrame()
-                        app_count = len(job_applications)
+                        app_count = 0
+                        if not all_candidates.empty and 'job_id' in all_candidates.columns:
+                            job_ref = job['ref']
+                            # Try matching REQ- format and JOB- format
+                            for _, cand in all_candidates.iterrows():
+                                cand_job = str(cand.get('job_id', ''))
+                                if cand_job == job_ref:
+                                    app_count += 1
+                                elif 'REQ-' in job_ref and 'JOB-' in cand_job:
+                                    # REQ-202608070900 matches JOB-070900
+                                    if job_ref[-6:] in cand_job:
+                                        app_count += 1
                     except:
                         app_count = 0
                     
                     # Stats row
-                    c1, c2, c3, c4 = st.columns(4)
+                    1, c2, c3, c4 = st.columns(4)
                     with c1:
-                        st.metric("👥 Applicants", app_count)
+                        st.markdown(f"**👥 Applicants:** {app_count}")
+                    with c2:
+                        st.markdown(f"**📍 Location:** {job['location']}")
+                    with c3:
+                        st.markdown(f"**💼 Type:** {job['type']}")
+                    with c4:
+                        st.markdown(f"**💰 Salary:** {job.get('salary', 'Not specified') or 'Not specified'}")
                     with c2:
                         st.metric("📍 Location", job['location'])
                     with c3:
@@ -10198,7 +10539,21 @@ APPLY NOW: {public_url}
                                     st.rerun()
                             with c3:
                                 if st.button("🤖 AI Screen Now", key=f"screen_tab3_{cand.get('candidate_ref')}"):
-                                    if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
+                                    cv_text_local = cv_text
+                                    cv_url_local = str(cand.get('cv_url', ''))
+                                    
+                                    if (not cv_text_local or cv_text_local in ['None', '', 'nan'] or len(cv_text_local) < 50):
+                                        if cv_url_local and cv_url_local not in ['None', '', 'nan'] and len(cv_url_local) > 10:
+                                            with st.spinner("📄 Extracting CV text..."):
+                                                extracted = extract_text_from_cv_url(cv_url_local)
+                                                if extracted:
+                                                    cv_text_local = extracted
+                                                    try:
+                                                        db._patch("candidates", {"resume_text": cv_text_local[:10000]}, {"candidate_ref": cand.get('candidate_ref', '')})
+                                                    except:
+                                                        pass
+                                    
+                                    if cv_text_local and cv_text_local not in ['None', '', 'nan'] and len(cv_text_local) > 50:
                                         with st.spinner("🤖 Running AI analysis..."):
                                             jd_text = ""
                                             if job_id and job_id not in ['None', '', 'nan']:
@@ -10451,9 +10806,51 @@ APPLY NOW: {public_url}
                         with st.spinner(f"🤖 Groq AI screening {len(unscreened)} candidates..."):
                             count = 0
                             for _, row in unscreened.iterrows():
-                                try:
-                                    cv_text = str(row.get('resume_text', ''))
-                                    if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
+                            try:
+                                cv_text = str(row.get('resume_text', ''))
+                                cv_url = str(row.get('cv_url', ''))
+                                
+                                if (not cv_text or cv_text in ['None', '', 'nan'] or len(cv_text) < 50):
+                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
+                                        extracted = extract_text_from_cv_url(cv_url)
+                                        if extracted:
+                                            cv_text = extracted
+                                            try:
+                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                            except:
+                                                pass
+                                
+                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
+                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
+                                        extracted = extract_text_from_cv_url(cv_url)
+                                        if extracted:
+                                            cv_text = extracted
+                                            try:
+                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                            except:
+                                                pass
+                                
+                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
+                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
+                                        extracted = extract_text_from_cv_url(cv_url)
+                                        if extracted:
+                                            cv_text = extracted
+                                            try:
+                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                            except:
+                                                pass
+                                
+                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
+                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
+                                        extracted = extract_text_from_cv_url(cv_url)
+                                        if extracted:
+                                            cv_text = extracted
+                                            try:
+                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                            except:
+                                                pass
+                                
+                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
                                         jd_text = ""
                                         try:
                                             all_reqs = db.get_all_job_requisitions()
@@ -10495,6 +10892,48 @@ APPLY NOW: {public_url}
                         for _, row in unscreened.iterrows():
                             try:
                                 cv_text = str(row.get('resume_text', ''))
+                                cv_url = str(row.get('cv_url', ''))
+                                
+                                if (not cv_text or cv_text in ['None', '', 'nan'] or len(cv_text) < 50):
+                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
+                                        extracted = extract_text_from_cv_url(cv_url)
+                                        if extracted:
+                                            cv_text = extracted
+                                            try:
+                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                            except:
+                                                pass
+                                
+                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
+                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
+                                        extracted = extract_text_from_cv_url(cv_url)
+                                        if extracted:
+                                            cv_text = extracted
+                                            try:
+                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                            except:
+                                                pass
+                                
+                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
+                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
+                                        extracted = extract_text_from_cv_url(cv_url)
+                                        if extracted:
+                                            cv_text = extracted
+                                            try:
+                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                            except:
+                                                pass
+                                
+                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
+                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
+                                        extracted = extract_text_from_cv_url(cv_url)
+                                        if extracted:
+                                            cv_text = extracted
+                                            try:
+                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                            except:
+                                                pass
+                                
                                 if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
                                     job_id_val = str(row.get('job_id', ''))
                                     jd_text = ""
@@ -10626,7 +11065,21 @@ APPLY NOW: {public_url}
                     col_a1, col_a2, col_a3 = st.columns(3)
                     with col_a1:
                         if st.button("🤖 AI Screen Now", key=f"screen_t4_{i}", use_container_width=True):
-                            if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
+                            cv_text_local = cv_text
+                            cv_url_local = cv_url
+                            
+                            if (not cv_text_local or cv_text_local in ['None', '', 'nan'] or len(cv_text_local) < 50):
+                                if cv_url_local and cv_url_local not in ['None', '', 'nan'] and len(cv_url_local) > 10:
+                                    with st.spinner("📄 Extracting CV text from file..."):
+                                        extracted = extract_text_from_cv_url(cv_url_local)
+                                        if extracted:
+                                            cv_text_local = extracted
+                                            try:
+                                                db._patch("candidates", {"resume_text": cv_text_local[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                            except:
+                                                pass
+                            
+                            if cv_text_local and cv_text_local not in ['None', '', 'nan'] and len(cv_text_local) > 50:
                                 with st.spinner("🤖 Running Groq AI analysis..."):
                                     jd_text = ""
                                     if job_id and job_id not in ['None', '', 'nan']:
@@ -11657,9 +12110,41 @@ def ai_recruitment_agent():
                         with st.spinner(f"🤖 Deep-analyzing {len(unscreened)} candidates..."):
                             screened = 0
                             for _, row in unscreened.iterrows():
-                                try:
-                                    cv_text = str(row.get('resume_text', ''))
-                                    if cv_text and cv_text != 'None' and len(cv_text) > 50:
+                            try:
+                                cv_text = str(row.get('resume_text', ''))
+                                cv_url = str(row.get('cv_url', ''))
+                                
+                                if (not cv_text or cv_text in ['None', '', 'nan'] or len(cv_text) < 50):
+                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
+                                        extracted = extract_text_from_cv_url(cv_url)
+                                        if extracted:
+                                            cv_text = extracted
+                                            try:
+                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                            except:
+                                                pass
+                                
+                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
+                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
+                                        extracted = extract_text_from_cv_url(cv_url)
+                                        if extracted:
+                                            cv_text = extracted
+                                            try:
+                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                            except:
+                                                pass
+                                
+                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
+                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
+                                        extracted = extract_text_from_cv_url(cv_url)
+                                        if extracted:
+                                            cv_text = extracted
+                                            try:
+                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                            except:
+                                                pass
+                                
+                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
                                         job_id_val = str(row.get('job_id', ''))
                                         jd_text = ""
                                         if job_id_val and job_id_val != 'None':
@@ -11696,9 +12181,31 @@ def ai_recruitment_agent():
                     if st.button("📊 Quick Score", use_container_width=True, disabled=len(unscreened)==0):
                         with st.spinner("Scoring..."):
                             for _, row in unscreened.iterrows():
-                                try:
-                                    cv_text = str(row.get('resume_text', ''))
-                                    if cv_text and len(cv_text) > 50:
+                            try:
+                                cv_text = str(row.get('resume_text', ''))
+                                cv_url = str(row.get('cv_url', ''))
+                                
+                                if (not cv_text or cv_text in ['None', '', 'nan'] or len(cv_text) < 50):
+                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
+                                        extracted = extract_text_from_cv_url(cv_url)
+                                        if extracted:
+                                            cv_text = extracted
+                                            try:
+                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                            except:
+                                                pass
+                                
+                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
+                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
+                                        extracted = extract_text_from_cv_url(cv_url)
+                                        if extracted:
+                                            cv_text = extracted
+                                            try:
+                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                            except:
+                                                pass
+                                
+                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
                                         result = ai_agent.score_candidate_advanced(cv_text, ai_agent.analyze_jd(cv_text[:500]))
                                         if isinstance(result, dict):
                                             db._patch("candidates", {"ai_score": int(result.get('overall_score', 0)), "ai_tier": result.get('tier', 'Pending')}, {"candidate_ref": row.get('candidate_ref', '')})
@@ -11954,7 +12461,21 @@ def ai_recruitment_agent():
                         
                         # Deep Analysis button - works even without screening
                         if st.button("🔍 Deep Analysis", key=f"deep_pipe_{idx}", use_container_width=True):
-                            if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
+                            cv_text_local = cv_text
+                            cv_url_local = cv_url
+                            
+                            if (not cv_text_local or cv_text_local in ['None', '', 'nan'] or len(cv_text_local) < 50):
+                                if cv_url_local and cv_url_local not in ['None', '', 'nan'] and len(cv_url_local) > 10:
+                                    with st.spinner("📄 Extracting CV text from file..."):
+                                        extracted = extract_text_from_cv_url(cv_url_local)
+                                        if extracted:
+                                            cv_text_local = extracted
+                                            try:
+                                                db._patch("candidates", {"resume_text": cv_text_local[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                            except:
+                                                pass
+                            
+                            if cv_text_local and cv_text_local not in ['None', '', 'nan'] and len(cv_text_local) > 50:
                                 with st.spinner("🤖 Running Groq AI Deep Analysis..."):
                                     job_jd = ""
                                     if job_id_val and job_id_val not in ['None', '', 'nan']:
@@ -17659,28 +18180,7 @@ def get_pipeline_stats(job_id=None):
     except:
         return {}, []
 
-def get_smart_response(question, screened_cands, all_candidates):
-    q = question.lower()
-    if 'top' in q or 'best' in q:
-        if len(screened_cands) > 0:
-            top = screened_cands.sort_values('ai_score', ascending=False).head(3)
-            resp = "🏆 **Top Candidates:**\n\n"
-            for i, (_, c) in enumerate(top.iterrows()):
-                resp += f"{i+1}. **{c.get('first_name','')} {c.get('last_name','')}** — {int(c.get('ai_score',0))}% ({c.get('ai_tier','')})\n"
-            return resp
-        return "No candidates screened yet."
-    if 'compare' in q:
-        if len(screened_cands) >= 2:
-            resp = "📊 **Comparison:**\n\n"
-            for _, c in screened_cands.sort_values('ai_score', ascending=False).head(5).iterrows():
-                resp += f"**{c.get('first_name','')} {c.get('last_name','')}**: {int(c.get('ai_score',0))}% | {c.get('ai_tier','')}\n"
-            return resp + "\n💡 Interview Tier 1 candidates first."
-        return "Need at least 2 screened candidates."
-    if 'interview' in q or 'question' in q:
-        return "📋 **Sample Questions:**\n\n1. Describe a challenging project you led.\n2. How do you handle disagreements?\n3. What's your most innovative solution?\n4. How do you stay current?\n5. Why Churchgate Group?"
-    if 'offer' in q or 'draft' in q:
-        return "📝 Use the Offer Letters tab in Recruitment Hub to generate official PDFs with Churchgate branding."
-    return "I can help with top candidates, comparisons, interview questions, and offer drafts."
+
 
 
 def lms_dashboard():
