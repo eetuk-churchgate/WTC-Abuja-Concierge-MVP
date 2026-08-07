@@ -8997,19 +8997,62 @@ class AIRecruitmentAgent:
         self.client = None
         self.model = "llama-3.1-70b-versatile"
         
-        self.groq_api_key = os.environ.get("GROQ_API_KEY", "")
+        # Try EVERY possible way to get the key
+        self.groq_api_key = ""
+        
+        # Method 1: Direct os.environ
+        val = os.environ.get("GROQ_API_KEY", "")
+        if val:
+            self.groq_api_key = val
+            print("✅ GROQ: Found in os.environ")
+        
+        # Method 2: Streamlit secrets (Railway style)
         if not self.groq_api_key:
             try:
-                self.groq_api_key = st.secrets.get("GROQ_API_KEY", "")
+                val = st.secrets["GROQ_API_KEY"]
+                if val:
+                    self.groq_api_key = val
+                    print("✅ GROQ: Found in st.secrets")
             except:
                 pass
         
+        # Method 3: Streamlit secrets .get
+        if not self.groq_api_key:
+            try:
+                val = st.secrets.get("GROQ_API_KEY", "")
+                if val:
+                    self.groq_api_key = val
+                    print("✅ GROQ: Found in st.secrets.get")
+            except:
+                pass
+        
+        # Method 4: List all env vars starting with GROQ
+        if not self.groq_api_key:
+            for key, value in os.environ.items():
+                if "GROQ" in key.upper():
+                    self.groq_api_key = value
+                    print(f"✅ GROQ: Found via env scan: {key}")
+                    break
+        
+        # Method 5: Try lowercase
+        if not self.groq_api_key:
+            val = os.environ.get("groq_api_key", "")
+            if val:
+                self.groq_api_key = val
+                print("✅ GROQ: Found in lowercase")
+        
+        # Print status
         if self.groq_api_key:
+            print(f"✅ GROQ API Key found! Starts with: {self.groq_api_key[:10]}...")
             try:
                 self.client = groq.Groq(api_key=self.groq_api_key)
                 self.use_groq = True
-            except:
-                pass
+                print("✅ Groq client initialized successfully!")
+            except Exception as e:
+                print(f"❌ Groq client init failed: {str(e)[:100]}")
+        else:
+            print("❌ GROQ_API_KEY NOT FOUND in any location!")
+            print(f"   Available env vars: {[k for k in os.environ.keys() if 'KEY' in k.upper() or 'GROQ' in k.upper()]}")
     
     def _groq_chat(self, messages, temperature=0.3, max_tokens=2000):
         try:
@@ -9186,6 +9229,58 @@ def get_pipeline_stats(job_id=None):
 # Initialize
 ai_agent = AIRecruitmentAgent()
 linkedin_parser = LinkedInParser()
+
+
+def extract_text_from_cv_url(cv_url):
+    """Download and extract text from CV file URL from Supabase storage"""
+    try:
+        import requests as req
+        import io
+        
+        response = req.get(cv_url, timeout=30)
+        if response.status_code != 200:
+            return None
+        
+        file_content = io.BytesIO(response.content)
+        
+        # Try PDF
+        try:
+            from pypdf import PdfReader
+            pdf_reader = PdfReader(file_content)
+            text = ""
+            for page in pdf_reader.pages:
+                extracted = page.extract_text()
+                if extracted:
+                    text += extracted + "\n"
+            if text.strip() and len(text.strip()) > 50:
+                return text.strip()
+        except:
+            pass
+        
+        # Try DOCX
+        try:
+            import docx
+            file_content.seek(0)
+            doc = docx.Document(file_content)
+            text = "\n".join([p.text for p in doc.paragraphs])
+            if text.strip() and len(text.strip()) > 50:
+                return text.strip()
+        except:
+            pass
+        
+        # Try plain text
+        try:
+            file_content.seek(0)
+            text = response.content.decode('utf-8', errors='ignore')
+            if text.strip() and len(text.strip()) > 50:
+                return text.strip()
+        except:
+            pass
+        
+        return None
+    except Exception as e:
+        print(f"CV extraction error: {str(e)[:100]}")
+        return None
 
 
 
@@ -9833,37 +9928,79 @@ APPLY NOW: {public_url}
                     status_icon = "🟢"
                     status_text = ""
                 
-                with st.expander(f"{status_icon} {job['ref']} - {job['title']} | {job['department']} | {job.get('applications', 0)} applicants | {status_text}", expanded=False):
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.markdown(f"**📍 Location:** {job['location']}")
-                        st.markdown(f"**💼 Type:** {job['type']}")
-                        st.markdown(f"**💰 Salary:** {job.get('salary', 'Not specified')}")
-                        st.markdown(f"**📅 Closes:** {job['closing']} ({status_text})")
-                    with col2:
-                        st.markdown(f"**📎 Public URL:**")
-                        st.code(job['public_url'], language=None)
-                        st.markdown(f"**Platforms:** LinkedIn: {'✅' if job['posts'].get('linkedin') else '❌'} | Indeed: {'✅' if job['posts'].get('indeed') else '❌'} | Glassdoor: {'✅' if job['posts'].get('glassdoor') else '❌'}")
+                with st.expander(f"{status_icon} {job['ref']} - {job['title']} | {job['department']} | {status_text}", expanded=False):
+                    # Count actual applications for this job
+                    try:
+                        all_candidates = db.get_all_candidates()
+                        job_applications = all_candidates[all_candidates['job_id'] == job['ref']] if not all_candidates.empty and 'job_id' in all_candidates.columns else pd.DataFrame()
+                        app_count = len(job_applications)
+                    except:
+                        app_count = 0
+                    
+                    # Stats row
+                    c1, c2, c3, c4 = st.columns(4)
+                    with c1:
+                        st.metric("👥 Applicants", app_count)
+                    with c2:
+                        st.metric("📍 Location", job['location'])
+                    with c3:
+                        st.metric("💼 Type", job['type'])
+                    with c4:
+                        st.metric("💰 Salary", job.get('salary', 'Not specified') or 'Not specified')
+                    
+                    # Countdown timer
+                    try:
+                        closing_date = datetime.strptime(job['closing'], '%Y-%m-%d')
+                        days_left = (closing_date - datetime.now()).days
+                        if days_left <= 3:
+                            st.error(f"🔴 URGENT: Only {days_left} days remaining! Closing: {job['closing']}")
+                        elif days_left <= 7:
+                            st.warning(f"🟡 Closing soon: {days_left} days remaining")
+                        else:
+                            st.info(f"🟢 {days_left} days remaining until {job['closing']}")
+                    except:
+                        pass
                     
                     st.markdown("---")
                     
+                    # Public URL
+                    st.markdown("**📎 Public Career Page URL:**")
+                    st.code(job['public_url'], language=None)
+                    
+                    # Platform status
+                    st.markdown(f"**📢 Platforms:** LinkedIn: {'✅' if job['posts'].get('linkedin') else '❌'} | Indeed: {'✅' if job['posts'].get('indeed') else '❌'} | Glassdoor: {'✅' if job['posts'].get('glassdoor') else '❌'}")
+                    
+                    st.markdown("---")
+                    
+                    # Application stats
+                    if app_count > 0:
+                        try:
+                            status_counts = job_applications['status'].value_counts().to_dict() if 'status' in job_applications.columns else {}
+                            st.markdown("**📊 Application Pipeline:**")
+                            cols = st.columns(len(status_counts) if status_counts else 1)
+                            for i, (status, count) in enumerate(status_counts.items()):
+                                with cols[i]:
+                                    st.metric(status, count)
+                        except:
+                            pass
+                    
                     # Quick actions
-                    c1, c2, c3 = st.columns(3)
+                    c1, c2, c3, c4 = st.columns(4)
                     with c1:
                         share_url = job['public_url']
                         st.markdown(f"[🔗 LinkedIn Share](https://www.linkedin.com/sharing/share-offsite/?url={share_url})")
-                        st.markdown(f"[💬 WhatsApp Share](https://wa.me/?text=Job:{job['title']}%20at%20Churchgate%20Group%20{share_url})")
                     with c2:
-                        st.markdown(f"[📋 View JD]({share_url})")
-                        st.markdown(f"📊 **Applications:** {job.get('applications', 0)}")
+                        st.markdown(f"[💬 WhatsApp Share](https://wa.me/?text=Job:%20{job['title']}%20at%20Churchgate%20Group%20{share_url})")
                     with c3:
-                        if st.button(f"⏹️ Close Job Early", key=f"close_{job['ref']}"):
+                        st.markdown(f"[📋 View Career Page]({share_url})")
+                    with c4:
+                        if st.button(f"⏹️ Close Job", key=f"close_{job['ref']}"):
                             for i, req in enumerate(st.session_state.job_requisitions):
                                 if req.get('id') == job['ref']:
                                     st.session_state.job_requisitions[i]['status'] = 'Expired'
                                     break
                             st.session_state.active_jobs = [j for j in st.session_state.active_jobs if j.get('ref') != job['ref']]
-                            st.warning(f"⏹️ {job['title']} closed early!")
+                            st.warning(f"⏹️ {job['title']} closed!")
                             st.rerun()
         
         # ===== EXPIRED JOBS =====
@@ -9952,7 +10089,25 @@ APPLY NOW: {public_url}
                     with col1:
                         status_filter = st.selectbox("Status", ["All", "New", "Shortlisted", "Interview Scheduled", "Offered", "Hired", "Rejected"], key="cand_status")
                     with col2:
-                        job_filter = st.selectbox("Job", ["All Jobs"] + list(candidates['job_id'].dropna().unique()) if 'job_id' in candidates.columns else ["All Jobs"], key="cand_job")
+                        # Build job name map
+                        job_name_map = {"All Jobs": "All Jobs"}
+                        try:
+                            all_reqs = db.get_all_job_requisitions()
+                            for r in all_reqs:
+                                req_id = r.get('req_id', '')
+                                title = r.get('title', req_id)
+                                job_name_map[title] = req_id
+                        except:
+                            pass
+                        
+                        # Add job_ids from candidates that don't have titles
+                        if 'job_id' in candidates.columns:
+                            for jid in candidates['job_id'].dropna().unique():
+                                if jid not in job_name_map.values():
+                                    job_name_map[jid] = jid
+                        
+                        job_filter_name = st.selectbox("Job", list(job_name_map.keys()), key="cand_job")
+                        job_filter = job_name_map.get(job_filter_name, "All Jobs")
                     with col3:
                         sort_by = st.selectbox("Sort", ["Newest First", "Name A-Z", "Status"], key="cand_sort")
                     with col4:
@@ -11876,9 +12031,14 @@ def ai_recruitment_agent():
         
         # Show AI engine status
         if ai_agent.use_groq:
-            st.success("🧠 Groq AI (Llama 3.1 70B) - Fully Interactive")
+            st.success(f"🧠 Groq AI Active - Model: {ai_agent.model}")
         else:
-            st.warning("⚠️ AI running in fallback mode. Check GROQ_API_KEY.")
+            st.error("⚠️ Groq AI NOT Connected!")
+            if ai_agent.groq_api_key:
+                st.info(f"Key found but connection failed. Key starts with: {ai_agent.groq_api_key[:10]}...")
+            else:
+                st.error("❌ GROQ_API_KEY not found! Check Railway secrets.")
+            st.info("Check Railway deployment logs for 'GROQ' diagnostic messages.")
         
         st.info("Ask me anything about your candidates, jobs, screening results, or hiring best practices. I'm powered by Groq's LLM for intelligent, contextual responses.")
         
