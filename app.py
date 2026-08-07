@@ -10273,7 +10273,7 @@ APPLY NOW: {public_url}
                         app_count = 0
                     
                     # Stats row
-                    1, c2, c3, c4 = st.columns(4)
+                    c1, c2, c3, c4 = st.columns(4)
                     with c1:
                         st.markdown(f"**👥 Applicants:** {app_count}")
                     with c2:
@@ -10282,12 +10282,6 @@ APPLY NOW: {public_url}
                         st.markdown(f"**💼 Type:** {job['type']}")
                     with c4:
                         st.markdown(f"**💰 Salary:** {job.get('salary', 'Not specified') or 'Not specified'}")
-                    with c2:
-                        st.metric("📍 Location", job['location'])
-                    with c3:
-                        st.metric("💼 Type", job['type'])
-                    with c4:
-                        st.metric("💰 Salary", job.get('salary', 'Not specified') or 'Not specified')
                     
                     # Countdown timer
                     try:
