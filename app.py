@@ -10800,51 +10800,22 @@ APPLY NOW: {public_url}
                         with st.spinner(f"🤖 Groq AI screening {len(unscreened)} candidates..."):
                             count = 0
                             for _, row in unscreened.iterrows():
-                            try:
-                                cv_text = str(row.get('resume_text', ''))
-                                cv_url = str(row.get('cv_url', ''))
-                                
-                                if (not cv_text or cv_text in ['None', '', 'nan'] or len(cv_text) < 50):
-                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
-                                        extracted = extract_text_from_cv_url(cv_url)
-                                        if extracted:
-                                            cv_text = extracted
-                                            try:
-                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
-                                            except:
-                                                pass
-                                
-                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
-                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
-                                        extracted = extract_text_from_cv_url(cv_url)
-                                        if extracted:
-                                            cv_text = extracted
-                                            try:
-                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
-                                            except:
-                                                pass
-                                
-                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
-                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
-                                        extracted = extract_text_from_cv_url(cv_url)
-                                        if extracted:
-                                            cv_text = extracted
-                                            try:
-                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
-                                            except:
-                                                pass
-                                
-                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
-                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
-                                        extracted = extract_text_from_cv_url(cv_url)
-                                        if extracted:
-                                            cv_text = extracted
-                                            try:
-                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
-                                            except:
-                                                pass
-                                
-                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
+                                try:
+                                    cv_text = str(row.get('resume_text', ''))
+                                    cv_url = str(row.get('cv_url', ''))
+                                    
+                                    # Extract from original file if no text
+                                    if (not cv_text or cv_text in ['None', '', 'nan'] or len(cv_text) < 50):
+                                        if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
+                                            extracted = extract_text_from_cv_url(cv_url)
+                                            if extracted:
+                                                cv_text = extracted
+                                                try:
+                                                    db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                                except:
+                                                    pass
+                                    
+                                    if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
                                         jd_text = ""
                                         try:
                                             all_reqs = db.get_all_job_requisitions()
@@ -10862,7 +10833,7 @@ APPLY NOW: {public_url}
                                                 "ai_tier": result.get('tier', 'Pending')
                                             }, {"candidate_ref": row.get('candidate_ref', '')})
                                             count += 1
-                                except:
+                                except Exception as ex:
                                     pass
                             
                             if count > 0:
@@ -10888,37 +10859,8 @@ APPLY NOW: {public_url}
                                 cv_text = str(row.get('resume_text', ''))
                                 cv_url = str(row.get('cv_url', ''))
                                 
+                                # Extract from original file if no text
                                 if (not cv_text or cv_text in ['None', '', 'nan'] or len(cv_text) < 50):
-                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
-                                        extracted = extract_text_from_cv_url(cv_url)
-                                        if extracted:
-                                            cv_text = extracted
-                                            try:
-                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
-                                            except:
-                                                pass
-                                
-                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
-                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
-                                        extracted = extract_text_from_cv_url(cv_url)
-                                        if extracted:
-                                            cv_text = extracted
-                                            try:
-                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
-                                            except:
-                                                pass
-                                
-                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
-                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
-                                        extracted = extract_text_from_cv_url(cv_url)
-                                        if extracted:
-                                            cv_text = extracted
-                                            try:
-                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
-                                            except:
-                                                pass
-                                
-                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
                                     if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
                                         extracted = extract_text_from_cv_url(cv_url)
                                         if extracted:
@@ -10948,7 +10890,7 @@ APPLY NOW: {public_url}
                                             "ai_tier": result.get('tier', 'Pending')
                                         }, {"candidate_ref": row.get('candidate_ref', '')})
                                         count += 1
-                            except:
+                            except Exception as ex:
                                 pass
                         
                         if count > 0:
