@@ -12046,41 +12046,22 @@ def ai_recruitment_agent():
                         with st.spinner(f"🤖 Deep-analyzing {len(unscreened)} candidates..."):
                             screened = 0
                             for _, row in unscreened.iterrows():
-                            try:
-                                cv_text = str(row.get('resume_text', ''))
-                                cv_url = str(row.get('cv_url', ''))
-                                
-                                if (not cv_text or cv_text in ['None', '', 'nan'] or len(cv_text) < 50):
-                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
-                                        extracted = extract_text_from_cv_url(cv_url)
-                                        if extracted:
-                                            cv_text = extracted
-                                            try:
-                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
-                                            except:
-                                                pass
-                                
-                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
-                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
-                                        extracted = extract_text_from_cv_url(cv_url)
-                                        if extracted:
-                                            cv_text = extracted
-                                            try:
-                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
-                                            except:
-                                                pass
-                                
-                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
-                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
-                                        extracted = extract_text_from_cv_url(cv_url)
-                                        if extracted:
-                                            cv_text = extracted
-                                            try:
-                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
-                                            except:
-                                                pass
-                                
-                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
+                                try:
+                                    cv_text = str(row.get('resume_text', ''))
+                                    cv_url = str(row.get('cv_url', ''))
+                                    
+                                    # Extract from original file if no text
+                                    if (not cv_text or cv_text in ['None', '', 'nan'] or len(cv_text) < 50):
+                                        if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
+                                            extracted = extract_text_from_cv_url(cv_url)
+                                            if extracted:
+                                                cv_text = extracted
+                                                try:
+                                                    db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                                except:
+                                                    pass
+                                    
+                                    if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
                                         job_id_val = str(row.get('job_id', ''))
                                         jd_text = ""
                                         if job_id_val and job_id_val != 'None':
@@ -12088,12 +12069,12 @@ def ai_recruitment_agent():
                                                 if r.get('req_id') == job_id_val:
                                                     jd_text = r.get('jd', '')
                                                     break
+                                        
                                         result = ai_agent.deep_analyze_candidate(cv_text, jd_text) if jd_text else ai_agent.score_candidate_advanced(cv_text, ai_agent.analyze_jd(cv_text[:500]))
                                         if isinstance(result, dict):
                                             score = int(result.get('overall_score', 0))
                                             tier = result.get('tier', 'Pending')
                                             db._patch("candidates", {"ai_score": score, "ai_tier": tier}, {"candidate_ref": row.get('candidate_ref', '')})
-                                            # Add to pipeline
                                             try:
                                                 db._post("recruitment_pipeline", {
                                                     "candidate_ref": row.get('candidate_ref', ''),
@@ -12109,7 +12090,7 @@ def ai_recruitment_agent():
                                             except:
                                                 pass
                                             screened += 1
-                                except:
+                                except Exception as ex:
                                     pass
                             st.success(f"✅ {screened} candidates screened!")
                             st.rerun()
