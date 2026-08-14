@@ -21,6 +21,7 @@ import os
 import random
 import re
 import groq
+import requests
 from PIL import Image
 import calendar
 
@@ -3551,7 +3552,12 @@ def performance_okrs():
             financial_year = st.session_state.get('appraisal_fy', 'FY 26/27')
         
         # Map if a cycle name was passed instead of FY
-        cycle_fy_map = {'Half-Year Appraisal': 'FY 26/27', 'Full-Year Appraisal': 'FY 25/26'}
+        cycle_fy_map = {
+            'Half-Year Appraisal': 'FY 26/27', 
+            'Full-Year Appraisal': 'FY 25/26',
+            'HOD Mock Appraisal': 'FY 26/27',
+            'Team Mock Appraisal': 'FY 26/27'
+        }
         if financial_year in cycle_fy_map:
             financial_year = cycle_fy_map[financial_year]
         
@@ -3776,9 +3782,11 @@ def performance_okrs():
         # FY SELECTOR - Map cycles to Financial Years
         # ============================================================
         cycle_fy_map = {
-            'Half-Year Appraisal': 'FY 26/27',
-            'Full-Year Appraisal': 'FY 25/26'
-        }
+                'Half-Year Appraisal': 'FY 26/27',
+                'Full-Year Appraisal': 'FY 25/26',
+                'HOD Mock Appraisal': 'FY 26/27',
+                'Team Mock Appraisal': 'FY 26/27'
+            }
         
         available_fy = []
         user_perf_all = get_all_perf_cached()
@@ -3989,9 +3997,11 @@ def performance_okrs():
         # FY SELECTOR FOR KPI CREATION
         # ============================================================
         cycle_fy_map = {
-            'Half-Year Appraisal': 'FY 26/27',
-            'Full-Year Appraisal': 'FY 25/26'
-        }
+                'Half-Year Appraisal': 'FY 26/27',
+                'Full-Year Appraisal': 'FY 25/26',
+                'HOD Mock Appraisal': 'FY 26/27',
+                'Team Mock Appraisal': 'FY 26/27'
+            }
         fy_cycle_map = {v: k for k, v in cycle_fy_map.items()}
         
         available_fy_kpi = ['FY 26/27', 'FY 25/26']
@@ -4553,7 +4563,9 @@ def performance_okrs():
             # ============================================================
             cycle_fy_map = {
                 'Half-Year Appraisal': 'FY 26/27',
-                'Full-Year Appraisal': 'FY 25/26'
+                'Full-Year Appraisal': 'FY 25/26',
+                'HOD Mock Appraisal': 'FY 26/27',
+                'Team Mock Appraisal': 'FY 26/27'
             }
             fy_cycle_map = {v: k for k, v in cycle_fy_map.items()}
             
@@ -4887,7 +4899,9 @@ def performance_okrs():
             # ============================================================
             cycle_fy_map = {
                 'Half-Year Appraisal': 'FY 26/27',
-                'Full-Year Appraisal': 'FY 25/26'
+                'Full-Year Appraisal': 'FY 25/26',
+                'HOD Mock Appraisal': 'FY 26/27',
+                'Team Mock Appraisal': 'FY 26/27'
             }
             fy_cycle_map = {v: k for k, v in cycle_fy_map.items()}
             
@@ -6209,7 +6223,9 @@ def performance_okrs():
             # ============================================================
             cycle_fy_map = {
                 'Half-Year Appraisal': 'FY 26/27',
-                'Full-Year Appraisal': 'FY 25/26'
+                'Full-Year Appraisal': 'FY 25/26',
+                'HOD Mock Appraisal': 'FY 26/27',
+                'Team Mock Appraisal': 'FY 26/27'
             }
             fy_cycle_map = {v: k for k, v in cycle_fy_map.items()}
             
@@ -7675,6 +7691,16 @@ def staff_confirmation():
             if not probation_employees.empty:
                 # Filters
                 filtered_review = probation_employees.copy()
+                
+                # FILTER: Only show due or overdue employees
+                now_date = datetime.now()
+                due_review = []
+                for _, emp_row in filtered_review.iterrows():
+                    emp_end = calculate_probation_end(emp_row.get('join_date'))
+                    if emp_end and emp_end <= now_date:
+                        due_review.append(emp_row)
+                filtered_review = pd.DataFrame(due_review) if due_review else pd.DataFrame()
+                
                 if is_admin:
                     col1, col2, col3 = st.columns(3)
                     with col1:
@@ -7760,7 +7786,27 @@ def staff_confirmation():
                             with col2:
                                 st.markdown(f"**Position:** {position}")
                                 st.markdown(f"**Join Date:** {join_date}")
-                                st.text_input("Highest Qualification", key=f"qual_{emp_id}", placeholder="e.g., B.Sc.")
+                                st.selectbox("Highest Qualification *", [
+                                    "O'Level (WASSCE)",
+                                    "Diploma/Certificate",
+                                    "National Technical Certificate (NTC)",
+                                    "Nigerian Certificate in Education (NCE)",
+                                    "Ordinary National Diploma (OND)",
+                                    "Higher National Diploma (HND)",
+                                    "Postgraduate Diploma (PGD)",
+                                    "Bachelor of Science (B.Sc)",
+                                    "Bachelor of Art (BA)",
+                                    "Bachelor of Engineering (B.Eng)",
+                                    "Bachelor of Technology (B.Tech)",
+                                    "Bachelor of Law (LLB)",
+                                    "Master of Science (M.Sc)",
+                                    "Master of Art (MA)",
+                                    "Master of Law (LLM)",
+                                    "M.Ed",
+                                    "MBA",
+                                    "DBA",
+                                    "Doctorate (Ph.D.)"
+                                ], key=f"qual_{emp_id}")
                             with col3:
                                 st.markdown(f"**Probation End:** {end_date.strftime('%B %d, %Y') if end_date else 'N/A'}")
                                 st.text_input("Confirmation Due Date", value=end_date.strftime('%Y-%m-%d') if end_date else '', key=f"due_{emp_id}")
@@ -7844,6 +7890,7 @@ def staff_confirmation():
                                                 "employee_id": emp_id, "employee_name": emp_name,
                                                 "department": dept, "position": position,
                                                 "region": new_region, "subsidiary": new_subsidiary,
+                                                "highest_qualification": st.session_state.get(f"qual_{emp_id}", ""),
                                                 "join_date": str(join_date), "probation_end": end_date.strftime('%Y-%m-%d') if end_date else '',
                                                 "hod_name": user_name, "supervisor_name": supervisor_name,
                                                 "line_manager_name": line_manager,
@@ -7947,7 +7994,7 @@ def staff_confirmation():
                                                     "status":"Approved by COO","coo_decision":"Approved",
                                                     "coo_name":user_name,"approved_date":now.strftime('%Y-%m-%d %H:%M')
                                                 }, {"id":r.get('id')})
-                                                db._patch("employees", {"status":"Active"}, {"employee_id":emp_id})
+                                                db._patch("employees", {"status":"HR Processing", "confirmation_status":"Pending HR Processing"}, {"employee_id":emp_id})
                                                 
                                                 # Generate confirmation letter
                                                 try:
@@ -7993,7 +8040,7 @@ def staff_confirmation():
         try:
             reviews = db._get("confirmation_reviews")
             if reviews:
-                confirmed = [r for r in reviews if r.get('status') == 'Approved by COO']
+                confirmed = [r for r in reviews if r.get('status') in ['Approved by COO', 'Letter Sent']]
                 
                 # ===== FILTERS =====
                 if confirmed and is_admin:
@@ -8161,6 +8208,74 @@ def staff_confirmation():
                                 'Weaknesses': r.get('weaknesses','')[:200], 'Confirmed': r.get('approved_date','')[:10]
                             } for r in confirmed]).to_csv(index=False),
                             "confirmed_full_report.csv", "text/csv", use_container_width=True)
+                
+                # HR PROCESSING QUEUE
+                st.markdown("---")
+                st.markdown("#### 🏢 HR Processing Queue")
+                st.info("Upload confirmation letters and send to employees.")
+                
+                hr_processing = [r for r in reviews if r.get('status') == 'Approved by COO'] if reviews else []
+                
+                if hr_processing:
+                    for r in hr_processing:
+                        emp_name = r.get('employee_name', '')
+                        emp_id = r.get('employee_id', '')
+                        emp_email = ''
+                        
+                        try:
+                            emp_data = db.get_all_employees()
+                            if not emp_data.empty:
+                                match = emp_data[emp_data['employee_id'] == emp_id]
+                                if not match.empty:
+                                    emp_email = match.iloc[0].get('email', '')
+                        except:
+                            pass
+                        
+                        with st.expander(f"🏢 {emp_name} — {r.get('position', '')} | {r.get('department', '')}"):
+                            st.markdown(f"**Employee:** {emp_name}")
+                            st.markdown(f"**Email:** {emp_email or 'N/A'}")
+                            st.markdown(f"**Score:** {r.get('total_performance_score', 'N/A')}/100 — {r.get('performance_rating', 'N/A')}")
+                            
+                            letter_file = st.file_uploader("Upload Confirmation Letter (PDF or DOCX)", type=['pdf', 'docx'], key=f"letter_{emp_id}")
+                            
+                            if st.button("📧 Send Confirmation Letter", key=f"send_letter_{emp_id}", use_container_width=True, type="primary"):
+                                if letter_file:
+                                    if emp_email:
+                                        try:
+                                            letter_ext = "pdf" if letter_file.type == "application/pdf" else "docx"
+                                            letter_url = db.upload_file("confirmation-letters", f"{emp_id}_confirmation_letter.{letter_ext}", letter_file.read(), letter_file.type)
+                                            
+                                            from utils.email_service import EmailService
+                                            EmailService().send_email(
+                                                emp_email,
+                                                f"🎉 Your Confirmation Letter - Churchgate Group",
+                                                f"Dear {emp_name},\n\nWe are delighted to inform you that your employment with Churchgate Group has been formally confirmed, following the successful completion of your probationary period.\n\nYour dedication, performance, and commitment during your probation have been exemplary, and we are pleased to welcome you as a fully confirmed member of our team.\n\nYour confirmation letter is attached to this email. Please review it and keep it for your records.\n\nWe look forward to your continued growth and contributions to the Churchgate Group family.\n\nCongratulations once again!\n\nWarm regards,\n\nChurchgate Group HR Team\nhris@churchgate.com"
+                                            )
+                                            
+                                            db._patch("confirmation_reviews", {
+                                                "status": "Letter Sent",
+                                                "letter_url": letter_url,
+                                                "letter_sent_date": datetime.now().strftime('%Y-%m-%d %H:%M')
+                                            }, {"employee_id": emp_id})
+                                            
+                                            db._patch("employees", {
+                                                "status": "Active",
+                                                "confirmation_status": "Letter Sent"
+                                            }, {"employee_id": emp_id})
+                                            
+                                            st.success(f"✅ Letter sent to {emp_email}!")
+                                            st.balloons()
+                                            time.sleep(1)
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Error: {str(e)}")
+                                    else:
+                                        st.error("❌ No email found for this employee")
+                                else:
+                                    st.error("❌ Please upload the confirmation letter first")
+                else:
+                    st.info("No pending HR processing.")
+                
                 else:
                     st.info("No confirmed staff match the selected filters.")
             else:
@@ -8181,7 +8296,7 @@ def staff_confirmation():
             if reviews or not all_employees.empty:
                 total_employees = len(all_employees) if not all_employees.empty else 0
                 total_probation = len(all_employees[all_employees['status'] == 'Probation']) if not all_employees.empty else 0
-                total_confirmed = len([r for r in reviews if r.get('status') == 'Approved by COO']) if reviews else 0
+                total_confirmed = len([r for r in reviews if r.get('status') in ['Approved by COO', 'Letter Sent']]) if reviews else 0
                 total_pending = len([r for r in reviews if r.get('status') in ['Pending COO Approval', 'Pending']]) if reviews else 0
                 total_extended = len([r for r in reviews if 'Extension' in str(r.get('status', ''))]) if reviews else 0
                 confirmation_rate = (total_confirmed / max(total_probation + total_confirmed, 1)) * 100
@@ -8995,7 +9110,7 @@ class AIRecruitmentAgent:
         self.use_openai = False
         self.use_groq = False
         self.client = None
-        self.model = "llama-3.1-70b-versatile"
+        self.model = "llama-3.1-8b-instant"
         
         # Try EVERY possible way to get the key
         self.groq_api_key = ""
@@ -9003,16 +9118,14 @@ class AIRecruitmentAgent:
         # Method 1: Direct os.environ
         val = os.environ.get("GROQ_API_KEY", "")
         if val:
-            self.groq_api_key = val
-            print("✅ GROQ: Found in os.environ")
+            self.groq_api_key = val.strip()
         
         # Method 2: Streamlit secrets (Railway style)
         if not self.groq_api_key:
             try:
                 val = st.secrets["GROQ_API_KEY"]
                 if val:
-                    self.groq_api_key = val
-                    print("✅ GROQ: Found in st.secrets")
+                    self.groq_api_key = val.strip()
             except:
                 pass
         
@@ -9021,8 +9134,7 @@ class AIRecruitmentAgent:
             try:
                 val = st.secrets.get("GROQ_API_KEY", "")
                 if val:
-                    self.groq_api_key = val
-                    print("✅ GROQ: Found in st.secrets.get")
+                    self.groq_api_key = val.strip()
             except:
                 pass
         
@@ -9030,40 +9142,52 @@ class AIRecruitmentAgent:
         if not self.groq_api_key:
             for key, value in os.environ.items():
                 if "GROQ" in key.upper():
-                    self.groq_api_key = value
-                    print(f"✅ GROQ: Found via env scan: {key}")
+                    self.groq_api_key = value.strip()
                     break
         
-        # Method 5: Try lowercase
-        if not self.groq_api_key:
-            val = os.environ.get("groq_api_key", "")
-            if val:
-                self.groq_api_key = val
-                print("✅ GROQ: Found in lowercase")
-        
-        # Print status
+        # Final clean
         if self.groq_api_key:
+            self.groq_api_key = self.groq_api_key.strip()
             print(f"✅ GROQ API Key found! Starts with: {self.groq_api_key[:10]}...")
-            try:
-                self.client = groq.Groq(api_key=self.groq_api_key)
-                self.use_groq = True
-                print("✅ Groq client initialized successfully!")
-            except Exception as e:
-                print(f"❌ Groq client init failed: {str(e)[:100]}")
+            self.use_groq = True
         else:
-            print("❌ GROQ_API_KEY NOT FOUND in any location!")
-            print(f"   Available env vars: {[k for k in os.environ.keys() if 'KEY' in k.upper() or 'GROQ' in k.upper()]}")
+            self.use_groq = False
+            print("❌ GROQ_API_KEY NOT FOUND!")
     
     def _groq_chat(self, messages, temperature=0.3, max_tokens=2000):
         try:
-            if not self.use_groq or not self.client:
+            if not self.use_groq or not self.groq_api_key:
                 return None
-            response = self.client.chat.completions.create(
-                model=self.model, messages=messages,
-                temperature=temperature, max_tokens=max_tokens
-            )
-            return response.choices[0].message.content
-        except:
+            
+            import requests as req
+            
+            url = "https://api.groq.com/openai/v1/chat/completions"
+            clean_key = self.groq_api_key.strip()
+            headers = {
+                "Authorization": f"Bearer {clean_key}",
+                "Content-Type": "application/json"
+            }
+            
+            payload = {
+                "model": self.model,
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens
+            }
+            
+            response = req.post(url, json=payload, headers=headers, timeout=30)
+            
+            if response.status_code == 200:
+                data = response.json()
+                content = data.get('choices', [{}])[0].get('message', {}).get('content', '')
+                if content:
+                    return content
+            
+            print(f"DEBUG Groq error: {response.status_code} - {response.text[:200]}")
+            return None
+                
+        except Exception as e:
+            print(f"DEBUG Groq error: {str(e)[:200]}")
             return None
     
     def analyze_jd(self, jd_text):
@@ -9140,69 +9264,102 @@ CV Content: {cv_text[:3000]}"""
                 "interview_questions": ["Tell me about your experience"]}
     
     def deep_analyze_candidate(self, cv_text, jd_text):
+        """Deep analysis with dynamic competency scoring based on JD"""
         if not cv_text or len(cv_text) < 50:
             return self.score_candidate_advanced(cv_text, self.analyze_jd(jd_text if jd_text else cv_text[:500]))
         
-        prompt = f"""Deep candidate analysis. Return ONLY valid JSON:
-{{"overall_score": 82, "skills_score": 85, "experience_score": 80, "education_score": 75,
-  "cv_quality_score": 78, "soft_skills_score": 82, "verbatim_flags": 5, "confidence": 90,
-  "tier": "Tier 2", "key_strengths": ["strength1", "strength2"],
-  "gaps_identified": ["gap1"], "interview_questions": ["q1", "q2", "q3"],
-  "recommendation": "Strong candidate", "risk_factors": ["None"], "culture_fit_score": 85}}
+        prompt = f"""You are an expert recruitment AI agent. Perform a comprehensive candidate evaluation against the job description provided.
 
-JD: {jd_text[:2000] if jd_text else 'General position'}
-CV: {cv_text[:3000]}"""
-        
-        if self.use_groq:
-            result = self._groq_chat([
-                {"role": "system", "content": "Expert recruitment AI. Return only valid JSON."},
-                {"role": "user", "content": prompt}
-            ], temperature=0.2, max_tokens=2000)
-            if result:
-                json_match = re.search(r'\{.*\}', result, re.DOTALL)
-                if json_match:
-                    return json.loads(json_match.group())
-        return self.score_candidate_advanced(cv_text, self.analyze_jd(jd_text if jd_text else cv_text[:500]))
-    
-    def chat(self, message, context=""):
-        if not self.use_groq:
-            return "I'm currently running in offline mode. Please check the GROQ_API_KEY configuration."
+First, analyze the job description to identify the TOP 5 most important competencies for this role. Then score the candidate against those competencies.
+
+Return ONLY valid JSON with this structure:
+{{
+    "role_type": "Identify the role category (e.g., Builder-Operator, Sales Operations, CRM Manager, Executive, Technical, etc.)",
+    "core_competencies": [
+        {{"name": "Competency 1", "weight": 25, "score": 4, "evidence": "What in the CV demonstrates this"}},
+        {{"name": "Competency 2", "weight": 20, "score": 5, "evidence": "What in the CV demonstrates this"}},
+        {{"name": "Competency 3", "weight": 20, "score": 3, "evidence": "What in the CV demonstrates this"}},
+        {{"name": "Competency 4", "weight": 20, "score": 4, "evidence": "What in the CV demonstrates this"}},
+        {{"name": "Competency 5", "weight": 15, "score": 4, "evidence": "What in the CV demonstrates this"}}
+    ],
+    "overall_score": 85,
+    "tier": "Tier 1",
+    "skills_score": 80,
+    "experience_score": 85,
+    "education_score": 75,
+    "cv_quality_score": 70,
+    "soft_skills_score": 80,
+    "verbatim_flags": 5,
+    "confidence": 90,
+    "builder_operator_score": 85,
+    "execution_rigor_score": 80,
+    "key_strengths": ["strength1", "strength2", "strength3"],
+    "gaps_identified": ["gap1", "gap2"],
+    "interview_questions": ["q1", "q2", "q3", "q4", "q5"],
+    "recommendation": "Detailed recommendation",
+    "risk_factors": ["risk1"],
+    "culture_fit_score": 80,
+    "red_flags": [],
+    "salary_estimation": "Market range estimate based on experience"
+}}
+
+IMPORTANT GUIDELINES:
+- For Sales Operations roles: prioritize CRM ownership, pipeline discipline, process enforcement, data-driven mindset, team management
+- For Builder-Operator roles: prioritize shipped production systems, technical depth, measurable business impact, cross-functional ability
+- For Associate/Junior roles: prioritize attention to detail, data handling, coachability, discipline, organization
+- For Manager roles: prioritize team management, process building, stakeholder management, systems thinking
+- Detect verbatim copying from JD templates
+- Flag vague claims without evidence
+- Note employment gaps
+- Assess if experience is at scale or limited
+
+Job Description: {jd_text[:3000] if jd_text else 'General position - assess broadly'}
+
+CV Content: {cv_text[:4000]}"""
         
         try:
-            system_prompt = f"""You are an intelligent AI Recruitment Assistant for Churchgate Group, a major real estate and infrastructure company in Nigeria. 
-
-You have access to the current recruitment pipeline. Be conversational, helpful, and provide specific insights based on the data available to you.
-
-Current Pipeline Context:
-{context[:2000]}
-
-Guidelines:
-- Be natural and conversational, like a helpful HR colleague
-- Reference specific candidates and scores when relevant
-- Provide actionable recommendations
-- If asked about candidates, analyze their scores and profiles
-- If asked to compare, give detailed comparisons
-- If asked for interview questions, make them role-specific
-- If you don't have enough data, be honest about it
-- Never say "I can only help with top candidates, comparisons..." - that's too restrictive
-- You CAN help with: candidate analysis, hiring strategy, interview prep, offer negotiations, onboarding tips, recruitment best practices, job description writing, salary benchmarking, and more"""
-
+            if self.use_groq:
+                result = self._groq_chat([
+                    {"role": "system", "content": "You are an expert recruitment AI agent. Analyze candidates deeply and objectively. Return only valid JSON with the exact structure requested."},
+                    {"role": "user", "content": prompt}
+                ], temperature=0.2, max_tokens=2500)
+                
+                if result:
+                    json_match = re.search(r'\{.*\}', result, re.DOTALL)
+                    if json_match:
+                        return json.loads(json_match.group())
+            
+            return self.score_candidate_advanced(cv_text, self.analyze_jd(jd_text if jd_text else cv_text[:500]))
+        except Exception as e:
+            print(f"Deep analysis error: {str(e)[:100]}")
+            return self.score_candidate_advanced(cv_text, self.analyze_jd(jd_text if jd_text else cv_text[:500]))
+    
+    def chat(self, message, context=""):
+        """AI Chat Assistant using Groq"""
+        if not self.use_groq:
+            return get_smart_response(message, [], pd.DataFrame())
+        
+        try:
+            system_prompt = """You are an intelligent AI Recruitment Assistant for Churchgate Group, a major real estate and infrastructure company in Nigeria. 
+You are helpful, conversational, and knowledgeable about HR, recruitment, and general business topics. 
+Respond naturally like a helpful colleague. Keep responses concise but informative.
+You can discuss: recruitment, HR policies, interviews, onboarding, performance management, training, company culture, leadership, career development, sourcing strategies, salary benchmarking, and general professional topics."""
+            
             messages = [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": message}
+                {"role": "user", "content": f"Context: {context[:1000]}\n\nQuestion: {message}"}
             ]
             
-            result = self._groq_chat(messages, temperature=0.7, max_tokens=1000)
+            result = self._groq_chat(messages, temperature=0.7, max_tokens=500)
             
-            if result and len(result) > 20:
-                return result
+            if result and len(result.strip()) > 10:
+                return result.strip()
             else:
-                print(f"DEBUG CHAT: Groq returned empty or short response: {result}")
-                return "I received your message but couldn't generate a proper response. Please try again or rephrase your question."
+                return get_smart_response(message, [], pd.DataFrame())
                 
-        except Exception as e:
-            print(f"DEBUG CHAT ERROR: {str(e)[:200]}")
-            return f"I encountered a technical issue: {str(e)[:100]}. Please try again."
+        except:
+            return get_smart_response(message, [], pd.DataFrame())
+
 
 
 def get_smart_response(message, screened_candidates, all_candidates):
@@ -9544,69 +9701,107 @@ linkedin_parser = LinkedInParser()
 
 
 def extract_text_from_cv_url(cv_url):
-    """Download and extract text from CV file URL from Supabase storage"""
+    """Download and extract text from CV file URL"""
     try:
         import requests as req
         import io
         
-        # Handle Supabase storage URLs
+        print(f"DEBUG CV: Downloading from {cv_url[:80]}...")
+        
         response = req.get(cv_url, timeout=30, headers={'User-Agent': 'Mozilla/5.0'})
         if response.status_code != 200:
-            print(f"CV download failed: HTTP {response.status_code}")
+            print(f"DEBUG CV: HTTP {response.status_code}")
             return None
         
-        content_type = response.headers.get('content-type', '').lower()
-        file_content = io.BytesIO(response.content)
+        file_bytes = response.content
+        print(f"DEBUG CV: Downloaded {len(file_bytes)} bytes")
         
-        extracted_text = ""
+        # Try pypdf
+        try:
+            from pypdf import PdfReader
+            file_stream = io.BytesIO(file_bytes)
+            pdf = PdfReader(file_stream)
+            text_parts = []
+            for page in pdf.pages:
+                text = page.extract_text()
+                if text and text.strip():
+                    # Only keep printable characters
+                    cleaned = ''.join(c for c in text if c.isprintable() or c in '\n\r\t ')
+                    # Skip if it looks like raw PDF
+                    if not cleaned.startswith('%PDF') and 'endobj' not in cleaned[:100]:
+                        text_parts.append(cleaned)
+            
+            if text_parts:
+                full_text = '\n'.join(text_parts).strip()
+                if len(full_text) > 100:
+                    print(f"DEBUG CV: SUCCESS - pypdf extracted {len(full_text)} chars")
+                    return full_text
+                else:
+                    print(f"DEBUG CV: pypdf text too short: {len(full_text)} chars")
+        except Exception as e:
+            print(f"DEBUG CV: pypdf failed: {str(e)[:100]}")
         
-        # Try PDF
-        if 'pdf' in content_type or cv_url.lower().endswith('.pdf'):
-            try:
-                from pypdf import PdfReader
-                pdf_reader = PdfReader(file_content)
-                for page in pdf_reader.pages:
-                    text = page.extract_text()
-                    if text:
-                        extracted_text += text + "\n"
-                if extracted_text.strip() and len(extracted_text.strip()) > 50:
-                    print(f"✅ PDF extracted: {len(extracted_text)} chars")
-                    return extracted_text.strip()
-            except Exception as e:
-                print(f"PDF extraction error: {str(e)[:100]}")
+        # Try PyPDF2
+        try:
+            import PyPDF2
+            file_stream = io.BytesIO(file_bytes)
+            pdf = PyPDF2.PdfReader(file_stream)
+            text_parts = []
+            for page in pdf.pages:
+                text = page.extract_text()
+                if text and text.strip():
+                    cleaned = ''.join(c for c in text if c.isprintable() or c in '\n\r\t ')
+                    if not cleaned.startswith('%PDF') and 'endobj' not in cleaned[:100]:
+                        text_parts.append(cleaned)
+            
+            if text_parts:
+                full_text = '\n'.join(text_parts).strip()
+                if len(full_text) > 100:
+                    print(f"DEBUG CV: SUCCESS - PyPDF2 extracted {len(full_text)} chars")
+                    return full_text
+        except Exception as e:
+            print(f"DEBUG CV: PyPDF2 failed: {str(e)[:100]}")
         
         # Try DOCX
-        if 'docx' in content_type or 'word' in content_type or cv_url.lower().endswith('.docx'):
-            try:
-                import docx
-                file_content.seek(0)
-                doc = docx.Document(file_content)
-                extracted_text = "\n".join([p.text for p in doc.paragraphs])
-                if extracted_text.strip() and len(extracted_text.strip()) > 50:
-                    print(f"✅ DOCX extracted: {len(extracted_text)} chars")
-                    return extracted_text.strip()
-            except Exception as e:
-                print(f"DOCX extraction error: {str(e)[:100]}")
+        try:
+            import docx
+            file_stream = io.BytesIO(file_bytes)
+            doc = docx.Document(file_stream)
+            text = '\n'.join([p.text for p in doc.paragraphs])
+            if len(text.strip()) > 100:
+                print(f"DEBUG CV: SUCCESS - DOCX extracted {len(text)} chars")
+                return text.strip()
+        except:
+            pass
         
-        # Try plain text
-        if not extracted_text or len(extracted_text.strip()) < 50:
-            try:
-                file_content.seek(0)
-                text = response.content.decode('utf-8', errors='ignore')
-                # Remove binary garbage
-                text = ''.join(c for c in text if c.isprintable() or c in '\n\r\t')
-                if text.strip() and len(text.strip()) > 50:
-                    print(f"✅ Text extracted: {len(text)} chars")
-                    return text.strip()
-            except:
-                pass
+        # ===== OCR FALLBACK FOR IMAGE-BASED PDFs =====
+        try:
+            from pdf2image import convert_from_bytes
+            import pytesseract
+            
+            print("DEBUG CV: Attempting OCR on image-based PDF...")
+            images = convert_from_bytes(file_bytes, first_page=1, last_page=2)
+            
+            ocr_text = []
+            for img in images:
+                text = pytesseract.image_to_string(img)
+                if text.strip():
+                    ocr_text.append(text.strip())
+            
+            if ocr_text:
+                full_text = '\n'.join(ocr_text)
+                if len(full_text.strip()) > 100:
+                    print(f"DEBUG CV: OCR SUCCESS - extracted {len(full_text)} chars")
+                    return full_text.strip()
+        except Exception as e:
+            print(f"DEBUG CV: OCR failed: {str(e)[:100]}")
         
-        print(f"❌ Could not extract text from CV: {cv_url[:50]}...")
+        print(f"DEBUG CV: All methods failed - PDF may be image-based (scanned)")
         return None
+        
     except Exception as e:
-        print(f"CV extraction error: {str(e)[:200]}")
+        print(f"DEBUG CV: Fatal error: {str(e)[:200]}")
         return None
-
 
 
 def recruitment_hub():
@@ -9614,20 +9809,28 @@ def recruitment_hub():
     st.markdown("""<div class="churchgate-header"><h1>💼 Recruitment Hub</h1><p>Job Requisition | Auto-Posting | AI Screening | Interview Scheduler | Offer Letters | Background Checks | Onboarding</p></div>""", unsafe_allow_html=True)
     
     # ============================================================
-    # AUTO-POST FUNCTION
+    # AUTO-POST FUNCTION - ENHANCED FOR ALL PLATFORMS
     # ============================================================
     def auto_post_job(job_title, job_department, job_location, job_type, job_salary, job_jd, job_ref, public_url):
-        """Auto-post job to LinkedIn, Indeed, and Glassdoor"""
+        """Auto-post job to LinkedIn, Indeed, Glassdoor, MyJobMag, HotNigerianJobs"""
         import re
         import urllib.parse
         
         clean_jd = re.sub(r'<[^>]+>', '', job_jd)
+        clean_jd_short = clean_jd[:800]
         results = {}
         
-        # LINKEDIN - Auto-post to personal profile + Company page link
+        # ============================================
+        # 1. LINKEDIN
+        # ============================================
         import requests as req_linkedin
         
-        linkedin_token = os.environ.get("LINKEDIN_ACCESS_TOKEN", st.secrets.get("LINKEDIN_ACCESS_TOKEN", ""))
+        linkedin_token = os.environ.get("LINKEDIN_ACCESS_TOKEN", "")
+        if not linkedin_token:
+            try:
+                linkedin_token = st.secrets.get("LINKEDIN_ACCESS_TOKEN", "")
+            except:
+                pass
         
         linkedin_post = f"""🚀 WE'RE HIRING: {job_title}
 
@@ -9637,11 +9840,11 @@ def recruitment_hub():
 
 APPLY NOW: {public_url}
 
-#Hiring #Jobs #ChurchgateGroup #Careers #NigeriaJobs"""
+#Hiring #Jobs #ChurchgateGroup #Careers #NigeriaJobs #LagosJobs #AbujaJobs"""
         
         messages = []
         
-        # 1. AUTO-POST TO PERSONAL PROFILE
+        # Auto-post to personal profile
         if linkedin_token:
             try:
                 user_url = "https://api.linkedin.com/v2/userinfo"
@@ -9672,41 +9875,154 @@ APPLY NOW: {public_url}
                     )
                     
                     if post_response.status_code in [200, 201]:
-                        messages.append('✅ Posted to personal LinkedIn')
+                        messages.append('✅ Posted to LinkedIn profile')
                     else:
-                        messages.append('⚠️ Personal LinkedIn: Click share link below')
+                        messages.append('⚠️ LinkedIn: Use share link below')
                 else:
                     messages.append('⚠️ LinkedIn auth issue')
             except:
                 messages.append('⚠️ LinkedIn API error')
         else:
-            messages.append('⚠️ No LinkedIn token configured')
+            messages.append('⚠️ No LinkedIn token')
         
-        # 2. WTC ABUJA PAGE - One-click share link
-        wtc_url = f"https://www.linkedin.com/shareArticle?mini=true&url={urllib.parse.quote(public_url)}&title={urllib.parse.quote('WE ARE HIRING: ' + job_title)}&summary={urllib.parse.quote(clean_jd[:200])}"
-        messages.append(f'🏢 [Click to post on WTC Abuja Page]({wtc_url})')
-        
-        # 3. CHURCHGATE GROUP PAGE - One-click share link
-        cg_url = f"https://www.linkedin.com/shareArticle?mini=true&url={urllib.parse.quote(public_url)}&title={urllib.parse.quote('WE ARE HIRING: ' + job_title)}&summary={urllib.parse.quote(clean_jd[:200])}"
-        messages.append(f'🏢 [Click to post on Churchgate Group Page]({cg_url})')
+        # LinkedIn share links
+        li_share = f"https://www.linkedin.com/shareArticle?mini=true&url={urllib.parse.quote(public_url)}&title={urllib.parse.quote('WE ARE HIRING: ' + job_title)}&summary={urllib.parse.quote(clean_jd[:200])}"
+        messages.append(f'🔗 [Share on LinkedIn]({li_share})')
         
         results['linkedin'] = {
             'status': 'success',
             'post_text': linkedin_post,
-            'message': ' | '.join(messages)
+            'message': ' | '.join(messages),
+            'share_url': li_share
         }
         
-        # INDEED
+        # ============================================
+        # 2. INDEED - XML Feed Generation
+        # ============================================
         try:
+            import xml.etree.ElementTree as ET
+            
+            # Create XML for Indeed
+            job_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<job>
+    <title><![CDATA[{job_title}]]></title>
+    <date><![CDATA[{datetime.now().strftime('%a, %d %b %Y %H:%M:%S +0000')}]]></date>
+    <referencenumber><![CDATA[{job_ref}]]></referencenumber>
+    <url><![CDATA[{public_url}]]></url>
+    <company><![CDATA[Churchgate Group]]></company>
+    <city><![CDATA[{job_location.split()[-1] if job_location else 'Abuja'}]]></city>
+    <state><![CDATA[FCT]]></state>
+    <country><![CDATA[Nigeria]]></country>
+    <description><![CDATA[{clean_jd[:3000]}]]></description>
+    <jobtype><![CDATA[{job_type}]]></jobtype>
+    <category><![CDATA[{job_department}]]></category>
+    <salary><![CDATA[{job_salary if job_salary else 'Competitive'}]]></salary>
+</job>"""
+            
             db_temp = DatabaseManager()
-            db_temp.upload_file("job-feeds", f"indeed_{job_ref}.txt", clean_jd[:2500].encode('utf-8'), "text/plain")
-            results['indeed'] = {'status': 'posted', 'message': '✅ Indeed feed saved! Upload at indeed.com/hire'}
-        except:
-            results['indeed'] = {'status': 'ready', 'message': '📋 Indeed content ready'}
+            db_temp.upload_file("job-feeds", f"indeed_{job_ref}.xml", job_xml.encode('utf-8'), "application/xml")
+            results['indeed'] = {
+                'status': 'posted', 
+                'message': '✅ Indeed XML feed generated! Upload at indeed.com/hire',
+                'xml_content': job_xml[:500]
+            }
+        except Exception as e:
+            results['indeed'] = {'status': 'ready', 'message': f'📋 Indeed content ready (upload manually)'}
         
-        # GLASSDOOR
+        # ============================================
+        # 3. GLASSDOOR
+        # ============================================
         glassdoor_url = f"https://www.glassdoor.com/employers/post-job/?title={urllib.parse.quote(job_title)}&location={urllib.parse.quote(job_location)}"
-        results['glassdoor'] = {'status': 'ready', 'post_url': glassdoor_url, 'message': '🏢 Glassdoor post ready!'}
+        results['glassdoor'] = {
+            'status': 'ready', 
+            'post_url': glassdoor_url, 
+            'message': f'🏢 [Post on Glassdoor]({glassdoor_url})'
+        }
+        
+        # ============================================
+        # 4. MYJOBMAG - Pre-filled Post Template
+        # ============================================
+        myjobmag_fields = {
+            'job_title': job_title,
+            'specialization': job_department,
+            'experience': '3-5 years',  # Adjust based on level
+            'job_mode': 'Full Time' if job_type.lower() == 'full-time' else 'Onsite',
+            'location': job_location,
+            'relocation': 'No',
+            'qualification': 'Degree',
+            'salary': job_salary if job_salary else 'Competitive',
+            'hiring_company': 'Churchgate Group',
+            'show_company': 'Yes',
+            'description': clean_jd[:3000],
+            'apply_method': 'Use this link to apply',
+            'apply_link': public_url,
+            'deadline': 'Set deadline',
+            'cover_letter': 'No'
+        }
+        
+        myjobmag_message = f"""📋 **MyJobMag Post Ready - Copy these fields:**
+
+**Job Title:** {myjobmag_fields['job_title']}
+**Specialization:** {myjobmag_fields['specialization']}
+**Experience:** {myjobmag_fields['experience']}
+**Job Mode:** {myjobmag_fields['job_mode']}
+**Location:** {myjobmag_fields['location']}
+**Qualification:** {myjobmag_fields['qualification']}
+**Salary:** {myjobmag_fields['salary']}
+**Hiring Company:** Churchgate Group
+**Apply Method:** Use link → {public_url}
+**Deadline:** Set to closing date
+
+**Description:**
+{clean_jd[:500]}...
+
+[Open MyJobMag Post Page](https://www.myjobmag.com/post-job)"""
+        
+        results['myjobmag'] = {
+            'status': 'ready',
+            'message': myjobmag_message,
+            'fields': myjobmag_fields
+        }
+        
+        # ============================================
+        # 5. HOTNIGERIANJOBS - Pre-filled Post Template
+        # ============================================
+        hnj_fields = {
+            'company': 'Churchgate Group',
+            'position_title': job_title,
+            'job_field': job_department,
+            'qualification': 'Degree',
+            'employment_type': job_type,
+            'location': job_location,
+            'city': job_location.split()[-1] if job_location else 'Abuja',
+            'salary_min': job_salary.split('-')[0].strip() if job_salary and '-' in job_salary else '',
+            'salary_max': job_salary.split('-')[1].strip() if job_salary and '-' in job_salary else '',
+            'deadline': '',
+            'description': clean_jd[:3000],
+            'apply_method': 'Direct applications to a different website',
+            'apply_url': public_url
+        }
+        
+        hnj_message = f"""📋 **HotNigerianJobs Post Ready - Copy these fields:**
+
+**Company:** Churchgate Group
+**Position Title:** {hnj_fields['position_title']}
+**Job Field:** {hnj_fields['job_field']}
+**Employment Type:** {hnj_fields['employment_type']}
+**Location:** {hnj_fields['location']}
+**Salary:** {job_salary if job_salary else 'Competitive'}
+**Application Method:** Direct to website → {public_url}
+
+**Description:**
+{clean_jd[:500]}...
+
+[Open HotNigerianJobs Post Page](https://www.hotnigerianjobs.com/employer/post-job)"""
+        
+        results['hotnigerianjobs'] = {
+            'status': 'ready',
+            'message': hnj_message,
+            'fields': hnj_fields
+        }
         
         return results
     
@@ -9849,13 +10165,17 @@ APPLY NOW: {public_url}
             screening_q4 = st.text_input("Screening Question 4", placeholder="e.g., B.Sc. Computer Science or related field")
             
             st.markdown("### Auto-Post Settings")
-            c1, c2, c3 = st.columns(3)
+            c1, c2, c3, c4, c5 = st.columns(5)
             with c1:
-                post_linkedin = st.checkbox("Post to LinkedIn", value=True)
+                post_linkedin = st.checkbox("LinkedIn", value=True)
             with c2:
-                post_indeed = st.checkbox("Post to Indeed", value=True)
+                post_indeed = st.checkbox("Indeed", value=True)
             with c3:
-                post_glassdoor = st.checkbox("Post to Glassdoor", value=True)
+                post_glassdoor = st.checkbox("Glassdoor", value=True)
+            with c4:
+                post_myjobmag = st.checkbox("MyJobMag", value=True)
+            with c5:
+                post_hotnigerianjobs = st.checkbox("HotNigerianJobs", value=True)
             
             submitted = st.form_submit_button("📤 Submit for Approval", use_container_width=True)
             
@@ -9867,7 +10187,7 @@ APPLY NOW: {public_url}
                         'type': employment_type, 'salary': salary_range, 'level': experience_level,
                         'positions': positions, 'closing': closing_date.strftime('%Y-%m-%d'),
                         'jd': jd_text_for_submission, 'screening': [screening_q1, screening_q2, screening_q3, screening_q4],
-                        'posts': {'linkedin': post_linkedin, 'indeed': post_indeed, 'glassdoor': post_glassdoor},
+                        'posts': {'linkedin': post_linkedin, 'indeed': post_indeed, 'glassdoor': post_glassdoor, 'myjobmag': post_myjobmag, 'hotnigerianjobs': post_hotnigerianjobs},
                         'status': 'Pending LM Approval',
                         'submitted_by': user_name, 'date': datetime.now().strftime('%Y-%m-%d %H:%M'),
                         'lm_comment': '', 'admin_comment': '', 'coo_comment': ''
@@ -10113,24 +10433,34 @@ APPLY NOW: {public_url}
                                         
                                         # ===== AUTO-POST TO JOB BOARDS =====
                                         post_settings = req.get('posts', {})
-                                        st.write(f"DEBUG posts: {post_settings}, type: {type(post_settings)}")
                                         posting_results = []
                                         
+                                        # Call auto_post_job ONCE
+                                        result = auto_post_job(req['title'], req['department'], req['location'], req['type'], req.get('salary', ''), req['jd'], job_ref, public_url)
+                                        
                                         if post_settings.get('linkedin'):
-                                            result = auto_post_job(req['title'], req['department'], req['location'], req['type'], req.get('salary', ''), req['jd'], job_ref, public_url)
                                             posting_results.append(result['linkedin']['message'])
                                         
                                         if post_settings.get('indeed'):
-                                            result = auto_post_job(req['title'], req['department'], req['location'], req['type'], req.get('salary', ''), req['jd'], job_ref, public_url)
                                             posting_results.append(result['indeed']['message'])
                                         
                                         if post_settings.get('glassdoor'):
-                                            result = auto_post_job(req['title'], req['department'], req['location'], req['type'], req.get('salary', ''), req['jd'], job_ref, public_url)
                                             posting_results.append(result['glassdoor']['message'])
                                         
+                                        if post_settings.get('myjobmag'):
+                                            posting_results.append(result['myjobmag']['message'])
+                                        
+                                        if post_settings.get('hotnigerianjobs'):
+                                            posting_results.append(result['hotnigerianjobs']['message'])
+                                        
                                         if posting_results:
+                                            st.markdown("### 📢 Job Posting Results")
                                             for msg in posting_results:
-                                                st.success(msg)
+                                                if 'MyJobMag' in msg or 'HotNigerianJobs' in msg or 'Copy these fields' in msg:
+                                                    with st.expander("📋 Platform Post Template"):
+                                                        st.markdown(msg)
+                                                else:
+                                                    st.success(msg)
                                         # ===================================
                                         
                                         st.success(f"✅ Job is LIVE on Careers Page!")
@@ -12095,41 +12425,31 @@ def ai_recruitment_agent():
                             st.success(f"✅ {screened} candidates screened!")
                             st.rerun()
                 with col3:
-                    if st.button("📊 Quick Score", use_container_width=True, disabled=len(unscreened)==0):
-                        with st.spinner("Scoring..."):
-                            for _, row in unscreened.iterrows():
-                            try:
-                                cv_text = str(row.get('resume_text', ''))
-                                cv_url = str(row.get('cv_url', ''))
-                                
-                                if (not cv_text or cv_text in ['None', '', 'nan'] or len(cv_text) < 50):
-                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
-                                        extracted = extract_text_from_cv_url(cv_url)
-                                        if extracted:
-                                            cv_text = extracted
-                                            try:
-                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
-                                            except:
-                                                pass
-                                
-                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
-                                    if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
-                                        extracted = extract_text_from_cv_url(cv_url)
-                                        if extracted:
-                                            cv_text = extracted
-                                            try:
-                                                db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
-                                            except:
-                                                pass
-                                
-                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
-                                        result = ai_agent.score_candidate_advanced(cv_text, ai_agent.analyze_jd(cv_text[:500]))
-                                        if isinstance(result, dict):
-                                            db._patch("candidates", {"ai_score": int(result.get('overall_score', 0)), "ai_tier": result.get('tier', 'Pending')}, {"candidate_ref": row.get('candidate_ref', '')})
-                                except:
-                                    pass
-                            st.success("✅ Quick scores applied!")
-                            st.rerun()
+                        if st.button("📊 Quick Score", use_container_width=True, disabled=len(unscreened)==0):
+                            with st.spinner("Scoring..."):
+                                for _, row in unscreened.iterrows():
+                                    try:
+                                        cv_text = str(row.get('resume_text', ''))
+                                        cv_url = str(row.get('cv_url', ''))
+                                        
+                                        if (not cv_text or cv_text in ['None', '', 'nan'] or len(cv_text) < 50):
+                                            if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
+                                                extracted = extract_text_from_cv_url(cv_url)
+                                                if extracted:
+                                                    cv_text = extracted
+                                                    try:
+                                                        db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
+                                                    except:
+                                                        pass
+                                        
+                                        if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
+                                            result = ai_agent.score_candidate_advanced(cv_text, ai_agent.analyze_jd(cv_text[:500]))
+                                            if isinstance(result, dict):
+                                                db._patch("candidates", {"ai_score": int(result.get('overall_score', 0)), "ai_tier": result.get('tier', 'Pending')}, {"candidate_ref": row.get('candidate_ref', '')})
+                                    except:
+                                        pass
+                                st.success("✅ Quick scores applied!")
+                                st.rerun()
                 
                 # ===== TIERING REPORT =====
                 st.markdown("---")
@@ -12173,45 +12493,176 @@ def ai_recruitment_agent():
                         except:
                             detailed = {}
                         
+                        # Safe getters to handle None values
+                        def safe_int(val, default=0):
+                            try:
+                                return int(float(val)) if val is not None else default
+                            except:
+                                return default
+                        
+                        def safe_str(val, default='N/A'):
+                            return str(val) if val is not None else default
+                        
                         scorecard_data.append({
                             'Rank': len(scorecard_data) + 1,
                             'Candidate': f"{row.get('first_name','')} {row.get('last_name','')}",
-                            'Overall': int(row.get('ai_score', 0)),
-                            'Tier': row.get('ai_tier', 'Pending'),
-                            'Skills': int(detailed.get('skills_score', 0)),
-                            'Experience': int(detailed.get('experience_score', 0)),
-                            'Education': int(detailed.get('education_score', 0)),
-                            'CV Quality': int(detailed.get('cv_quality_score', detailed.get('soft_skills_score', 0))),
-                            'Verbatim': f"{int(detailed.get('verbatim_flags', 0))}%",
-                            'Confidence': f"{int(detailed.get('confidence', 0))}%",
-                            'Strengths': ', '.join(detailed.get('key_strengths', [])[:2]),
-                            'Gaps': ', '.join(detailed.get('gaps_identified', [])[:2]),
+                            'Overall': safe_int(detailed.get('overall_score', row.get('ai_score', 0))),
+                            'Tier': safe_str(detailed.get('tier', row.get('ai_tier')), 'Pending'),
+                            'Role_Type': safe_str(detailed.get('role_type'), 'General'),
+                            'Core_Competencies': detailed.get('core_competencies', []),
+                            # Standard scores
+                            'Skills': safe_int(detailed.get('skills_score', 0)),
+                            'Experience': safe_int(detailed.get('experience_score', 0)),
+                            'Education': safe_int(detailed.get('education_score', 0)),
+                            'CV_Quality': safe_int(detailed.get('cv_quality_score', 0)),
+                            'Soft_Skills': safe_int(detailed.get('soft_skills_score', 0)),
+                            'Culture_Fit': safe_int(detailed.get('culture_fit_score', 0)),
+                            # Risk & Confidence
+                            'Verbatim_Risk': f"{safe_int(detailed.get('verbatim_flags', 0))}%",
+                            'AI_Confidence': f"{safe_int(detailed.get('confidence', 0))}%",
+                            # Strengths & Gaps
+                            'Strengths': ', '.join(detailed.get('key_strengths', [])[:3]) if detailed.get('key_strengths') else 'N/A',
+                            'Gaps': ', '.join(detailed.get('gaps_identified', [])[:3]) if detailed.get('gaps_identified') else 'N/A',
+                            # Red Flags
+                            'Red_Flags': ', '.join(detailed.get('red_flags', [])) if detailed.get('red_flags') else 'None',
+                            # Salary
+                            'Salary_Estimate': safe_str(detailed.get('salary_estimation'), 'N/A'),
+                            # Recommendation
+                            'Recommendation': safe_str(detailed.get('recommendation'), 'N/A'),
+                            # Interview Questions
+                            'Interview_Questions': detailed.get('interview_questions', []),
+                            # Dynamic extra scores - capture ANY additional scores the AI returns
+                            'Extra_Scores': {k: v for k, v in detailed.items() if k.endswith('_score') and k not in ['overall_score', 'skills_score', 'experience_score', 'education_score', 'cv_quality_score', 'soft_skills_score', 'culture_fit_score', 'builder_operator_score', 'execution_rigor_score']},
+                            # Risk factors
+                            'Risk_Factors': detailed.get('risk_factors', []),
                         })
                     
                     if scorecard_data:
-                        scorecard_df = pd.DataFrame(scorecard_data)
+                        # Build dynamic table - only show relevant columns
+                        display_cols = ['Rank', 'Candidate', 'Overall', 'Tier', 'Role_Type']
+                        
+                        # Add columns that have data
+                        for col in ['Skills', 'Experience', 'Education', 'CV_Quality', 'Culture_Fit', 'Verbatim_Risk', 'AI_Confidence', 'Salary_Estimate', 'Recommendation', 'Red_Flags']:
+                            sample_val = str(scorecard_data[0].get(col, ''))
+                            if sample_val and sample_val not in ['0%', '0', 'N/A', 'None', '']:
+                                display_cols.append(col)
+                        
+                        scorecard_df = pd.DataFrame(scorecard_data)[display_cols]
                         st.dataframe(scorecard_df, use_container_width=True, hide_index=True)
                         
                         # Detailed breakdown for each candidate
                         st.markdown("---")
                         st.markdown("### 🔍 Individual Score Breakdowns")
                         for i, data in enumerate(scorecard_data):
-                            with st.expander(f"📊 {data['Candidate']} — {data['Overall']}% — {data['Tier']}"):
-                                col1, col2, col3, col4 = st.columns(4)
-                                col1.metric("🎯 Skills", f"{data['Skills']}%")
-                                col2.metric("💼 Experience", f"{data['Experience']}%")
-                                col3.metric("🎓 Education", f"{data['Education']}%")
-                                col4.metric("📄 CV Quality", f"{data['CV Quality']}%")
+                            with st.expander(f"📊 {data.get('Candidate', 'Unknown')} — {data.get('Overall', 0)}% — {data.get('Tier', 'Pending')} — {data.get('Role_Type', 'General')}"):
                                 
-                                st.markdown(f"**🚨 Verbatim Risk:** {data['Verbatim']}")
-                                st.markdown(f"**🤖 AI Confidence:** {data['Confidence']}")
-                                st.markdown(f"**✅ Strengths:** {data['Strengths']}")
-                                st.markdown(f"**⚠️ Gaps:** {data['Gaps']}")
+                                # ===== DYNAMIC COMPETENCY BREAKDOWN =====
+                                competencies = data.get('Core_Competencies', [])
+                                if competencies:
+                                    st.markdown("### 🎯 Role-Specific Competency Assessment")
+                                    st.caption(f"📌 Role Type: {data.get('Role_Type', 'General')}")
+                                    
+                                    # Competency summary table
+                                    comp_data = []
+                                    for comp in competencies:
+                                        comp_data.append({
+                                            'Competency': comp.get('name', 'N/A'),
+                                            'Weight': f"{comp.get('weight', 0)}%",
+                                            'Score': f"{comp.get('score', 0)}/5",
+                                            'Evidence': comp.get('evidence', '')[:80]
+                                        })
+                                    if comp_data:
+                                        st.dataframe(pd.DataFrame(comp_data), use_container_width=True, hide_index=True)
+                                    
+                                    # Visual competency bars
+                                    for comp in competencies:
+                                        comp_name = comp.get('name', 'Competency')
+                                        comp_score = comp.get('score', 0)
+                                        comp_weight = comp.get('weight', 0)
+                                        
+                                        col1, col2 = st.columns([3, 1])
+                                        with col1:
+                                            st.markdown(f"**{comp_name}** ({comp_weight}%)")
+                                            st.progress(comp_score/5)
+                                        with col2:
+                                            st.markdown(f"**{comp_score}/5**")
                                 
-                                # Visual score bar
-                                st.progress(data['Overall']/100)
-                    else:
-                        st.info("Scorecard data will appear after screening.")
+                                st.markdown("---")
+                                
+                                # ===== STANDARD SCORES =====
+                                st.markdown("### 📊 Standard Scores")
+                                cols = st.columns(3)
+                                with cols[0]:
+                                    st.metric("🎯 Skills", f"{data.get('Skills', 0)}%")
+                                    st.metric("🎓 Education", f"{data.get('Education', 0)}%")
+                                with cols[1]:
+                                    st.metric("💼 Experience", f"{data.get('Experience', 0)}%")
+                                    st.metric("📄 CV Quality", f"{data.get('CV_Quality', 0)}%")
+                                with cols[2]:
+                                    st.metric("🤝 Soft Skills", f"{data.get('Soft_Skills', 0)}%")
+                                    st.metric("🏢 Culture Fit", f"{data.get('Culture_Fit', 0)}%")
+                                
+                                # ===== DYNAMIC EXTRA SCORES (any score AI returns) =====
+                                extra_scores = data.get('Extra_Scores', {})
+                                if extra_scores:
+                                    st.markdown("---")
+                                    st.markdown("### 📈 Additional Role-Specific Scores")
+                                    extra_cols = st.columns(min(len(extra_scores), 4))
+                                    for idx, (key, value) in enumerate(extra_scores.items()):
+                                        label = key.replace('_score', '').replace('_', ' ').title()
+                                        col_idx = idx % len(extra_cols)
+                                        with extra_cols[col_idx]:
+                                            st.metric(f"📌 {label}", f"{safe_int(value)}%")
+                                
+                                st.markdown("---")
+                                
+                                # ===== RISK & CONFIDENCE =====
+                                col1, col2, col3 = st.columns(3)
+                                with col1:
+                                    st.markdown(f"**🚨 Verbatim Risk:** {data.get('Verbatim_Risk', '0%')}")
+                                with col2:
+                                    st.markdown(f"**🤖 AI Confidence:** {data.get('AI_Confidence', '0%')}")
+                                with col3:
+                                    st.progress(data.get('Overall', 0)/100)
+                                
+                                # ===== STRENGTHS & GAPS =====
+                                c1, c2 = st.columns(2)
+                                with c1:
+                                    st.markdown("**✅ Key Strengths**")
+                                    st.success(data.get('Strengths', 'N/A'))
+                                with c2:
+                                    st.markdown("**⚠️ Gaps Identified**")
+                                    st.warning(data.get('Gaps', 'N/A'))
+                                
+                                # ===== RED FLAGS =====
+                                red_flags = data.get('Red_Flags', 'None')
+                                if red_flags and red_flags != 'None':
+                                    st.error(f"**🚩 Red Flags:** {red_flags}")
+                                
+                                # ===== RISK FACTORS =====
+                                risk_factors = data.get('Risk_Factors', [])
+                                if risk_factors:
+                                    st.markdown("**⚠️ Risk Factors:**")
+                                    for risk in risk_factors:
+                                        st.markdown(f"- {risk}")
+                                
+                                # ===== SALARY =====
+                                salary = data.get('Salary_Estimate', 'N/A')
+                                if salary and salary != 'N/A':
+                                    st.info(f"**💰 Market Salary Estimate:** {salary}")
+                                
+                                # ===== RECOMMENDATION =====
+                                recommendation = data.get('Recommendation', 'N/A')
+                                if recommendation and recommendation != 'N/A':
+                                    st.success(f"**💡 AI Recommendation:** {recommendation}")
+                                
+                                # ===== INTERVIEW QUESTIONS =====
+                                questions = data.get('Interview_Questions', [])
+                                if questions:
+                                    st.markdown("---")
+                                    st.markdown("### 🎯 AI-Generated Interview Questions")
+                                    for q_idx, q in enumerate(questions[:5]):
+                                        st.markdown(f"**{q_idx+1}.** {q}")
                     
                     # Send to Manager
                     col1, col2 = st.columns(2)
