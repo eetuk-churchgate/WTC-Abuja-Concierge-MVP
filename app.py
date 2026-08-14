@@ -8587,27 +8587,23 @@ def staff_confirmation():
                 st.info("No confirmation reviews found.")
         except:
             st.info("Data loading...")
-    
-     # ============================================================
+
+    # ============================================================
     # TAB 4: DASHBOARD - FORTUNE 500 ANALYTICS
     # ============================================================
     with tab4:
         st.subheader("📊 Confirmation & Probation Analytics")
-        
-        # Restrict non-admin to their department only
-        if not is_admin:
-            if reviews:
-                reviews = [r for r in reviews if r.get('department', '') == user_dept]
-            if not probation_employees.empty:
-                probation_employees = probation_employees[probation_employees['department'] == user_dept]
         
         try:
             reviews = db._get("confirmation_reviews")
             all_employees = db.get_all_employees()
             
             # Apply department restriction for non-admins
-            if not is_admin and not all_employees.empty:
-                all_employees = all_employees[all_employees['department'] == user_dept]
+            if not is_admin:
+                if reviews:
+                    reviews = [r for r in reviews if r.get('department', '') == user_dept]
+                if not all_employees.empty:
+                    all_employees = all_employees[all_employees['department'] == user_dept]
             
             if reviews or not all_employees.empty:
                 total_employees = len(all_employees) if not all_employees.empty else 0
