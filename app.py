@@ -1041,7 +1041,7 @@ def sidebar_navigation():
                 "bullseye", "globe", "book-half", "heart-fill", 
                 "mortarboard-fill", "shield-fill", "graph-up", "person-circle"
             ]
-        elif user_role == 'Manager':
+        elif user_role in ['Manager', 'HOD', 'Senior Manager', 'General Manager', 'Head of Department(HOD)', 'Management', 'Senior Management/C-Level', 'Senior Management']:
             menu_options = [
                 "🏠 Employee Dashboard", "✅ Staff Confirmation", "💼 Recruitment Hub", 
                 "🤖 AI Recruitment Agent", "📈 Performance & OKRs", "🔄 Requests Hub",
@@ -2658,7 +2658,7 @@ def employee_management():
                             ec1, ec2, ec3 = st.columns(3)
                             with ec1:
                                 current_dept = str(emp.get('department', 'Technology Group'))
-                                dept_options = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin']
+                                dept_options = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin', 'Central Stores']
                                 dept_idx = dept_options.index(current_dept) if current_dept in dept_options else 1
                                 new_dept = st.selectbox("Department", dept_options, index=dept_idx, key=f"dept_{emp['employee_id']}_{st.session_state.dir_page}")
                                 
@@ -2795,7 +2795,7 @@ def employee_management():
                 phone = st.text_input("Phone")
             with c2:
                 employee_id = st.text_input("Employee ID *", placeholder="e.g., AN00001")
-                department = st.selectbox("Department *", ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin'])
+                department = st.selectbox("Department *", ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin', 'Central Stores'])
                 position = st.text_input("Position *")
                 grade = st.selectbox("Grade", ['Junior', 'Intermediate', 'Mid-Senior', 'Senior', 'Manager', 'Senior Manager', 'General Manager', 'Head of Department(HOD)', 'Management', 'Senior Management/C-Level'])
             with c3:
@@ -2868,19 +2868,157 @@ def employee_management():
     with tab3:
         st.subheader("📤 Bulk Employee Upload")
         st.info("Upload CSV with columns: employee_id, first_name, last_name, email, phone, department, position, grade, employment_type, join_date, date_of_birth, region, subsidiary, reports_to, gender, status, system_role")
+        
+        # APPROVED DEPARTMENTS
+        APPROVED_DEPARTMENTS = [
+            'Senior Management', 'Technology Group', 'Facility Management', 'Human Resources',
+            'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security',
+            'Legal', 'Operations', 'Engineering', 'Admin'
+        ]
+        
+        # SMART DEPARTMENT MAPPING - auto-corrects known alternatives
+        DEPARTMENT_ALIASES = {
+            'facility': 'Facility Management',
+            'facility mgt': 'Facility Management',
+            'facility mgmt': 'Facility Management',
+            'facilities': 'Facility Management',
+            'facilities management': 'Facility Management',
+            'maintenance': 'Facility Management',
+            'sales & marketing': 'Sales, Marketing & Trade Services',
+            'sales and marketing': 'Sales, Marketing & Trade Services',
+            'sales marketing': 'Sales, Marketing & Trade Services',
+            'sales, marketing & trade services': 'Sales, Marketing & Trade Services',
+            'administration': 'Admin',
+            'admin.': 'Admin',
+            'administrative': 'Admin',
+            'security': 'Security',
+            'hr': 'Human Resources',
+            'human resource': 'Human Resources',
+            'human resources': 'Human Resources',
+            'tech': 'Technology Group',
+            'technology': 'Technology Group',
+            'it': 'Technology Group',
+            'accounts': 'Accounts & Finance',
+            'account & finance': 'Accounts & Finance',
+            'accounts and finance': 'Accounts & Finance',
+            'finance': 'Accounts & Finance',
+            'procurement': 'Procurement',
+            'legal': 'Legal',
+            'operations': 'Operations',
+            'engineering': 'Engineering',
+            'senior mgt': 'Senior Management',
+            'senior management': 'Senior Management',
+            'sm': 'Senior Management',
+        }
+        
+        # APPROVED SUBSIDIARIES
+        APPROVED_SUBSIDIARIES = [
+            'Aba Textile Mills PLC', 'Agroline Ventures Limited', 'Associated Textile Manufacturing Company Limited',
+            'First Continental Properties Limited', 'Food & Confectionery Products (Nig.) Limited',
+            'HotelInvest & Resorts Limited', 'Intercott Limited', 'Platinum Travel Limited',
+            'R. B Properties Limited', 'Reliance Mills Limited', 'Vineyard Designs Nig. Limited',
+            'World Trade Center(WTC)'
+        ]
+        
+        # SMART SUBSIDIARY MAPPING - auto-corrects known alternatives
+        SUBSIDIARY_ALIASES = {
+            'aba textile mills ltd': 'Aba Textile Mills PLC',
+            'aba textile mills': 'Aba Textile Mills PLC',
+            'aba textile': 'Aba Textile Mills PLC',
+            'agroline': 'Agroline Ventures Limited',
+            'agroline ventures': 'Agroline Ventures Limited',
+            'agroline ventures ltd': 'Agroline Ventures Limited',
+            'associated textile': 'Associated Textile Manufacturing Company Limited',
+            'associated textile manufacturing': 'Associated Textile Manufacturing Company Limited',
+            'associated textile manufacturing ltd': 'Associated Textile Manufacturing Company Limited',
+            'associated textile manufacturing limited': 'Associated Textile Manufacturing Company Limited',
+            'atmcl': 'Associated Textile Manufacturing Company Limited',
+            'first continental': 'First Continental Properties Limited',
+            'first continental properties': 'First Continental Properties Limited',
+            'fcpl': 'First Continental Properties Limited',
+            'food & confectionery': 'Food & Confectionery Products (Nig.) Limited',
+            'food and confectionery': 'Food & Confectionery Products (Nig.) Limited',
+            'food&confectionery': 'Food & Confectionery Products (Nig.) Limited',
+            'food&confectionery products': 'Food & Confectionery Products (Nig.) Limited',
+            'hotelinvest': 'HotelInvest & Resorts Limited',
+            'hotel invest': 'HotelInvest & Resorts Limited',
+            'hotelinvest & resort': 'HotelInvest & Resorts Limited',
+            'hotel invest and resort': 'HotelInvest & Resorts Limited',
+            'intercott': 'Intercott Limited',
+            'platinum travel': 'Platinum Travel Limited',
+            'r. b properties': 'R. B Properties Limited',
+            'r.b properties': 'R. B Properties Limited',
+            'rb properties': 'R. B Properties Limited',
+            'reliance mills': 'Reliance Mills Limited',
+            'vineyard': 'Vineyard Designs Nig. Limited',
+            'vinegard': 'Vineyard Designs Nig. Limited',
+            'vineguard': 'Vineyard Designs Nig. Limited',
+            'vineyard design': 'Vineyard Designs Nig. Limited',
+            'wtc': 'World Trade Center(WTC)',
+            'world trade center': 'World Trade Center(WTC)',
+            'world trade centre': 'World Trade Center(WTC)',
+        }
+        
+        # SMART CORRECTION FUNCTIONS
+        def smart_department_correction(dept_name):
+            if not dept_name:
+                return ''
+            dept_clean = str(dept_name).strip().lower()
+            if dept_clean in DEPARTMENT_ALIASES:
+                return DEPARTMENT_ALIASES[dept_clean]
+            # Exact match after strip
+            for approved in APPROVED_DEPARTMENTS:
+                if dept_clean == approved.lower():
+                    return approved
+            # Contains match
+            for approved in APPROVED_DEPARTMENTS:
+                if approved.lower() in dept_clean or dept_clean in approved.lower():
+                    return approved
+            return ''  # Unknown - leave blank for HR
+        
+        def smart_subsidiary_correction(sub_name):
+            if not sub_name:
+                return ''
+            sub_clean = str(sub_name).strip().lower()
+            if sub_clean in SUBSIDIARY_ALIASES:
+                return SUBSIDIARY_ALIASES[sub_clean]
+            # Exact match after strip
+            for approved in APPROVED_SUBSIDIARIES:
+                if sub_clean == approved.lower():
+                    return approved
+            # Contains match
+            for approved in APPROVED_SUBSIDIARIES:
+                if approved.lower() in sub_clean or sub_clean in approved.lower():
+                    return approved
+            return ''  # Unknown - leave blank for HR
+        
         template_df = pd.DataFrame(columns=['employee_id', 'first_name', 'last_name', 'email', 'phone', 'department', 'position', 'grade', 'employment_type', 'join_date', 'date_of_birth', 'region', 'subsidiary', 'reports_to', 'gender', 'status', 'system_role'])
         st.download_button("📥 Download Template", template_df.to_csv(index=False), "employee_template.csv", "text/csv")
         uploaded_file = st.file_uploader("Upload CSV", type=['csv'])
         if uploaded_file:
             df = pd.read_csv(uploaded_file)
             st.write(f"**{len(df)} employees in file**")
+            
+            # PREVIEW: Show how departments will be corrected
+            if 'department' in df.columns:
+                dept_preview = []
+                for dept in df['department'].dropna().unique():
+                    corrected = smart_department_correction(dept)
+                    dept_preview.append({'Original': str(dept).strip(), 'Will Become': corrected if corrected else '⚠️ BLANK (HR assign)'})
+                
+                if dept_preview:
+                    st.markdown("**📋 Department Preview:**")
+                    st.dataframe(pd.DataFrame(dept_preview), use_container_width=True, hide_index=True)
+            
             st.dataframe(df.head(), use_container_width=True)
             if st.button("📤 Upload All", use_container_width=True):
                 success, fail = 0, 0
+                corrected_count = 0
+                blank_dept_count = 0
+                blank_sub_count = 0
                 progress_bar = st.progress(0)
                 total = len(df)
                 
-                # Pre-load existing IDs for fast duplicate checking
                 existing_ids = set()
                 try:
                     all_emp = db._get("employees")
@@ -2893,12 +3031,10 @@ def employee_management():
                     try:
                         emp_id = str(row.get('employee_id', '')).strip()
                         
-                        # Fast duplicate check
                         if emp_id in existing_ids:
                             fail += 1
                             continue
                         
-                        # Quick date conversion
                         join_date = str(row.get('join_date', '')).strip()
                         dob = str(row.get('date_of_birth', '')).strip()
                         
@@ -2912,13 +3048,29 @@ def employee_management():
                             if len(parts) == 3 and len(parts[2]) == 4:
                                 dob = f"{parts[2]}-{parts[1].zfill(2)}-{parts[0].zfill(2)}"
                         
+                        # SMART DEPARTMENT CORRECTION
+                        raw_dept = str(row.get('department', '')).strip()
+                        corrected_dept = smart_department_correction(raw_dept)
+                        if corrected_dept and corrected_dept != raw_dept:
+                            corrected_count += 1
+                        if not corrected_dept:
+                            blank_dept_count += 1
+                        
+                        # SMART SUBSIDIARY CORRECTION
+                        raw_sub = str(row.get('subsidiary', '')).strip()
+                        corrected_sub = smart_subsidiary_correction(raw_sub)
+                        if corrected_sub and corrected_sub != raw_sub:
+                            corrected_count += 1
+                        if not corrected_sub:
+                            blank_sub_count += 1
+                        
                         db._post("employees", {
                             "employee_id": emp_id,
                             "first_name": str(row.get('first_name', '')).strip(),
                             "last_name": str(row.get('last_name', '')).strip(),
                             "email": str(row.get('email', '')).strip(),
                             "phone": str(row.get('phone', '')).strip(),
-                            "department": str(row.get('department', '')).strip(),
+                            "department": corrected_dept,
                             "position": str(row.get('position', '')).strip(),
                             "grade": str(row.get('grade', 'Junior')).strip(),
                             "employment_type": str(row.get('employment_type', 'Full-time')).strip(),
@@ -2926,14 +3078,13 @@ def employee_management():
                             "date_of_birth": dob,
                             "status": str(row.get('status', 'Active')).strip(),
                             "region": str(row.get('region', 'Lagos')).strip(),
-                            "subsidiary": str(row.get('subsidiary', '')).strip(),
+                            "subsidiary": corrected_sub,
                             "reports_to": str(row.get('reports_to', '')).strip(),
                             "gender": str(row.get('gender', 'Male')).strip()
                         })
                         
                         existing_ids.add(emp_id)
                         
-                        # Create user login
                         emp_email = str(row.get('email', '')).strip()
                         emp_name = f"{str(row.get('first_name', '')).strip()} {str(row.get('last_name', '')).strip()}"
                         emp_role = str(row.get('system_role', 'Team Member')).strip()
@@ -2948,13 +3099,12 @@ def employee_management():
                                     "email": emp_email,
                                     "password": default_pw,
                                     "role": emp_role,
-                                    "department": str(row.get('department', '')).strip(),
+                                    "department": corrected_dept,
                                     "position": str(row.get('position', '')).strip()
                                 })
                             except:
                                 pass
                             
-                            # Send welcome email
                             try:
                                 from utils.email_service import EmailService
                                 EmailService().send_welcome_email(emp_name, emp_email, "https://hris.churchgate.com")
@@ -2971,6 +3121,12 @@ def employee_management():
                 if success > 0:
                     st.success(f"✅ {success} uploaded! ({fail} skipped)")
                     st.info(f"📧 Welcome emails sent to {success} new employees")
+                    if corrected_count > 0:
+                        st.success(f"🔧 {corrected_count} department/subsidiary names auto-corrected!")
+                    if blank_dept_count > 0:
+                        st.warning(f"⚠️ {blank_dept_count} employees uploaded WITHOUT department (HR assign manually)")
+                    if blank_sub_count > 0:
+                        st.warning(f"⚠️ {blank_sub_count} employees uploaded WITHOUT subsidiary (HR assign manually)")
                 else:
                     st.warning(f"⚠️ {fail} records skipped. Check for duplicate IDs.")
                 
@@ -2980,22 +3136,58 @@ def employee_management():
     # ============ TAB 4: GENERATE LOGINS ============
     with tab4:
         st.subheader("🔑 Generate Employee Login Credentials")
+        
+        # Build employee dropdown list
+        emp_options_list = []
+        if not employees_df.empty:
+            emp_options_list = [f"{row['first_name']} {row['last_name']} — {row.get('department', '')}" for _, row in employees_df.iterrows()]
+        
         st.markdown("### ⚡ Quick Single Employee")
+        
+        # Employee selector dropdown
+        selected_emp = st.selectbox("👤 Select Employee", ["Select employee..."] + emp_options_list, key="single_emp_dropdown")
+        
+        # Auto-fill from selection
+        if selected_emp != "Select employee...":
+            selected_name = selected_emp.split(" — ")[0].strip()
+            emp_match = employees_df[employees_df.apply(lambda x: f"{x['first_name']} {x['last_name']}".strip() == selected_name, axis=1)]
+            if not emp_match.empty:
+                emp_row = emp_match.iloc[0]
+                emp_full_name = f"{emp_row['first_name']} {emp_row['last_name']}"
+                emp_db_email = emp_row.get('email', '')
+                emp_db_dept = emp_row.get('department', '')
+                emp_db_id = emp_row.get('employee_id', '')
+                emp_db_position = emp_row.get('position', '')
+            else:
+                emp_full_name = selected_name
+                emp_db_email = ''
+                emp_db_dept = ''
+                emp_db_id = ''
+                emp_db_position = ''
+        else:
+            emp_full_name = ''
+            emp_db_email = ''
+            emp_db_dept = ''
+            emp_db_id = ''
+            emp_db_position = ''
+        
         with st.form("single_login_form"):
             c1, c2 = st.columns(2)
             with c1:
-                single_email = st.text_input("Employee Email *", placeholder="e.g., employee@churchgate.com")
-                single_name = st.text_input("Full Name *")
+                single_email = st.text_input("Employee Email *", value=emp_db_email, placeholder="e.g., employee@churchgate.com")
+                single_name = st.text_input("Full Name *", value=emp_full_name)
                 single_pw = st.text_input("Password", value="churchgate2026")
             with c2:
-                single_dept = st.selectbox("Department", ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin'], key="single_dept")
+                dept_options = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin', 'Central Stores']
+                dept_idx = dept_options.index(emp_db_dept) if emp_db_dept in dept_options else 0
+                single_dept = st.selectbox("Department", dept_options, index=dept_idx, key="single_dept")
                 single_role = st.selectbox("Role", ['Team Member', 'Team Lead', 'Manager', 'HOD', 'Admin'], key="single_role")
-                single_id = st.text_input("Employee ID", placeholder="e.g., AN00001")
+                single_id = st.text_input("Employee ID", value=emp_db_id, placeholder="e.g., AN00001")
             
             if st.form_submit_button("🔑 Create Single Login", use_container_width=True):
                 if single_email and single_name:
                     try:
-                        db.create_user(single_id, single_name, single_email, single_pw, single_role, single_dept, 'Staff')
+                        db.create_user(single_id, single_name, single_email, single_pw, single_role, single_dept, emp_db_position or 'Staff')
                         st.success(f"✅ Login created for {single_name}!")
                         st.info(f"🔗 Login at: https://hris.churchgate.com")
                         try:
@@ -3015,6 +3207,9 @@ def employee_management():
         if not employees_df.empty:
             default_pw = st.text_input("Default Password for Bulk", value="churchgate2026")
             
+            # Search bar
+            bulk_search = st.text_input("🔍 Search employees", placeholder="Type name, department, or email...", key="bulk_search_input")
+            
             # Build employee list with current login status
             emp_list = []
             try:
@@ -3025,13 +3220,22 @@ def employee_management():
             
             for _, emp in employees_df.iterrows():
                 emp_email = str(emp.get('email', ''))
+                emp_name = f"{emp['first_name']} {emp['last_name']}"
+                emp_dept = emp.get('department', '')
+                
+                # Apply search filter
+                if bulk_search:
+                    search_term = bulk_search.lower()
+                    if search_term not in emp_name.lower() and search_term not in emp_dept.lower() and search_term not in emp_email.lower():
+                        continue
+                
                 has_login = emp_email in existing_emails
                 emp_list.append({
                     'Select': False,
-                    'Name': f"{emp['first_name']} {emp['last_name']}",
+                    'Name': emp_name,
                     'ID': emp['employee_id'],
                     'Email': emp_email,
-                    'Department': emp.get('department', ''),
+                    'Department': emp_dept,
                     'Role': str(emp.get('role', 'Team Member')),
                     'Has Login': '✅ Yes' if has_login else '❌ No'
                 })
@@ -3039,7 +3243,6 @@ def employee_management():
             # Display with checkboxes for selection
             st.markdown("**Select employees to generate logins:**")
             
-            # Select all / Deselect all
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("✅ Select All Without Login", use_container_width=True):
@@ -3086,13 +3289,12 @@ def employee_management():
                             except:
                                 pass
                             count += 1
-                        except:
-                            pass
+                        except Exception as e:
+                            st.warning(f"Failed for {emp['Name']}: {str(e)}")
                 st.success(f"✅ {count} logins generated!")
                 st.info(f"🔗 Login URL: https://hris.churchgate.com")
                 st.info(f"🔑 Default password: **{default_pw}**")
                 
-                # Download list for generated logins
                 login_df = pd.DataFrame(selected)
                 st.download_button("📥 Download Login List", login_df[['Name', 'Email', 'ID', 'Department', 'Role']].to_csv(index=False), "logins.csv", "text/csv")
         else:
@@ -4578,15 +4780,14 @@ def performance_okrs():
             hod_cycle = fy_cycle_map.get(hod_fy, hod_fy)
             st.caption(f"📊 Viewing: **{hod_fy}**")
             
-            # ===== SECTION 1: KPI APPROVAL =====
+           # ===== SECTION 1: KPI APPROVAL =====
             st.markdown("### 📊 Team KPI Submissions")
             try:
                 all_perf = db._get("performance_data"); team_submissions = {}
                 for row in (all_perf or []):
                     if row.get('submission_status') == 'Submitted':
-                        # Filter by cycle
                         kpi_list = json.loads(row.get('kpi_data', '[]')) if row.get('kpi_data') else []
-                        matching = [k for k in kpi_list if k.get('cycle', '') == hod_cycle]
+                        matching = kpi_list
                         if not matching:
                             continue
                         clean_name = ' '.join(str(row.get('user_name', '')).split())
@@ -7512,12 +7713,104 @@ def performance_okrs():
                     st.info("No appraisal data available for recommendations.")
 
 
+def send_confirmation_reminders():
+    """Send automated reminders for confirmation workflow"""
+    try:
+        from utils.email_service import EmailService
+        es = EmailService()
+        
+        HR_TEAM = ["bsakote@churchgate.com", "ichukwunonye@churchgate.com", "gbalogun@churchgate.com", "eochala@churchgate.com"]
+        
+        # Get probation employees
+        try:
+            all_emp = db.get_all_employees()
+            probation_employees = all_emp[all_emp['status'] == 'Probation'] if not all_emp.empty else pd.DataFrame()
+        except:
+            probation_employees = pd.DataFrame()
+        
+        now = datetime.now()
+        
+        # HOD reminders
+        if not probation_employees.empty:
+            for _, emp in probation_employees.iterrows():
+                # Calculate probation end
+                join_date = emp.get('join_date', '')
+                try:
+                    if isinstance(join_date, str):
+                        jd = datetime.strptime(join_date, '%Y-%m-%d')
+                    else:
+                        jd = pd.to_datetime(join_date)
+                    end_date = jd + timedelta(days=180)
+                except:
+                    continue
+                
+                days_left = (end_date - now).days
+                emp_name = f"{emp['first_name']} {emp['last_name']}"
+                dept = emp.get('department', '')
+                
+                hod_email = ''
+                try:
+                    all_emp_data = db.get_all_employees()
+                    if not all_emp_data.empty:
+                        hod_candidates = all_emp_data[(all_emp_data['department'] == dept) & 
+                            (all_emp_data['position'].str.contains('HOD|Head|Manager|Director', case=False, na=False))]
+                        if not hod_candidates.empty:
+                            hod_email = hod_candidates.iloc[0].get('email', '')
+                except:
+                    pass
+                
+                if days_left <= 7 and days_left >= 0:
+                    if hod_email:
+                        es.send_email(hod_email,
+                            f"⏰ Confirmation Due Soon: {emp_name}",
+                            f"Dear HOD,\n\n{emp_name} ({dept}) is due for confirmation in {days_left} days.\n\nPlease review and submit your recommendation.\n\nChurchgate Group HR")
+                elif days_left < 0:
+                    if hod_email:
+                        es.send_email(hod_email,
+                            f"🚨 OVERDUE Confirmation: {emp_name}",
+                            f"Dear HOD,\n\n{emp_name} ({dept}) confirmation is OVERDUE by {abs(days_left)} days.\n\nImmediate action required.\n\nChurchgate Group HR")
+        
+        # COO and HR reminders
+        reviews = db._get("confirmation_reviews") or []
+        pending_coo = [r for r in reviews if r.get('status') == 'Pending COO Approval']
+        hr_processing = [r for r in reviews if r.get('status') == 'Approved by COO']
+        
+        if pending_coo:
+            es.send_email("jeromedas@churchgate.com",
+                f"📋 Pending Confirmations: {len(pending_coo)} awaiting your approval",
+                f"Dear Jerome,\n\nYou have {len(pending_coo)} confirmation(s) awaiting your approval.\n\nPlease review at: https://hris.churchgate.com\n\nChurchgate Group HR")
+        
+        if hr_processing:
+            for hr_recipient in HR_TEAM:
+                es.send_email(hr_recipient,
+                    f"🏢 HR Processing: {len(hr_processing)} confirmation letters to send",
+                    f"Dear HR Team,\n\n{len(hr_processing)} staff are awaiting confirmation letters.\n\nPlease process at: https://hris.churchgate.com\n\nChurchgate Group HR")
+    except:
+        pass
+
+
 def staff_confirmation():
     """
     Churchgate Group HRIS - Staff Confirmation Module v2.0
     Fortune 500 Standard | Full Confirmation Decision Form | Auto-Notifications | Confirmation Letters
     """
     st.markdown("""<div class="churchgate-header"><h1>✅ Staff Confirmation Board</h1><p>Probation Tracking | Full Decision Form | Performance Rating | HOD Review | COO Approval | Confirmation Letters</p></div>""", unsafe_allow_html=True)
+    
+    # Automated reminders
+    if 'last_reminder_sent' not in st.session_state:
+        st.session_state.last_reminder_sent = None
+    
+    should_send = False
+    if st.session_state.last_reminder_sent:
+        days_since = (datetime.now() - st.session_state.last_reminder_sent).days
+        if days_since >= 2:
+            should_send = True
+    else:
+        should_send = True
+    
+    if should_send:
+        send_confirmation_reminders()
+        st.session_state.last_reminder_sent = datetime.now()
     
     user_name = st.session_state.user['name'] if st.session_state.user else 'Staff'
     user_role = st.session_state.user['role'] if st.session_state.user else 'Employee'
@@ -7611,27 +7904,34 @@ def staff_confirmation():
     
     st.markdown("---")
     
-    tab1, tab2, tab3, tab4 = st.tabs(["📋 Probation Board", "🔍 Review & Confirm", "✅ Confirmed Staff", "📊 Dashboard"])
+    # TAB RESTRICTIONS: Admin sees all, HOD sees limited
+    if is_admin:
+        tab1, tab2, tab3, tab4 = st.tabs(["📋 Probation Board", "🔍 Review & Confirm", "✅ Confirmed Staff", "📊 Dashboard"])
+    else:
+        tab1, tab2, tab3, tab4 = st.tabs(["🔒 Restricted", "🔍 Review & Confirm", "🔒 Restricted", "📊 My Department Dashboard"])
     
     # ============================================================
-    # TAB 1: PROBATION BOARD
+    # TAB 1: PROBATION BOARD (Admin Only)
     # ============================================================
     with tab1:
-        st.subheader("📋 Employees on Probation")
-        
-        # Region/Subsidiary/Department Filters (Admin only)
-        if is_admin:
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                filter_region = st.selectbox("🌍 Region", ["All", "Abuja", "Lagos", "Aba"], key="prob_region")
-            with col2:
-                SUBSIDIARY_OPTIONS = {
-                    'Abuja': ['All', 'World Trade Center(WTC)', 'Agroline Ventures Limited'],
-                    'Lagos': ['All', 'First Continental Properties Limited', 'R. B Properties Limited', 'Churchgate Nigeria Limited', 'Aba Textile Mills PLC'],
-                    'Aba': ['All', 'Aba Textile Mills PLC']
-                }
-                sub_opts = SUBSIDIARY_OPTIONS.get(filter_region, ['All']) if filter_region != 'All' else ['All']
-                filter_subsidiary = st.selectbox("🏢 Subsidiary", sub_opts, key="prob_sub")
+        if not is_admin:
+            st.warning("⛔ This section is restricted to Admin/HR only.")
+        else:
+            st.subheader("📋 Employees on Probation")
+            
+            # Region/Subsidiary/Department Filters (Admin only)
+            if is_admin:
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    filter_region = st.selectbox("🌍 Region", ["All", "Abuja", "Lagos", "Aba"], key="prob_region")
+                with col2:
+                    SUBSIDIARY_OPTIONS = {
+                        'Abuja': ['All', 'World Trade Center(WTC)', 'Agroline Ventures Limited'],
+                        'Lagos': ['All', 'First Continental Properties Limited', 'R. B Properties Limited', 'Churchgate Nigeria Limited', 'Aba Textile Mills PLC'],
+                        'Aba': ['All', 'Aba Textile Mills PLC']
+                    }
+                    sub_opts = SUBSIDIARY_OPTIONS.get(filter_region, ['All']) if filter_region != 'All' else ['All']
+                    filter_subsidiary = st.selectbox("🏢 Subsidiary", sub_opts, key="prob_sub")
             with col3:
                 all_depts_list = ['All'] + sorted(list(probation_employees['department'].dropna().unique())) if not probation_employees.empty else ['All']
                 filter_dept = st.selectbox("🏭 Department", all_depts_list, key="prob_dept")
@@ -7682,88 +7982,93 @@ def staff_confirmation():
             st.success("🎉 No employees currently on probation!")
     
     # ============================================================
-    # TAB 2: REVIEW & CONFIRM (WITH FILTERS)
-    # ============================================================
-    with tab2:
-        st.subheader("🔍 Review & Confirm Employees")
-        
-        if is_hod or is_admin:
-            if not probation_employees.empty:
-                # Filters
-                filtered_review = probation_employees.copy()
-                
-                # FILTER: Only show due or overdue employees
-                now_date = datetime.now()
-                due_review = []
-                for _, emp_row in filtered_review.iterrows():
-                    emp_end = calculate_probation_end(emp_row.get('join_date'))
-                    if emp_end and emp_end <= now_date:
-                        due_review.append(emp_row)
-                filtered_review = pd.DataFrame(due_review) if due_review else pd.DataFrame()
-                
-                if is_admin:
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        rev_region = st.selectbox("🌍 Region", ["All", "Abuja", "Lagos", "Aba"], key="rev_region")
-                    with col2:
-                        SUBSIDIARY_OPTIONS_REV = {
-                            'Abuja': ['All', 'World Trade Center(WTC)', 'Agroline Ventures Limited'],
-                            'Lagos': ['All', 'First Continental Properties Limited', 'R. B Properties Limited', 'Churchgate Nigeria Limited', 'Aba Textile Mills PLC', 'Associated Textile Manufacturing Company Limited', 'Food & Confectionery Products (Nig.) Limited', 'First Spinners PLC', 'HotelInvest & Resorts Limited', 'International Textile Industries (Nig.) Limited', 'Intercott Limited', 'Ocean Fisheries (Nig.) Limited', 'Platinum Travel Limited', 'Reliance Mills Limited', 'Vineyard Designs Nig. Limited'],
-                            'Aba': ['All', 'Aba Textile Mills PLC']
-                        }
-                        sub_opts = SUBSIDIARY_OPTIONS_REV.get(rev_region, ['All']) if rev_region != 'All' else ['All']
-                        rev_sub = st.selectbox("🏢 Subsidiary", sub_opts, key="rev_sub")
-                    with col3:
-                        all_depts_rev = ['All'] + sorted(list(probation_employees['department'].dropna().unique()))
-                        rev_dept = st.selectbox("🏭 Department", all_depts_rev, key="rev_dept")
+        # TAB 2: REVIEW & CONFIRM (WITH FILTERS)
+        # ============================================================
+        with tab2:
+            st.subheader("🔍 Review & Confirm Employees")
+            
+            if is_hod or is_admin:
+                if not probation_employees.empty:
+                    # Filters
+                    filtered_review = probation_employees.copy()
                     
-                    if rev_region != 'All':
-                        filtered_review = filtered_review[filtered_review['region'] == rev_region]
-                    if rev_sub != 'All':
-                        filtered_review = filtered_review[filtered_review['subsidiary'] == rev_sub]
-                    if rev_dept != 'All':
-                        filtered_review = filtered_review[filtered_review['department'] == rev_dept]
-                
-                st.markdown(f"**{len(filtered_review)} employees to review**")
-                
-                if len(filtered_review) == 0:
-                    st.info("No employees match the selected filters.")
-                
-                for _, emp in filtered_review.iterrows():
-                    emp_name = f"{emp['first_name']} {emp['last_name']}"
-                    emp_id = emp.get('employee_id', '')
-                    dept = emp.get('department', '')
-                    position = emp.get('position', '')
-                    join_date = emp.get('join_date', '')
-                    end_date = calculate_probation_end(join_date)
+                    # HOD filter: Show ALL in same department
+                    if not is_admin:
+                        filtered_review = filtered_review[
+                            filtered_review['department'].str.lower().str.strip() == user_dept.lower().strip()
+                        ]
                     
-                    if not is_admin and dept != user_dept: continue
+                    # FILTER: Only show due or overdue employees
+                    if not filtered_review.empty:
+                        now_date = datetime.now()
+                        due_review = []
+                        for _, emp_row in filtered_review.iterrows():
+                            emp_end = calculate_probation_end(emp_row.get('join_date'))
+                            if emp_end and emp_end <= now_date:
+                                due_review.append(emp_row)
+                        filtered_review = pd.DataFrame(due_review) if due_review else pd.DataFrame()
                     
-                    days_left = (end_date - now).days if end_date else 0
-                    urgency = "🚨" if days_left < 0 else "⏰" if days_left <= 7 else "📅"
-                    
-                    with st.expander(f"{urgency} Review: {emp_name} — {position} ({dept}) | {'OVERDUE' if days_left < 0 else f'{days_left}d left'}"):
-                        st.markdown(f"**Probation Period:** {join_date} to {end_date.strftime('%B %d, %Y') if end_date else 'N/A'}")
-                        st.markdown(f"**Region:** {emp.get('region', 'N/A')} | **Subsidiary:** {emp.get('subsidiary', 'N/A')}")
+                    if is_admin:
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            rev_region = st.selectbox("🌍 Region", ["All", "Abuja", "Lagos", "Aba"], key="rev_region")
+                        with col2:
+                            SUBSIDIARY_OPTIONS_REV = {
+                                'Abuja': ['All', 'World Trade Center(WTC)', 'Agroline Ventures Limited'],
+                                'Lagos': ['All', 'First Continental Properties Limited', 'R. B Properties Limited', 'Churchgate Nigeria Limited', 'Aba Textile Mills PLC', 'Associated Textile Manufacturing Company Limited', 'Food & Confectionery Products (Nig.) Limited', 'First Spinners PLC', 'HotelInvest & Resorts Limited', 'International Textile Industries (Nig.) Limited', 'Intercott Limited', 'Ocean Fisheries (Nig.) Limited', 'Platinum Travel Limited', 'Reliance Mills Limited', 'Vineyard Designs Nig. Limited'],
+                                'Aba': ['All', 'Aba Textile Mills PLC']
+                            }
+                            sub_opts = SUBSIDIARY_OPTIONS_REV.get(rev_region, ['All']) if rev_region != 'All' else ['All']
+                            rev_sub = st.selectbox("🏢 Subsidiary", sub_opts, key="rev_sub")
+                        with col3:
+                            all_depts_rev = ['All'] + sorted(list(probation_employees['department'].dropna().unique()))
+                            rev_dept = st.selectbox("🏭 Department", all_depts_rev, key="rev_dept")
                         
-                        # Check if already reviewed
-                        try:
-                            existing_review = db._get("confirmation_reviews")
-                            already_reviewed = [r for r in existing_review if r.get('employee_id') == emp_id]
-                            if already_reviewed:
-                                latest = already_reviewed[0]
-                                st.info(f"📋 Already reviewed by {latest.get('hod_name','')} on {latest.get('review_date','')[:10]} — Status: {latest.get('status','')}")
-                        except:
-                            pass
+                        if rev_region != 'All':
+                            filtered_review = filtered_review[filtered_review['region'] == rev_region]
+                        if rev_sub != 'All':
+                            filtered_review = filtered_review[filtered_review['subsidiary'] == rev_sub]
+                        if rev_dept != 'All':
+                            filtered_review = filtered_review[filtered_review['department'] == rev_dept]
+                    
+                    st.markdown(f"**{len(filtered_review)} employees to review**")
+                    
+                    if len(filtered_review) == 0:
+                        st.info("No employees match the selected filters.")
+                    
+                    for _, emp in filtered_review.iterrows():
+                        emp_name = f"{emp['first_name']} {emp['last_name']}"
+                        emp_id = emp.get('employee_id', '')
+                        dept = emp.get('department', '')
+                        position = emp.get('position', '')
+                        join_date = emp.get('join_date', '')
+                        end_date = calculate_probation_end(join_date)
                         
-                        # HOD Review - FULL DECISION FORM
-                        if is_hod:
-                            st.markdown("---")
-                            st.markdown("#### 👔 EMPLOYEE CONFIRMATION DECISION FORM")
+                        days_left = (end_date - now).days if end_date else 0
+                        urgency = "🚨" if days_left < 0 else "⏰" if days_left <= 7 else "📅"
+                        
+                        with st.expander(f"{urgency} Review: {emp_name} — {position} ({dept}) | {'OVERDUE' if days_left < 0 else f'{days_left}d left'}"):
+                            st.markdown(f"**Probation Period:** {join_date} to {end_date.strftime('%B %d, %Y') if end_date else 'N/A'}")
+                            st.markdown(f"**Region:** {emp.get('region', 'N/A')} | **Subsidiary:** {emp.get('subsidiary', 'N/A')}")
                             
-                            # Get employee data
-                            emp_region = emp.get('region', '')
-                            emp_subsidiary = emp.get('subsidiary', '')
+                            # Check if already reviewed
+                            try:
+                                existing_review = db._get("confirmation_reviews")
+                                already_reviewed = [r for r in existing_review if r.get('employee_id') == emp_id]
+                                if already_reviewed:
+                                    latest = already_reviewed[0]
+                                    st.info(f"📋 Already reviewed by {latest.get('hod_name','')} on {latest.get('review_date','')[:10]} — Status: {latest.get('status','')}")
+                            except:
+                                pass
+                            
+                            # HOD Review - FULL DECISION FORM
+                            if is_hod:
+                                st.markdown("---")
+                                st.markdown("#### 👔 EMPLOYEE CONFIRMATION DECISION FORM")
+                                
+                                # Get employee data
+                                emp_region = emp.get('region', '')
+                                emp_subsidiary = emp.get('subsidiary', '')
                             
                             SUBSIDIARY_OPTIONS_FORM = {
                                 'Abuja': ['World Trade Center(WTC)', 'Agroline Ventures Limited'],
@@ -8032,29 +8337,32 @@ def staff_confirmation():
                             except: pass
     
     # ============================================================
-    # TAB 3: CONFIRMED STAFF (UPGRADED)
+    # TAB 3: CONFIRMED STAFF (UPGRADED) - Admin Only
     # ============================================================
     with tab3:
-        st.subheader("✅ Confirmed Staff Records")
-        
-        try:
-            reviews = db._get("confirmation_reviews")
-            if reviews:
-                confirmed = [r for r in reviews if r.get('status') in ['Approved by COO', 'Letter Sent']]
-                
-                # ===== FILTERS =====
-                if confirmed and is_admin:
-                    st.markdown("---")
-                    col1, col2, col3, col4 = st.columns(4)
-                    with col1:
-                        conf_region = st.selectbox("🌍 Region", ["All", "Abuja", "Lagos", "Aba"], key="conf_region")
-                    with col2:
-                        SUBS_OPT = {
-                            'Abuja': ['All', 'World Trade Center(WTC)', 'Agroline Ventures Limited'],
-                            'Lagos': ['All', 'First Continental Properties Limited', 'Churchgate Nigeria Limited', 'R. B Properties Limited', 'Aba Textile Mills PLC'],
-                            'Aba': ['All', 'Aba Textile Mills PLC']
-                        }
-                        sub_opts = SUBS_OPT.get(conf_region, ['All']) if conf_region != 'All' else ['All']
+        if not is_admin:
+            st.warning("⛔ This section is restricted to Admin/HR only.")
+        else:
+            st.subheader("✅ Confirmed Staff Records")
+            
+            try:
+                reviews = db._get("confirmation_reviews")
+                if reviews:
+                    confirmed = [r for r in reviews if r.get('status') in ['Approved by COO', 'Letter Sent']]
+                    
+                    # ===== FILTERS =====
+                    if confirmed and is_admin:
+                        st.markdown("---")
+                        col1, col2, col3, col4 = st.columns(4)
+                        with col1:
+                            conf_region = st.selectbox("🌍 Region", ["All", "Abuja", "Lagos", "Aba"], key="conf_region")
+                        with col2:
+                            SUBS_OPT = {
+                                'Abuja': ['All', 'World Trade Center(WTC)', 'Agroline Ventures Limited'],
+                                'Lagos': ['All', 'First Continental Properties Limited', 'Churchgate Nigeria Limited', 'R. B Properties Limited', 'Aba Textile Mills PLC'],
+                                'Aba': ['All', 'Aba Textile Mills PLC']
+                            }
+                            sub_opts = SUBS_OPT.get(conf_region, ['All']) if conf_region != 'All' else ['All']
                         conf_sub = st.selectbox("🏢 Subsidiary", sub_opts, key="conf_sub")
                     with col3:
                         all_depts_conf = ['All'] + sorted(list(set(r.get('department','') for r in confirmed)))
@@ -8275,23 +8583,31 @@ def staff_confirmation():
                                     st.error("❌ Please upload the confirmation letter first")
                 else:
                     st.info("No pending HR processing.")
-                
-                else:
-                    st.info("No confirmed staff match the selected filters.")
             else:
                 st.info("No confirmation reviews found.")
         except:
             st.info("Data loading...")
     
-    # ============================================================
+     # ============================================================
     # TAB 4: DASHBOARD - FORTUNE 500 ANALYTICS
     # ============================================================
     with tab4:
         st.subheader("📊 Confirmation & Probation Analytics")
         
+        # Restrict non-admin to their department only
+        if not is_admin:
+            if reviews:
+                reviews = [r for r in reviews if r.get('department', '') == user_dept]
+            if not probation_employees.empty:
+                probation_employees = probation_employees[probation_employees['department'] == user_dept]
+        
         try:
             reviews = db._get("confirmation_reviews")
             all_employees = db.get_all_employees()
+            
+            # Apply department restriction for non-admins
+            if not is_admin and not all_employees.empty:
+                all_employees = all_employees[all_employees['department'] == user_dept]
             
             if reviews or not all_employees.empty:
                 total_employees = len(all_employees) if not all_employees.empty else 0
@@ -18093,7 +18409,7 @@ def my_profile():
                     new_gender = st.selectbox("Gender", ['Male', 'Female'], index=0 if emp_gender == 'Male' else 1)
                 with c2:
                     new_last = st.text_input("Last Name", value=last_name)
-                    dept_list = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin']
+                    dept_list = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin', 'Central Stores']
                     dept_idx = dept_list.index(emp_dept) if emp_dept in dept_list else 0
                     new_dept = st.selectbox("Department", dept_list, index=dept_idx)
                     new_region = st.selectbox("Region", ['Abuja', 'Lagos'], index=0 if emp_region == 'Abuja' else 1)
@@ -18307,14 +18623,15 @@ def my_profile():
                 
                 # Add new skill
                 with st.expander("➕ Add Skill", expanded=False):
-                    new_skill = st.text_input("New Skill", placeholder="e.g., Python, Project Management, BMS", key="new_skill")
-                    if st.button("Add Skill", key="add_skill_btn", use_container_width=True):
-                        if new_skill and new_skill.strip():
-                            skills_list.append(new_skill.strip())
-                            updated_skills = ', '.join(skills_list)
-                            db._patch("users", {"skills": updated_skills}, {"email": user_email})
-                            st.success(f"✅ '{new_skill}' added!")
-                            st.rerun()
+                    with st.form("add_skill_form", clear_on_submit=True):
+                        new_skill = st.text_input("New Skill", placeholder="e.g., Python, Project Management, BMS", key="new_skill_form")
+                        if st.form_submit_button("Add Skill", use_container_width=True):
+                            if new_skill and new_skill.strip():
+                                skills_list.append(new_skill.strip())
+                                updated_skills = ', '.join(skills_list)
+                                db._patch("users", {"skills": updated_skills}, {"email": user_email})
+                                st.success(f"✅ '{new_skill}' added!")
+                                st.rerun()
             
             with col2:
                 st.markdown("### 🏅 Certifications")
@@ -18338,14 +18655,15 @@ def my_profile():
                 
                 # Add new certification
                 with st.expander("➕ Add Certification", expanded=False):
-                    new_cert = st.text_input("New Certification", placeholder="e.g., CCNP, PMP, CIPM", key="new_cert")
-                    if st.button("Add Certification", key="add_cert_btn", use_container_width=True):
-                        if new_cert and new_cert.strip():
-                            certs_list.append(new_cert.strip())
-                            updated_certs = ', '.join(certs_list)
-                            db._patch("users", {"certifications": updated_certs}, {"email": user_email})
-                            st.success(f"✅ '{new_cert}' added!")
-                            st.rerun()
+                    with st.form("add_cert_form", clear_on_submit=True):
+                        new_cert = st.text_input("New Certification", placeholder="e.g., CCNP, PMP, CIPM", key="new_cert_form")
+                        if st.form_submit_button("Add Certification", use_container_width=True):
+                            if new_cert and new_cert.strip():
+                                certs_list.append(new_cert.strip())
+                                updated_certs = ', '.join(certs_list)
+                                db._patch("users", {"certifications": updated_certs}, {"email": user_email})
+                                st.success(f"✅ '{new_cert}' added!")
+                                st.rerun()
             
             # Remove functionality (handled via direct edit)
             with st.expander("✏️ Edit All Skills & Certifications", expanded=False):
@@ -18386,32 +18704,45 @@ def my_profile():
                 st.info("No documents uploaded yet.")
             
             st.markdown("---")
-            doc_category = st.selectbox("Document Category", ["personal", "certificate", "contract", "tax", "review"], key="doc_category")
-            uploaded_doc = st.file_uploader("Upload New Document", type=['pdf', 'docx', 'jpg', 'jpeg', 'png', 'xlsx', 'xls'], key="doc_upload")
-            doc_name = st.text_input("Document Name", placeholder="e.g., Employment Contract, Certification", key="doc_name")
+            st.markdown("#### 📤 Upload New Document")
             
-            if uploaded_doc is not None and doc_name:
-                if st.button("📤 Upload & Save Document", use_container_width=True):
-                    try:
-                        doc_bytes = uploaded_doc.read()
-                        file_url = ""
-                        try:
-                            file_url = db.upload_file("documents", f"{user_id}_{doc_name}", doc_bytes, uploaded_doc.type)
-                        except:
-                            pass
-                        db._post("employee_documents", {
-                            "employee_id": user_id,
-                            "document_type": doc_category,
-                            "document_name": doc_name,
-                            "file_url": file_url,
-                            "uploaded_by": user_name,
-                            "uploaded_at": datetime.now().strftime('%Y-%m-%d %H:%M'),
-                            "is_public": False
-                        })
-                        st.success(f"✅ '{doc_name}' saved!")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"❌ Upload failed: {str(e)}")
+            with st.form("document_upload_form", clear_on_submit=True):
+                uploaded_doc = st.file_uploader("Upload Document", type=['pdf', 'docx', 'jpg', 'jpeg', 'png', 'xlsx', 'xls'])
+                doc_name = st.text_input("Document Name", placeholder="e.g., Employment Contract")
+                doc_category = st.selectbox("Document Category", ["personal", "certificate", "contract", "tax", "review"])
+                
+                submit_doc = st.form_submit_button("📤 Upload & Save Document", use_container_width=True, type="primary")
+                
+                if submit_doc:
+                    if uploaded_doc is not None and doc_name:
+                        with st.spinner("Uploading document..."):
+                            try:
+                                safe_doc_name = doc_name.replace(' ', '_').replace('(', '').replace(')', '')
+                                doc_bytes = uploaded_doc.read()
+                                file_url = ""
+                                try:
+                                    file_url = db.upload_file("documents", f"{user_id}_{safe_doc_name}", doc_bytes, uploaded_doc.type)
+                                except Exception as e:
+                                    st.warning(f"Storage note: {str(e)}")
+                                
+                                db._post("employee_documents", {
+                                    "employee_id": user_id,
+                                    "document_type": doc_category,
+                                    "document_name": doc_name,
+                                    "file_url": file_url,
+                                    "uploaded_by": user_name,
+                                    "uploaded_at": datetime.now().strftime('%Y-%m-%d %H:%M'),
+                                    "is_public": False
+                                })
+                                st.success(f"✅ '{doc_name}' saved!")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"❌ Upload failed: {str(e)}")
+                    else:
+                        if uploaded_doc is None:
+                            st.warning("Please select a file to upload")
+                        if not doc_name:
+                            st.warning("Please enter a document name")
         
         with tab4:
             st.markdown("### 👥 My Team")
