@@ -2658,7 +2658,7 @@ def employee_management():
                             ec1, ec2, ec3 = st.columns(3)
                             with ec1:
                                 current_dept = str(emp.get('department', 'Technology Group'))
-                                dept_options = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin']
+                                dept_options = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin', 'Central Stores']
                                 dept_idx = dept_options.index(current_dept) if current_dept in dept_options else 1
                                 new_dept = st.selectbox("Department", dept_options, index=dept_idx, key=f"dept_{emp['employee_id']}_{st.session_state.dir_page}")
                                 
@@ -2795,7 +2795,7 @@ def employee_management():
                 phone = st.text_input("Phone")
             with c2:
                 employee_id = st.text_input("Employee ID *", placeholder="e.g., AN00001")
-                department = st.selectbox("Department *", ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin'])
+                department = st.selectbox("Department *", ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin', 'Central Stores'])
                 position = st.text_input("Position *")
                 grade = st.selectbox("Grade", ['Junior', 'Intermediate', 'Mid-Senior', 'Senior', 'Manager', 'Senior Manager', 'General Manager', 'Head of Department(HOD)', 'Management', 'Senior Management/C-Level'])
             with c3:
@@ -3178,7 +3178,7 @@ def employee_management():
                 single_name = st.text_input("Full Name *", value=emp_full_name)
                 single_pw = st.text_input("Password", value="churchgate2026")
             with c2:
-                dept_options = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin']
+                dept_options = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin', 'Central Stores']
                 dept_idx = dept_options.index(emp_db_dept) if emp_db_dept in dept_options else 0
                 single_dept = st.selectbox("Department", dept_options, index=dept_idx, key="single_dept")
                 single_role = st.selectbox("Role", ['Team Member', 'Team Lead', 'Manager', 'HOD', 'Admin'], key="single_role")
@@ -4763,13 +4763,17 @@ def performance_okrs():
             # ============================================================
             # FY SELECTOR FOR HOD REVIEW
             # ============================================================
-            cycle_fy_map = {
+            CYCLE_TO_FY = {
                 'Half-Year Appraisal': 'FY 26/27',
                 'Full-Year Appraisal': 'FY 25/26',
                 'HOD Mock Appraisal': 'FY 26/27',
                 'Team Mock Appraisal': 'FY 26/27'
             }
-            fy_cycle_map = {v: k for k, v in cycle_fy_map.items()}
+            
+            FY_TO_CYCLES = {
+                'FY 26/27': ['Half-Year Appraisal', 'HOD Mock Appraisal', 'Team Mock Appraisal', 'Full-Year Appraisal'],
+                'FY 25/26': ['Full-Year Appraisal']
+            }
             
             col_fy, col_space = st.columns([1, 3])
             with col_fy:
@@ -4777,26 +4781,38 @@ def performance_okrs():
                     index=0 if 'Half-Year' in st.session_state.appraisal_cycle_name else 1,
                     key="hod_fy")
             
-            hod_cycle = fy_cycle_map.get(hod_fy, hod_fy)
+            hod_cycles = FY_TO_CYCLES.get(hod_fy, ['Half-Year Appraisal'])
+            hod_cycle = hod_cycles[0]
             st.caption(f"📊 Viewing: **{hod_fy}**")
             
-           # ===== SECTION 1: KPI APPROVAL =====
+            # View toggle for Admins
+            if is_admin:
+                view_mode = st.radio("👁️ View Mode", ["👔 HOD View", "🔐 Admin View"], 
+                    horizontal=True, key="hod_view_mode")
+            else:
+                view_mode = "👔 HOD View"
+            
+            is_dept_view = (view_mode == "👔 HOD View")
+            
+            # ===== SECTION 1: KPI APPROVAL =====
             st.markdown("### 📊 Team KPI Submissions")
             try:
                 all_perf = db._get("performance_data"); team_submissions = {}
                 for row in (all_perf or []):
                     if row.get('submission_status') == 'Submitted':
+
                         kpi_list = json.loads(row.get('kpi_data', '[]')) if row.get('kpi_data') else []
-                        matching = kpi_list
+                        matching = [k for k in kpi_list if k.get('cycle', '') in hod_cycles]
                         if not matching:
                             continue
                         clean_name = ' '.join(str(row.get('user_name', '')).split())
-                        if is_admin or get_employee_dept(clean_name) == user_dept:
+                        if not is_dept_view or get_employee_dept(clean_name) == user_dept:
                             if clean_name not in team_submissions: team_submissions[clean_name] = []
                             team_submissions[clean_name].append({'pillar': row.get('pillar_name', ''), 'kpis': matching, 'row_id': row.get('id')})
                 if team_submissions:
                     st.success(f"📋 {len(team_submissions)} team member(s)")
                     pillar_order = get_pillars(hod_fy)
+                    pillar_order = sorted(pillar_order, key=lambda x: int(x.split('.')[0]) if x.split('.')[0].isdigit() else 99)
                     for emp_name, submissions in team_submissions.items():
                         with st.expander(f"👤 {emp_name}", expanded=False):
                             ordered_subs = sorted(submissions, key=lambda x: pillar_order.index(x['pillar']) if x['pillar'] in pillar_order else 99)
@@ -4833,18 +4849,18 @@ def performance_okrs():
                 all_perf = db._get("performance_data"); team_approved = {}
                 for row in all_perf:
                     if row.get('submission_status') == 'Approved':
-                        # Filter by cycle
                         kpi_list = json.loads(row.get('kpi_data', '[]')) if row.get('kpi_data') else []
-                        matching = [k for k in kpi_list if k.get('cycle', '') == hod_cycle]
+                        matching = [k for k in kpi_list if k.get('cycle', '') in hod_cycles]
                         if not matching:
                             continue
                         clean_name = ' '.join(str(row.get('user_name', '')).split())
-                        if is_admin or get_employee_dept(clean_name) == user_dept:
+                        if not is_dept_view or get_employee_dept(clean_name) == user_dept:
                             if clean_name not in team_approved: team_approved[clean_name] = []
                             team_approved[clean_name].append({'pillar': row.get('pillar_name', ''), 'kpis': json.loads(row.get('kpi_data', '[]')) if row.get('kpi_data') else [], 'weight': row.get('weight', 0)})
                 if team_approved:
                     st.success(f"✅ {len(team_approved)} team member(s) with approved KPIs")
-                    pillar_order = get_pillars(hod_fy)
+                   pillar_order = get_pillars(hod_fy)
+                    pillar_order = sorted(pillar_order, key=lambda x: int(x.split('.')[0]) if x.split('.')[0].isdigit() else 99)
                     for emp_name, kpi_data in team_approved.items():
                         with st.expander(f"✅ {emp_name} — {len(kpi_data)} pillar(s) approved", expanded=False):
                             combined = {}
@@ -4890,15 +4906,10 @@ def performance_okrs():
             except:
                 pass
             
-            if is_admin:
-                submitted_appraisals = {k: v for k, v in st.session_state.self_assessments.items() 
-                                       if v['status'] in ['Submitted', 'Awaiting HOD Re-review', 'Escalated from TL', 'Escalated to HOD from TL']
-                                       and v.get('cycle_name', '') == hod_cycle}
-            else:
-                submitted_appraisals = {k: v for k, v in st.session_state.self_assessments.items() 
-                                       if get_employee_dept(k) == user_dept 
-                                       and v['status'] in ['Submitted', 'Awaiting HOD Re-review', 'Escalated from TL', 'Escalated to HOD from TL']
-                                       and v.get('cycle_name', '') == hod_cycle}
+            submitted_appraisals = {k: v for k, v in st.session_state.self_assessments.items() 
+                                   if not is_dept_view or get_employee_dept(clean_name) == user_dept: 
+                                   and v['status'] in ['Submitted', 'Awaiting HOD Re-review', 'Escalated from TL', 'Escalated to HOD from TL']
+                                   and (v.get('cycle_name', '') in hod_cycles or v.get('cycle_name', '') == '')}
             
             if submitted_appraisals:
                 st.success(f"📋 {len(submitted_appraisals)} appraisal(s) for review")
@@ -4972,6 +4983,7 @@ def performance_okrs():
                         
                         hod_scores = {}
                         pillar_order = get_pillars(hod_fy)
+                    pillar_order = sorted(pillar_order, key=lambda x: int(x.split('.')[0]) if x.split('.')[0].isdigit() else 99)
                         
                         staff_total = 0
                         staff_count = 0
@@ -6428,13 +6440,18 @@ def performance_okrs():
                 'HOD Mock Appraisal': 'FY 26/27',
                 'Team Mock Appraisal': 'FY 26/27'
             }
-            fy_cycle_map = {v: k for k, v in cycle_fy_map.items()}
-            
             col_fy, col_space = st.columns([1, 3])
             with col_fy:
                 committee_fy = st.selectbox("📅 Financial Year", ['FY 26/27', 'FY 25/26'],
                     index=0 if 'Half-Year' in st.session_state.appraisal_cycle_name else 1,
                     key="committee_fy")
+            
+            if committee_fy == 'FY 26/27':
+                committee_cycles = ['Half-Year Appraisal', 'Team Mock Appraisal', 'HOD Mock Appraisal']
+            else:
+                committee_cycles = ['Full-Year Appraisal']
+            
+            committee_cycle = committee_cycles[0]
             
             committee_cycle = fy_cycle_map.get(committee_fy, committee_fy)
             st.caption(f"📊 Viewing: **{committee_fy}** ({committee_cycle})")
@@ -6551,7 +6568,7 @@ def performance_okrs():
             # Filter by selected committee cycle
             all_assessments_filtered = {}
             for emp_name, assessment in all_assessments.items():
-                if assessment.get('cycle_name', '') == committee_cycle or not assessment.get('cycle_name'):
+                if assessment.get('cycle_name', '') in committee_cycles or not assessment.get('cycle_name'):
                     all_assessments_filtered[emp_name] = assessment
             all_assessments = all_assessments_filtered
             
@@ -7614,14 +7631,8 @@ def performance_okrs():
                         recommendation_source = "Appraisal Committee"
                     elif acceptance == 'Accepted':
                         comments = hod_comments or tl_comments or ''
-                        if 'promot' in comments.lower():
-                            recommendation = "PROMOTE - " + comments[:100]
-                        elif 'salary' in comments.lower() or 'increment' in comments.lower():
-                            recommendation = "SALARY REVIEW - " + comments[:100]
-                        elif 'train' in comments.lower() or 'develop' in comments.lower():
-                            recommendation = "TRAINING & DEVELOPMENT - " + comments[:100]
-                        elif 'pip' in comments.lower() or 'improve' in comments.lower():
-                            recommendation = "PERFORMANCE IMPROVEMENT PLAN - " + comments[:100]
+                        if comments.strip():
+                            recommendation = comments[:200]
                         else:
                             recommendation = "REVIEW COMPLETED"
                         recommendation_source = f"{reviewer_type} Review"
@@ -7907,30 +7918,27 @@ def staff_confirmation():
     tab1, tab2, tab3, tab4 = st.tabs(["📋 Probation Board", "🔍 Review & Confirm", "✅ Confirmed Staff", "📊 Dashboard"])
     
     # ============================================================
-    # TAB 1: PROBATION BOARD (Admin Only)
+    # TAB 1: PROBATION BOARD
     # ============================================================
     with tab1:
-        if not is_admin:
-            st.warning("⛔ This section is restricted to Admin/HR only.")
-        else:
-            st.subheader("📋 Employees on Probation")
-            
-            # Region/Subsidiary/Department Filters (Admin only)
-            if is_admin:
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    filter_region = st.selectbox("🌍 Region", ["All", "Abuja", "Lagos", "Aba"], key="prob_region")
-                with col2:
-                    SUBSIDIARY_OPTIONS = {
-                        'Abuja': ['All', 'World Trade Center(WTC)', 'Agroline Ventures Limited'],
-                        'Lagos': ['All', 'First Continental Properties Limited', 'R. B Properties Limited', 'Churchgate Nigeria Limited', 'Aba Textile Mills PLC'],
-                        'Aba': ['All', 'Aba Textile Mills PLC']
-                    }
-                    sub_opts = SUBSIDIARY_OPTIONS.get(filter_region, ['All']) if filter_region != 'All' else ['All']
-                    filter_subsidiary = st.selectbox("🏢 Subsidiary", sub_opts, key="prob_sub")
-                with col3:
-                    all_depts_list = ['All'] + sorted(list(probation_employees['department'].dropna().unique())) if not probation_employees.empty else ['All']
-                    filter_dept = st.selectbox("🏭 Department", all_depts_list, key="prob_dept")
+        st.subheader("📋 Employees on Probation")
+        
+        # Region/Subsidiary/Department Filters (Admin only)
+        if is_admin:
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                filter_region = st.selectbox("🌍 Region", ["All", "Abuja", "Lagos", "Aba"], key="prob_region")
+            with col2:
+                SUBSIDIARY_OPTIONS = {
+                    'Abuja': ['All', 'World Trade Center(WTC)', 'Agroline Ventures Limited'],
+                    'Lagos': ['All', 'First Continental Properties Limited', 'R. B Properties Limited', 'Churchgate Nigeria Limited', 'Aba Textile Mills PLC'],
+                    'Aba': ['All', 'Aba Textile Mills PLC']
+                }
+                sub_opts = SUBSIDIARY_OPTIONS.get(filter_region, ['All']) if filter_region != 'All' else ['All']
+                filter_subsidiary = st.selectbox("🏢 Subsidiary", sub_opts, key="prob_sub")
+            with col3:
+                all_depts_list = ['All'] + sorted(list(probation_employees['department'].dropna().unique())) if not probation_employees.empty else ['All']
+                filter_dept = st.selectbox("🏭 Department", all_depts_list, key="prob_dept")
         
         if not probation_employees.empty:
             # Apply filters
@@ -8333,80 +8341,77 @@ def staff_confirmation():
                             except: pass
     
     # ============================================================
-    # TAB 3: CONFIRMED STAFF (Admin Only)
+    # TAB 3: CONFIRMED STAFF (UPGRADED)
     # ============================================================
     with tab3:
-            if not is_admin:
-                st.warning("⛔ This section is restricted to Admin/HR only.")
-            else:
-                st.subheader("✅ Confirmed Staff Records")
+        st.subheader("✅ Confirmed Staff Records")
+        
+        try:
+            reviews = db._get("confirmation_reviews")
+            if reviews:
+                confirmed = [r for r in reviews if r.get('status') in ['Approved by COO', 'Letter Sent']]
                 
-                try:
-                    reviews = db._get("confirmation_reviews")
-                    if reviews:
-                        confirmed = [r for r in reviews if r.get('status') in ['Approved by COO', 'Letter Sent']]
-                        
-                        # ===== FILTERS =====
-                        if confirmed and is_admin:
-                            st.markdown("---")
-                            col1, col2, col3, col4 = st.columns(4)
-                            with col1:
-                                conf_region = st.selectbox("🌍 Region", ["All", "Abuja", "Lagos", "Aba"], key="conf_region")
-                            with col2:
-                                SUBS_OPT = {
-                                    'Abuja': ['All', 'World Trade Center(WTC)', 'Agroline Ventures Limited'],
-                                    'Lagos': ['All', 'First Continental Properties Limited', 'Churchgate Nigeria Limited', 'R. B Properties Limited', 'Aba Textile Mills PLC'],
-                                    'Aba': ['All', 'Aba Textile Mills PLC']
-                                }
-                                sub_opts = SUBS_OPT.get(conf_region, ['All']) if conf_region != 'All' else ['All']
-                                conf_sub = st.selectbox("🏢 Subsidiary", sub_opts, key="conf_sub")
-                            with col3:
-                                all_depts_conf = ['All'] + sorted(list(set(r.get('department','') for r in confirmed)))
-                                conf_dept = st.selectbox("🏭 Department", all_depts_conf, key="conf_dept")
-                            with col4:
-                                conf_rating = st.selectbox("⭐ Rating", ["All", "Outstanding", "Satisfactory", "Average", "Unsatisfactory", "Poor"], key="conf_rating")
-                            
-                            # Apply filters
-                            if conf_region != 'All':
-                                confirmed = [r for r in confirmed if r.get('region','') == conf_region]
-                            if conf_sub != 'All':
-                                confirmed = [r for r in confirmed if r.get('subsidiary','') == conf_sub]
-                            if conf_dept != 'All':
-                                confirmed = [r for r in confirmed if r.get('department','') == conf_dept]
-                            if conf_rating != 'All':
-                                confirmed = [r for r in confirmed if r.get('performance_rating','') == conf_rating]
-                        
-                        if confirmed:
-                            # ===== SUMMARY STATS =====
-                            avg_score = sum(float(r.get('total_performance_score', 0)) for r in confirmed) / len(confirmed)
-                            outstanding = len([r for r in confirmed if r.get('performance_rating') == 'Outstanding'])
-                            satisfactory = len([r for r in confirmed if r.get('performance_rating') == 'Satisfactory'])
-                            avg_scores_by_dept = {}
-                            for r in confirmed:
-                                dept = r.get('department', 'Unknown')
-                                score = float(r.get('total_performance_score', 0))
-                                if dept not in avg_scores_by_dept:
-                                    avg_scores_by_dept[dept] = []
-                                avg_scores_by_dept[dept].append(score)
-                            
-                            st.markdown("---")
-                            c1, c2, c3, c4, c5 = st.columns(5)
-                            c1.metric("✅ Total Confirmed", len(confirmed))
-                            c2.metric("📊 Avg Score", f"{avg_score:.0f}/100")
-                            c3.metric("🌟 Outstanding", outstanding)
-                            c4.metric("👍 Satisfactory", satisfactory)
-                            c5.metric("🏢 Departments", len(avg_scores_by_dept))
-                            
-                            # ===== CHARTS =====
-                            st.markdown("---")
-                            col1, col2 = st.columns(2)
-                            
-                            with col1:
-                                st.markdown("#### ⭐ Rating Distribution")
-                                rating_counts = {}
-                                for r in confirmed:
-                                    rating = r.get('performance_rating', 'Unknown')
-                                    rating_counts[rating] = rating_counts.get(rating, 0) + 1
+                # ===== FILTERS =====
+                if confirmed and is_admin:
+                    st.markdown("---")
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        conf_region = st.selectbox("🌍 Region", ["All", "Abuja", "Lagos", "Aba"], key="conf_region")
+                    with col2:
+                        SUBS_OPT = {
+                            'Abuja': ['All', 'World Trade Center(WTC)', 'Agroline Ventures Limited'],
+                            'Lagos': ['All', 'First Continental Properties Limited', 'Churchgate Nigeria Limited', 'R. B Properties Limited', 'Aba Textile Mills PLC'],
+                            'Aba': ['All', 'Aba Textile Mills PLC']
+                        }
+                        sub_opts = SUBS_OPT.get(conf_region, ['All']) if conf_region != 'All' else ['All']
+                        conf_sub = st.selectbox("🏢 Subsidiary", sub_opts, key="conf_sub")
+                    with col3:
+                        all_depts_conf = ['All'] + sorted(list(set(r.get('department','') for r in confirmed)))
+                        conf_dept = st.selectbox("🏭 Department", all_depts_conf, key="conf_dept")
+                    with col4:
+                        conf_rating = st.selectbox("⭐ Rating", ["All", "Outstanding", "Satisfactory", "Average", "Unsatisfactory", "Poor"], key="conf_rating")
+                    
+                    # Apply filters
+                    if conf_region != 'All':
+                        confirmed = [r for r in confirmed if r.get('region','') == conf_region]
+                    if conf_sub != 'All':
+                        confirmed = [r for r in confirmed if r.get('subsidiary','') == conf_sub]
+                    if conf_dept != 'All':
+                        confirmed = [r for r in confirmed if r.get('department','') == conf_dept]
+                    if conf_rating != 'All':
+                        confirmed = [r for r in confirmed if r.get('performance_rating','') == conf_rating]
+                
+                if confirmed:
+                    # ===== SUMMARY STATS =====
+                    avg_score = sum(float(r.get('total_performance_score', 0)) for r in confirmed) / len(confirmed)
+                    outstanding = len([r for r in confirmed if r.get('performance_rating') == 'Outstanding'])
+                    satisfactory = len([r for r in confirmed if r.get('performance_rating') == 'Satisfactory'])
+                    avg_scores_by_dept = {}
+                    for r in confirmed:
+                        dept = r.get('department', 'Unknown')
+                        score = float(r.get('total_performance_score', 0))
+                        if dept not in avg_scores_by_dept:
+                            avg_scores_by_dept[dept] = []
+                        avg_scores_by_dept[dept].append(score)
+                    
+                    st.markdown("---")
+                    c1, c2, c3, c4, c5 = st.columns(5)
+                    c1.metric("✅ Total Confirmed", len(confirmed))
+                    c2.metric("📊 Avg Score", f"{avg_score:.0f}/100")
+                    c3.metric("🌟 Outstanding", outstanding)
+                    c4.metric("👍 Satisfactory", satisfactory)
+                    c5.metric("🏢 Departments", len(avg_scores_by_dept))
+                    
+                    # ===== CHARTS =====
+                    st.markdown("---")
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.markdown("#### ⭐ Rating Distribution")
+                        rating_counts = {}
+                        for r in confirmed:
+                            rating = r.get('performance_rating', 'Unknown')
+                            rating_counts[rating] = rating_counts.get(rating, 0) + 1
                         
                         if rating_counts:
                             fig1 = px.pie(values=list(rating_counts.values()), names=list(rating_counts.keys()), hole=0.5,
@@ -8593,13 +8598,6 @@ def staff_confirmation():
         try:
             reviews = db._get("confirmation_reviews")
             all_employees = db.get_all_employees()
-            
-            # Apply department restriction for non-admins
-            if not is_admin:
-                if reviews:
-                    reviews = [r for r in reviews if r.get('department', '') == user_dept]
-                if not all_employees.empty:
-                    all_employees = all_employees[all_employees['department'] == user_dept]
             
             if reviews or not all_employees.empty:
                 total_employees = len(all_employees) if not all_employees.empty else 0
@@ -18401,7 +18399,7 @@ def my_profile():
                     new_gender = st.selectbox("Gender", ['Male', 'Female'], index=0 if emp_gender == 'Male' else 1)
                 with c2:
                     new_last = st.text_input("Last Name", value=last_name)
-                    dept_list = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin']
+                    dept_list = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin', 'Central Stores']
                     dept_idx = dept_list.index(emp_dept) if emp_dept in dept_list else 0
                     new_dept = st.selectbox("Department", dept_list, index=dept_idx)
                     new_region = st.selectbox("Region", ['Abuja', 'Lagos'], index=0 if emp_region == 'Abuja' else 1)
