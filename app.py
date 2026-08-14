@@ -4907,7 +4907,7 @@ def performance_okrs():
                 pass
             
             submitted_appraisals = {k: v for k, v in st.session_state.self_assessments.items() 
-                                   if not is_dept_view or get_employee_dept(clean_name) == user_dept: 
+                                   if (not is_dept_view or get_employee_dept(k) == user_dept)
                                    and v['status'] in ['Submitted', 'Awaiting HOD Re-review', 'Escalated from TL', 'Escalated to HOD from TL']
                                    and (v.get('cycle_name', '') in hod_cycles or v.get('cycle_name', '') == '')}
             
@@ -4932,12 +4932,12 @@ def performance_okrs():
                                     if docs and isinstance(docs, list) and len(docs) > 0:
                                         st.markdown("**📎 Rejection Documents:**")
                                         for doc_url in docs:
-                                                file_name = doc_url.split('/')[-1]
-                                                parts = file_name.split('_', 3)
-                                                import urllib.parse
-                                                display_name = parts[-1] if len(parts) >= 4 else file_name
-                                                display_name = urllib.parse.unquote(display_name)
-                                                st.markdown(f"- 📄 [{display_name}]({doc_url})")
+                                            file_name = doc_url.split('/')[-1]
+                                            parts = file_name.split('_', 3)
+                                            import urllib.parse
+                                            display_name = parts[-1] if len(parts) >= 4 else file_name
+                                            display_name = urllib.parse.unquote(display_name)
+                                            st.markdown(f"- 📄 [{display_name}]({doc_url})")
                                 except: pass
                         
                         st.markdown(f"**👤 Staff Comments:** {assessment.get('comments', 'N/A')}")
@@ -4983,7 +4983,7 @@ def performance_okrs():
                         
                         hod_scores = {}
                         pillar_order = get_pillars(hod_fy)
-                    pillar_order = sorted(pillar_order, key=lambda x: int(x.split('.')[0]) if x.split('.')[0].isdigit() else 99)
+                        pillar_order = sorted(pillar_order, key=lambda x: int(x.split('.')[0]) if x.split('.')[0].isdigit() else 99)
                         
                         staff_total = 0
                         staff_count = 0
