@@ -4859,7 +4859,7 @@ def performance_okrs():
                             team_approved[clean_name].append({'pillar': row.get('pillar_name', ''), 'kpis': json.loads(row.get('kpi_data', '[]')) if row.get('kpi_data') else [], 'weight': row.get('weight', 0)})
                 if team_approved:
                     st.success(f"✅ {len(team_approved)} team member(s) with approved KPIs")
-                   pillar_order = get_pillars(hod_fy)
+                    pillar_order = get_pillars(hod_fy)
                     pillar_order = sorted(pillar_order, key=lambda x: int(x.split('.')[0]) if x.split('.')[0].isdigit() else 99)
                     for emp_name, kpi_data in team_approved.items():
                         with st.expander(f"✅ {emp_name} — {len(kpi_data)} pillar(s) approved", expanded=False):
