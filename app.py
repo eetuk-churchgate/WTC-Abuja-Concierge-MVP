@@ -2658,7 +2658,7 @@ def employee_management():
                             ec1, ec2, ec3 = st.columns(3)
                             with ec1:
                                 current_dept = str(emp.get('department', 'Technology Group'))
-                                dept_options = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin', 'Central Stores']
+                                dept_options = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin']
                                 dept_idx = dept_options.index(current_dept) if current_dept in dept_options else 1
                                 new_dept = st.selectbox("Department", dept_options, index=dept_idx, key=f"dept_{emp['employee_id']}_{st.session_state.dir_page}")
                                 
@@ -2795,7 +2795,7 @@ def employee_management():
                 phone = st.text_input("Phone")
             with c2:
                 employee_id = st.text_input("Employee ID *", placeholder="e.g., AN00001")
-                department = st.selectbox("Department *", ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin', 'Central Stores'])
+                department = st.selectbox("Department *", ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin'])
                 position = st.text_input("Position *")
                 grade = st.selectbox("Grade", ['Junior', 'Intermediate', 'Mid-Senior', 'Senior', 'Manager', 'Senior Manager', 'General Manager', 'Head of Department(HOD)', 'Management', 'Senior Management/C-Level'])
             with c3:
@@ -3178,7 +3178,7 @@ def employee_management():
                 single_name = st.text_input("Full Name *", value=emp_full_name)
                 single_pw = st.text_input("Password", value="churchgate2026")
             with c2:
-                dept_options = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin', 'Central Stores']
+                dept_options = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin']
                 dept_idx = dept_options.index(emp_db_dept) if emp_db_dept in dept_options else 0
                 single_dept = st.selectbox("Department", dept_options, index=dept_idx, key="single_dept")
                 single_role = st.selectbox("Role", ['Team Member', 'Team Lead', 'Manager', 'HOD', 'Admin'], key="single_role")
@@ -7904,11 +7904,7 @@ def staff_confirmation():
     
     st.markdown("---")
     
-    # TAB RESTRICTIONS: Admin sees all, HOD sees limited
-    if is_admin:
-        tab1, tab2, tab3, tab4 = st.tabs(["📋 Probation Board", "🔍 Review & Confirm", "✅ Confirmed Staff", "📊 Dashboard"])
-    else:
-        tab1, tab2, tab3, tab4 = st.tabs(["🔒 Restricted", "🔍 Review & Confirm", "🔒 Restricted", "📊 My Department Dashboard"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📋 Probation Board", "🔍 Review & Confirm", "✅ Confirmed Staff", "📊 Dashboard"])
     
     # ============================================================
     # TAB 1: PROBATION BOARD (Admin Only)
@@ -7932,9 +7928,9 @@ def staff_confirmation():
                     }
                     sub_opts = SUBSIDIARY_OPTIONS.get(filter_region, ['All']) if filter_region != 'All' else ['All']
                     filter_subsidiary = st.selectbox("🏢 Subsidiary", sub_opts, key="prob_sub")
-            with col3:
-                all_depts_list = ['All'] + sorted(list(probation_employees['department'].dropna().unique())) if not probation_employees.empty else ['All']
-                filter_dept = st.selectbox("🏭 Department", all_depts_list, key="prob_dept")
+                with col3:
+                    all_depts_list = ['All'] + sorted(list(probation_employees['department'].dropna().unique())) if not probation_employees.empty else ['All']
+                    filter_dept = st.selectbox("🏭 Department", all_depts_list, key="prob_dept")
         
         if not probation_employees.empty:
             # Apply filters
@@ -8337,80 +8333,80 @@ def staff_confirmation():
                             except: pass
     
     # ============================================================
-    # TAB 3: CONFIRMED STAFF (UPGRADED) - Admin Only
+    # TAB 3: CONFIRMED STAFF (Admin Only)
     # ============================================================
     with tab3:
-        if not is_admin:
-            st.warning("⛔ This section is restricted to Admin/HR only.")
-        else:
-            st.subheader("✅ Confirmed Staff Records")
-            
-            try:
-                reviews = db._get("confirmation_reviews")
-                if reviews:
-                    confirmed = [r for r in reviews if r.get('status') in ['Approved by COO', 'Letter Sent']]
-                    
-                    # ===== FILTERS =====
-                    if confirmed and is_admin:
-                        st.markdown("---")
-                        col1, col2, col3, col4 = st.columns(4)
-                        with col1:
-                            conf_region = st.selectbox("🌍 Region", ["All", "Abuja", "Lagos", "Aba"], key="conf_region")
-                        with col2:
-                            SUBS_OPT = {
-                                'Abuja': ['All', 'World Trade Center(WTC)', 'Agroline Ventures Limited'],
-                                'Lagos': ['All', 'First Continental Properties Limited', 'Churchgate Nigeria Limited', 'R. B Properties Limited', 'Aba Textile Mills PLC'],
-                                'Aba': ['All', 'Aba Textile Mills PLC']
-                            }
-                            sub_opts = SUBS_OPT.get(conf_region, ['All']) if conf_region != 'All' else ['All']
-                        conf_sub = st.selectbox("🏢 Subsidiary", sub_opts, key="conf_sub")
-                    with col3:
-                        all_depts_conf = ['All'] + sorted(list(set(r.get('department','') for r in confirmed)))
-                        conf_dept = st.selectbox("🏭 Department", all_depts_conf, key="conf_dept")
-                    with col4:
-                        conf_rating = st.selectbox("⭐ Rating", ["All", "Outstanding", "Satisfactory", "Average", "Unsatisfactory", "Poor"], key="conf_rating")
-                    
-                    # Apply filters
-                    if conf_region != 'All':
-                        confirmed = [r for r in confirmed if r.get('region','') == conf_region]
-                    if conf_sub != 'All':
-                        confirmed = [r for r in confirmed if r.get('subsidiary','') == conf_sub]
-                    if conf_dept != 'All':
-                        confirmed = [r for r in confirmed if r.get('department','') == conf_dept]
-                    if conf_rating != 'All':
-                        confirmed = [r for r in confirmed if r.get('performance_rating','') == conf_rating]
+            if not is_admin:
+                st.warning("⛔ This section is restricted to Admin/HR only.")
+            else:
+                st.subheader("✅ Confirmed Staff Records")
                 
-                if confirmed:
-                    # ===== SUMMARY STATS =====
-                    avg_score = sum(float(r.get('total_performance_score', 0)) for r in confirmed) / len(confirmed)
-                    outstanding = len([r for r in confirmed if r.get('performance_rating') == 'Outstanding'])
-                    satisfactory = len([r for r in confirmed if r.get('performance_rating') == 'Satisfactory'])
-                    avg_scores_by_dept = {}
-                    for r in confirmed:
-                        dept = r.get('department', 'Unknown')
-                        score = float(r.get('total_performance_score', 0))
-                        if dept not in avg_scores_by_dept:
-                            avg_scores_by_dept[dept] = []
-                        avg_scores_by_dept[dept].append(score)
-                    
-                    st.markdown("---")
-                    c1, c2, c3, c4, c5 = st.columns(5)
-                    c1.metric("✅ Total Confirmed", len(confirmed))
-                    c2.metric("📊 Avg Score", f"{avg_score:.0f}/100")
-                    c3.metric("🌟 Outstanding", outstanding)
-                    c4.metric("👍 Satisfactory", satisfactory)
-                    c5.metric("🏢 Departments", len(avg_scores_by_dept))
-                    
-                    # ===== CHARTS =====
-                    st.markdown("---")
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.markdown("#### ⭐ Rating Distribution")
-                        rating_counts = {}
-                        for r in confirmed:
-                            rating = r.get('performance_rating', 'Unknown')
-                            rating_counts[rating] = rating_counts.get(rating, 0) + 1
+                try:
+                    reviews = db._get("confirmation_reviews")
+                    if reviews:
+                        confirmed = [r for r in reviews if r.get('status') in ['Approved by COO', 'Letter Sent']]
+                        
+                        # ===== FILTERS =====
+                        if confirmed and is_admin:
+                            st.markdown("---")
+                            col1, col2, col3, col4 = st.columns(4)
+                            with col1:
+                                conf_region = st.selectbox("🌍 Region", ["All", "Abuja", "Lagos", "Aba"], key="conf_region")
+                            with col2:
+                                SUBS_OPT = {
+                                    'Abuja': ['All', 'World Trade Center(WTC)', 'Agroline Ventures Limited'],
+                                    'Lagos': ['All', 'First Continental Properties Limited', 'Churchgate Nigeria Limited', 'R. B Properties Limited', 'Aba Textile Mills PLC'],
+                                    'Aba': ['All', 'Aba Textile Mills PLC']
+                                }
+                                sub_opts = SUBS_OPT.get(conf_region, ['All']) if conf_region != 'All' else ['All']
+                                conf_sub = st.selectbox("🏢 Subsidiary", sub_opts, key="conf_sub")
+                            with col3:
+                                all_depts_conf = ['All'] + sorted(list(set(r.get('department','') for r in confirmed)))
+                                conf_dept = st.selectbox("🏭 Department", all_depts_conf, key="conf_dept")
+                            with col4:
+                                conf_rating = st.selectbox("⭐ Rating", ["All", "Outstanding", "Satisfactory", "Average", "Unsatisfactory", "Poor"], key="conf_rating")
+                            
+                            # Apply filters
+                            if conf_region != 'All':
+                                confirmed = [r for r in confirmed if r.get('region','') == conf_region]
+                            if conf_sub != 'All':
+                                confirmed = [r for r in confirmed if r.get('subsidiary','') == conf_sub]
+                            if conf_dept != 'All':
+                                confirmed = [r for r in confirmed if r.get('department','') == conf_dept]
+                            if conf_rating != 'All':
+                                confirmed = [r for r in confirmed if r.get('performance_rating','') == conf_rating]
+                        
+                        if confirmed:
+                            # ===== SUMMARY STATS =====
+                            avg_score = sum(float(r.get('total_performance_score', 0)) for r in confirmed) / len(confirmed)
+                            outstanding = len([r for r in confirmed if r.get('performance_rating') == 'Outstanding'])
+                            satisfactory = len([r for r in confirmed if r.get('performance_rating') == 'Satisfactory'])
+                            avg_scores_by_dept = {}
+                            for r in confirmed:
+                                dept = r.get('department', 'Unknown')
+                                score = float(r.get('total_performance_score', 0))
+                                if dept not in avg_scores_by_dept:
+                                    avg_scores_by_dept[dept] = []
+                                avg_scores_by_dept[dept].append(score)
+                            
+                            st.markdown("---")
+                            c1, c2, c3, c4, c5 = st.columns(5)
+                            c1.metric("✅ Total Confirmed", len(confirmed))
+                            c2.metric("📊 Avg Score", f"{avg_score:.0f}/100")
+                            c3.metric("🌟 Outstanding", outstanding)
+                            c4.metric("👍 Satisfactory", satisfactory)
+                            c5.metric("🏢 Departments", len(avg_scores_by_dept))
+                            
+                            # ===== CHARTS =====
+                            st.markdown("---")
+                            col1, col2 = st.columns(2)
+                            
+                            with col1:
+                                st.markdown("#### ⭐ Rating Distribution")
+                                rating_counts = {}
+                                for r in confirmed:
+                                    rating = r.get('performance_rating', 'Unknown')
+                                    rating_counts[rating] = rating_counts.get(rating, 0) + 1
                         
                         if rating_counts:
                             fig1 = px.pie(values=list(rating_counts.values()), names=list(rating_counts.keys()), hole=0.5,
@@ -8587,7 +8583,7 @@ def staff_confirmation():
                 st.info("No confirmation reviews found.")
         except:
             st.info("Data loading...")
-
+    
     # ============================================================
     # TAB 4: DASHBOARD - FORTUNE 500 ANALYTICS
     # ============================================================
@@ -18405,7 +18401,7 @@ def my_profile():
                     new_gender = st.selectbox("Gender", ['Male', 'Female'], index=0 if emp_gender == 'Male' else 1)
                 with c2:
                     new_last = st.text_input("Last Name", value=last_name)
-                    dept_list = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin', 'Central Stores']
+                    dept_list = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin']
                     dept_idx = dept_list.index(emp_dept) if emp_dept in dept_list else 0
                     new_dept = st.selectbox("Department", dept_list, index=dept_idx)
                     new_region = st.selectbox("Region", ['Abuja', 'Lagos'], index=0 if emp_region == 'Abuja' else 1)
