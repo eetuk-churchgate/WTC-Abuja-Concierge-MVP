@@ -118,6 +118,91 @@ def clear_all_cache():
     """Clear all cached data"""
     st.cache_data.clear()
 
+
+
+# ============ ADDITIONAL CACHED FUNCTIONS FOR PERFORMANCE ============
+@st.cache_data(ttl=300)
+def cached_get_users():
+    """Cached users for role mapping"""
+    try:
+        data = db._get("users")
+        return data if data else []
+    except:
+        return []
+
+@st.cache_data(ttl=300)
+def cached_get_peer_ratings():
+    """Cached peer ratings"""
+    try:
+        data = db._get("peer_ratings")
+        return data if data else []
+    except:
+        return []
+
+@st.cache_data(ttl=300)
+def cached_get_leave_requests():
+    """Cached leave requests"""
+    try:
+        data = db._get("leave_requests")
+        return data if data else []
+    except:
+        return []
+
+@st.cache_data(ttl=300)
+def cached_get_job_requisitions():
+    """Cached job requisitions"""
+    try:
+        data = db.get_all_job_requisitions()
+        return data if data else []
+    except:
+        return []
+
+@st.cache_data(ttl=300)
+def cached_get_training_courses():
+    """Cached training courses"""
+    try:
+        data = db._get("training_courses")
+        return data if data else []
+    except:
+        return []
+
+@st.cache_data(ttl=300)
+def cached_get_employees_with_roles():
+    """Get employees with roles merged - cached"""
+    employees_df = load_employees_cached()
+    if employees_df.empty:
+        return employees_df
+    
+    users_data = cached_get_users()
+    if users_data:
+        role_map = {u.get('email', ''): u.get('role', 'Team Member') for u in users_data if u.get('email')}
+        if 'email' in employees_df.columns:
+            employees_df['role'] = employees_df['email'].map(role_map).fillna('Team Member')
+        else:
+            employees_df['role'] = 'Team Member'
+    else:
+        employees_df['role'] = 'Team Member'
+    
+    return employees_df
+
+def clear_all_caches():
+    """Clear all caches after data modifications"""
+    load_employees_cached.clear()
+    load_performance_cached.clear()
+    load_candidates_cached.clear()
+    load_appraisals_cached.clear()
+    load_engagement_cached.clear()
+    cached_get_users.clear()
+    cached_get_peer_ratings.clear()
+    cached_get_leave_requests.clear()
+    cached_get_job_requisitions.clear()
+    cached_get_training_courses.clear()
+    cached_get_employees_with_roles.clear()
+    st.cache_data.clear()
+
+
+
+
 # ============================================================
 # PAGE CONFIG
 # ============================================================
@@ -1659,7 +1744,7 @@ def employee_dashboard():
     st.markdown("---")
     st.markdown("**Department Heads**")
     try:
-        emp_df = db.get_all_employees()
+        emp_df = employees_df
         if not emp_df.empty:
             hod_df = emp_df[emp_df['grade'].isin(['Manager', 'Senior Manager', 'General Manager', 'Head of Department(HOD)', 'Management', 'Senior Management/C-Level'])]
             dept_list = hod_df['department'].unique()
@@ -1722,7 +1807,7 @@ def employee_dashboard():
         st.markdown("---")
         st.markdown("### 👥 Department Heads")
         try:
-            emp_df = db.get_all_employees()
+            emp_df = employees_df
             if not emp_df.empty:
                 hod_df = emp_df[emp_df['grade'].isin(['Manager', 'Senior Manager', 'General Manager', 'Head of Department(HOD)', 'Management', 'Senior Management/C-Level'])]
                 hod_data = []
@@ -2322,19 +2407,9 @@ def executive_dashboard():
         """, unsafe_allow_html=True)
 
 def employee_management():
-    # Cache employees for 5 minutes
-    @st.cache_data(ttl=300)
-    def load_employees_cached():
-        try:
-            df = db.get_all_employees()
-            if df is None or df.empty:
-                return pd.DataFrame()
-            return df
-        except:
-            return pd.DataFrame()
-    
-    employees_df = load_employees_cached()
     track_engagement("Employee Management")
+    # Use globally cached employees with roles
+    employees_df = cached_get_employees_with_roles()
     st.markdown("""<div class="churchgate-header"><h1>👥 Employee Management</h1><p>Comprehensive workforce management | Real-time Data | Churchgate Group</p></div>""", unsafe_allow_html=True)
     
     user_role = st.session_state.user['role'] if st.session_state.user else 'Team Member'
@@ -2358,35 +2433,7 @@ def employee_management():
         'Aba': ['Aba Textile Mills PLC']
     }
     
-    def load_employees():
-        try:
-            df = db.get_all_employees()
-            if df is None or df.empty:
-                df = pd.DataFrame(columns=['employee_id', 'first_name', 'last_name', 'email', 'phone', 'department', 'position', 'grade', 'employment_type', 'join_date', 'status', 'region', 'subsidiary', 'reports_to'])
-            return df
-        except:
-            return pd.DataFrame(columns=['employee_id', 'first_name', 'last_name', 'email', 'phone', 'department', 'position', 'grade', 'employment_type', 'join_date', 'status', 'region', 'subsidiary', 'reports_to'])
     
-    employees_df = load_employees()
-    
-    # Merge role from users table into employees dataframe
-    try:
-        users_data = db._get("users")
-        if users_data:
-            role_map = {}
-            for u in users_data:
-                email = u.get('email', '')
-                role = u.get('role', 'Team Member')
-                if email:
-                    role_map[email] = role
-            if 'email' in employees_df.columns and not employees_df.empty:
-                employees_df['role'] = employees_df['email'].map(role_map).fillna('Team Member')
-            else:
-                employees_df['role'] = 'Team Member'
-        else:
-            employees_df['role'] = 'Team Member'
-    except:
-        employees_df['role'] = 'Team Member'
     
     # Build list of all employee names for Reports To dropdown
     all_employee_names = []
@@ -2399,6 +2446,10 @@ def employee_management():
         'Procurement': '#2b6cb0', 'Security': '#718096', 'Legal': '#e53e3e', 'Operations': '#319795',
         'Engineering': '#d53f8c'
     }
+    
+    # Initialize tab state if not exists
+    if 'emp_mgmt_tab' not in st.session_state:
+        st.session_state.emp_mgmt_tab = 0
     
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
         "📋 Directory", "➕ Add Employee", "📤 Bulk Upload", 
@@ -2727,7 +2778,9 @@ def employee_management():
                                     }, {"employee_id": emp['employee_id']})
                                     db._patch("users", {"role": new_role, "department": new_dept, "name": f"{emp['first_name']} {emp['last_name']}"}, {"email": new_email})
                                     st.success(f"✅ {emp['first_name']} {emp['last_name']} updated!")
-                                    st.cache_data.clear(); time.sleep(1); st.rerun()
+clear_all_caches()
+time.sleep(0.5)
+st.rerun()
                                 except Exception as e:
                                     st.error(f"Update failed: {str(e)}")
                         
@@ -2742,11 +2795,16 @@ def employee_management():
                             if current_status == 'Archived':
                                 if st.button("🔄 Restore", key=f"restore_{emp['employee_id']}_{st.session_state.dir_page}", use_container_width=True):
                                     db._patch("employees", {"status": "Active"}, {"employee_id": emp['employee_id']})
-                                    st.success(f"✅ Restored!"); st.cache_data.clear(); time.sleep(1); st.rerun()
+                                    st.success(f"✅ Restored!")
+clear_all_caches()
+time.sleep(0.5)
+st.rerun()
                             else:
                                 if st.button("📦 Archive", key=f"archive_{emp['employee_id']}_{st.session_state.dir_page}", use_container_width=True):
                                     db._patch("employees", {"status": "Archived"}, {"employee_id": emp['employee_id']})
-                                    st.success(f"📦 Archived!"); st.cache_data.clear(); time.sleep(1); st.rerun()
+                                    st.success(f"📦 Archived!")
+clear_all_caches()
+time.sleep(0.5)
                         with action_col3:
                             del_pending_key = f"del_pending_{emp['employee_id']}_{st.session_state.dir_page}"
                             if st.button("🗑️ Delete", key=f"del_{emp['employee_id']}_{st.session_state.dir_page}", use_container_width=True):
@@ -2758,7 +2816,10 @@ def employee_management():
                                         ok = db._delete("employees", {"employee_id": emp['employee_id']})
                                         del st.session_state[del_pending_key]
                                         if ok:
-                                            st.success("🗑️ Deleted!"); st.cache_data.clear(); time.sleep(1); st.rerun()
+                                            st.success("🗑️ Deleted!")
+clear_all_caches()
+time.sleep(0.5)
+st.rerun()
                                         else:
                                             st.error("Delete failed — the employee may still be referenced by other records (appraisals, documents, etc).")
                                     except Exception as e: st.error(f"Failed: {str(e)}")
@@ -3131,7 +3192,7 @@ def employee_management():
                     st.warning(f"⚠️ {fail} records skipped. Check for duplicate IDs.")
                 
                 st.balloons()
-                st.cache_data.clear()
+                clear_all_caches()
     
     # ============ TAB 4: GENERATE LOGINS ============
     with tab4:
@@ -3144,7 +3205,7 @@ def employee_management():
         
         st.markdown("### ⚡ Quick Single Employee")
         
-        # Employee selector dropdown
+        # Employee selector dropdown - OUTSIDE FORM
         selected_emp = st.selectbox("👤 Select Employee", ["Select employee..."] + emp_options_list, key="single_emp_dropdown")
         
         # Auto-fill from selection
@@ -3171,41 +3232,42 @@ def employee_management():
             emp_db_id = ''
             emp_db_position = ''
         
-        with st.form("single_login_form"):
-            c1, c2 = st.columns(2)
-            with c1:
-                single_email = st.text_input("Employee Email *", value=emp_db_email, placeholder="e.g., employee@churchgate.com")
-                single_name = st.text_input("Full Name *", value=emp_full_name)
-                single_pw = st.text_input("Password", value="churchgate2026")
-            with c2:
-                dept_options = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin', 'Central Stores']
-                dept_idx = dept_options.index(emp_db_dept) if emp_db_dept in dept_options else 0
-                single_dept = st.selectbox("Department", dept_options, index=dept_idx, key="single_dept")
-                single_role = st.selectbox("Role", ['Team Member', 'Team Lead', 'Manager', 'HOD', 'Admin'], key="single_role")
-                single_id = st.text_input("Employee ID", value=emp_db_id, placeholder="e.g., AN00001")
-            
-            if st.form_submit_button("🔑 Create Single Login", use_container_width=True):
-                if single_email and single_name:
+        # Form fields - OUTSIDE FORM for real-time updates
+        c1, c2 = st.columns(2)
+        with c1:
+            single_email = st.text_input("Employee Email *", value=emp_db_email, placeholder="e.g., employee@churchgate.com", key="single_email_input")
+            single_name = st.text_input("Full Name *", value=emp_full_name, key="single_name_input")
+            single_pw = st.text_input("Password", value="churchgate2026", key="single_pw_input")
+        with c2:
+            dept_options = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin']
+            dept_idx = dept_options.index(emp_db_dept) if emp_db_dept in dept_options else 0
+            single_dept = st.selectbox("Department", dept_options, index=dept_idx, key="single_dept_input")
+            single_role = st.selectbox("Role", ['Team Member', 'Team Lead', 'Manager', 'HOD', 'Admin'], key="single_role_input")
+            single_id = st.text_input("Employee ID", value=emp_db_id, placeholder="e.g., AN00001", key="single_id_input")
+        
+        # Submit button - NOT in form
+        if st.button("🔑 Create Single Login", use_container_width=True, type="primary", key="single_login_btn"):
+            if single_email and single_name:
+                try:
+                    db.create_user(single_id, single_name, single_email, single_pw, single_role, single_dept, emp_db_position or 'Staff')
+                    st.success(f"✅ Login created for {single_name}!")
+                    st.info(f"🔗 Login at: https://hris.churchgate.com")
                     try:
-                        db.create_user(single_id, single_name, single_email, single_pw, single_role, single_dept, emp_db_position or 'Staff')
-                        st.success(f"✅ Login created for {single_name}!")
-                        st.info(f"🔗 Login at: https://hris.churchgate.com")
-                        try:
-                            from utils.email_service import EmailService
-                            EmailService().send_welcome_email(single_name, single_email, "https://hris.churchgate.com")
-                            st.info(f"📧 Welcome email sent to {single_email}")
-                        except:
-                            pass
-                        st.balloons()
+                        from utils.email_service import EmailService
+                        EmailService().send_welcome_email(single_name, single_email, "https://hris.churchgate.com")
+                        st.info(f"📧 Welcome email sent to {single_email}")
                     except:
-                        st.warning(f"⚠️ A login for {single_email} may already exist.")
-                else:
-                    st.error("❌ Email and Name required!")
+                        pass
+                    st.balloons()
+                except:
+                    st.warning(f"⚠️ A login for {single_email} may already exist.")
+            else:
+                st.error("❌ Email and Name required!")
         
         st.markdown("---")
         st.markdown("### 👥 Bulk Generate Logins")
         if not employees_df.empty:
-            default_pw = st.text_input("Default Password for Bulk", value="churchgate2026")
+            default_pw = st.text_input("Default Password for Bulk", value="churchgate2026", key="bulk_pw_input")
             
             # Search bar
             bulk_search = st.text_input("🔍 Search employees", placeholder="Type name, department, or email...", key="bulk_search_input")
@@ -3223,7 +3285,6 @@ def employee_management():
                 emp_name = f"{emp['first_name']} {emp['last_name']}"
                 emp_dept = emp.get('department', '')
                 
-                # Apply search filter
                 if bulk_search:
                     search_term = bulk_search.lower()
                     if search_term not in emp_name.lower() and search_term not in emp_dept.lower() and search_term not in emp_email.lower():
@@ -3240,23 +3301,23 @@ def employee_management():
                     'Has Login': '✅ Yes' if has_login else '❌ No'
                 })
             
-            # Display with checkboxes for selection
+            # Display with checkboxes
             st.markdown("**Select employees to generate logins:**")
             
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("✅ Select All Without Login", use_container_width=True):
+                if st.button("✅ Select All Without Login", use_container_width=True, key="select_all_btn"):
                     for emp in emp_list:
                         if emp['Has Login'] == '❌ No':
                             emp['Select'] = True
                     st.rerun()
             with col2:
-                if st.button("🔄 Deselect All", use_container_width=True):
+                if st.button("🔄 Deselect All", use_container_width=True, key="deselect_all_btn"):
                     for emp in emp_list:
                         emp['Select'] = False
                     st.rerun()
             
-            # Show table with checkboxes
+            # Table with checkboxes
             for i, emp in enumerate(emp_list):
                 cols = st.columns([0.5, 2, 1, 2, 1, 1, 1])
                 with cols[0]:
@@ -3277,7 +3338,8 @@ def employee_management():
             selected = [e for e in emp_list if e['Select']]
             st.markdown(f"**{len(selected)} employee(s) selected**")
             
-            if st.button(f"🔑 Generate Logins for {len(selected)} Selected", use_container_width=True, disabled=len(selected)==0):
+            # Bulk generate button - NOT in form
+            if st.button(f"🔑 Generate Logins for {len(selected)} Selected", use_container_width=True, disabled=len(selected)==0, key="bulk_gen_btn"):
                 count = 0
                 for emp in selected:
                     if emp['Email'] and emp['Email'] != 'N/A' and '@' in emp['Email']:
@@ -5958,14 +6020,22 @@ def performance_okrs():
                         if st.button("🤖 AI Analyze Rejection Patterns", use_container_width=True, type="primary"):
                             with st.spinner("🧠 Analyzing..."):
                                 try:
-                                    import openai
-                                    openai_key = os.environ.get("OPENAI_API_KEY", st.secrets.get("OPENAI_API_KEY", ""))
-                                    if openai_key:
-                                        client = openai.OpenAI(api_key=openai_key)
+                                    from groq import Groq
+                                    groq_key = os.environ.get("GROQ_API_KEY", st.secrets.get("GROQ_API_KEY", ""))
+                                    if groq_key:
+                                        client = Groq(api_key=groq_key)
                                         reasons_text = "\n".join([f"- {r['Employee']} ({r['Department']}, {r['Region']}): {r['Rejection Reason']}" for r in rejections])
-                                        response = client.chat.completions.create(model="gpt-3.5-turbo", messages=[{"role": "system", "content": "Analyze these appraisal rejections. Provide: 1) Top 3 themes 2) Departments with issues 3) Recommendations."}, {"role": "user", "content": reasons_text}], temperature=0.5, max_tokens=400)
-                                        st.markdown("### 🤖 AI Analysis"); st.success("Analysis complete!"); st.markdown(response.choices[0].message.content)
-                                    else: st.info("OpenAI API key not configured.")
+                                        response = client.chat.completions.create(
+                                            model="openai/gpt-oss-20b",
+                                            messages=[{"role": "system", "content": "Analyze these appraisal rejections. Provide: 1) Top 3 themes 2) Departments with issues 3) Recommendations."},
+                                                      {"role": "user", "content": reasons_text}],
+                                            temperature=0.5, max_tokens=400
+                                        )
+                                        st.markdown("### 🤖 AI Analysis")
+                                        st.success("Analysis complete!")
+                                        st.markdown(response.choices[0].message.content)
+                                    else:
+                                        st.info("Groq API key not configured.")
                                 except Exception as e:
                                     st.warning(f"AI analysis unavailable: {str(e)}")
                                     st.markdown("### 📊 Manual Analysis\n**Common Themes:** Score disagreements, insufficient evidence review, communication gaps.\n**Recommendations:** Pre-review calibration meetings, ensure evidence acknowledgment, add discussion step.")
@@ -7033,12 +7103,11 @@ def performance_okrs():
                     if st.button("🧠 Generate AI Insights", use_container_width=True, type="primary"):
                         with st.spinner("Analyzing appraisal data with AI..."):
                             try:
-                                import openai
-                                openai_key = os.environ.get("OPENAI_API_KEY", st.secrets.get("OPENAI_API_KEY", ""))
-                                if openai_key:
-                                    client = openai.OpenAI(api_key=openai_key)
+                                from groq import Groq
+                                groq_key = os.environ.get("GROQ_API_KEY", st.secrets.get("GROQ_API_KEY", ""))
+                                if groq_key:
+                                    client = Groq(api_key=groq_key)
                                     
-                                    # Build comprehensive data summary
                                     insights_text = f"""
                                     Appraisal Cycle: {st.session_state.appraisal_cycle_name}
                                     Total Participants: {total_participants}
@@ -7062,7 +7131,7 @@ def performance_okrs():
                                     """
                                     
                                     response = client.chat.completions.create(
-                                        model="gpt-3.5-turbo",
+                                        model="openai/gpt-oss-20b",
                                         messages=[{
                                             "role": "system",
                                             "content": "You are a Fortune 500 HR Analytics Director. Analyze this appraisal data and provide: 1) Top 3 key findings 2) Department performance comparison 3) Talent risk areas 4) 3 strategic recommendations for leadership 5) Predicted trends for next cycle. Be specific and data-driven."
@@ -7078,7 +7147,7 @@ def performance_okrs():
                                     st.success("Analysis complete!")
                                     st.markdown(response.choices[0].message.content)
                                 else:
-                                    st.info("OpenAI API key not configured.")
+                                    st.info("Groq API key not configured.")
                             except Exception as e:
                                 st.warning(f"AI insights unavailable: {str(e)}")
                                 st.markdown("""
@@ -8731,12 +8800,12 @@ def staff_confirmation():
                                 Ending Soon: {ending_soon} | Overdue: {overdue}
                                 """
                                 
-                                openai_key = os.environ.get("OPENAI_API_KEY", st.secrets.get("OPENAI_API_KEY", ""))
-                                if openai_key:
-                                    import openai
-                                    client = openai.OpenAI(api_key=openai_key)
+                                from groq import Groq
+                                groq_key = os.environ.get("GROQ_API_KEY", st.secrets.get("GROQ_API_KEY", ""))
+                                if groq_key:
+                                    client = Groq(api_key=groq_key)
                                     response = client.chat.completions.create(
-                                        model="gpt-3.5-turbo",
+                                        model="openai/gpt-oss-20b",
                                         messages=[{"role": "system", "content": "You are an HR Analytics expert. Provide 3 key findings and 3 recommendations based on staff confirmation data. Be concise."},
                                                   {"role": "user", "content": insights_context}],
                                         temperature=0.5, max_tokens=400
@@ -8744,9 +8813,9 @@ def staff_confirmation():
                                     st.success("Analysis complete!")
                                     st.markdown(response.choices[0].message.content)
                                 else:
-                                    st.info("OpenAI key not configured. Manual insights: Monitor overdue confirmations, track department performance, fast-track outstanding employees.")
+                                    st.info("Groq API key not configured.")
                             except:
-                                st.info("AI insights unavailable. Check OpenAI configuration.")
+                                st.info("AI insights unavailable. Check Groq configuration.")
                 
                 # Recent Activity
                 st.markdown("---")
@@ -9416,7 +9485,7 @@ class AIRecruitmentAgent:
         self.use_openai = False
         self.use_groq = False
         self.client = None
-        self.model = "llama-3.1-8b-instant"
+        self.model = "openai/gpt-oss-20b"
         
         # Try EVERY possible way to get the key
         self.groq_api_key = ""
