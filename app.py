@@ -1246,6 +1246,68 @@ st.markdown("""
         --ag-border-color: #3A3A3A !important;
         --ag-row-hover-color: #2C2C2C !important;
     }
+    
+    /* ===== DATAFRAME DARK THEME - CSS ONLY ===== */
+    [data-testid="stDataFrame"] {
+        background-color: #2C2C2C !important;
+    }
+    [data-testid="stDataFrame"] [data-testid="stDataFrameResizable"] {
+        background-color: #2C2C2C !important;
+    }
+    [data-testid="stDataFrame"] .glide-data-grid {
+        background-color: #2C2C2C !important;
+    }
+    [data-testid="stDataFrame"] canvas {
+        background-color: #2C2C2C !important;
+    }
+    [data-testid="stDataFrame"] [class*="glide"],
+    [data-testid="stDataFrame"] [class*="dvn"] {
+        background-color: #2C2C2C !important;
+    }
+    
+    /* ===== CANVAS VISIBILITY FIX - INVERT ===== */
+    [data-testid="stDataFrame"],
+    [data-testid="stDataFrame"] canvas,
+    [data-testid="stDataFrame"] .glide-data-grid {
+        filter: invert(0.85) hue-rotate(180deg) !important;
+        background-color: transparent !important;
+    }
+    [data-testid="stDataFrame"] img,
+    [data-testid="stDataFrame"] svg {
+        filter: invert(0.85) hue-rotate(180deg) !important;
+    }
+    
+    /* ===== DARK HTML TABLE ===== */
+    .dark-csv-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background-color: #1E1E1E !important;
+        border: 1px solid #333333 !important;
+        border-radius: 6px !important;
+        overflow: hidden !important;
+        color: #E0E0E0 !important;
+        font-size: 0.85rem !important;
+    }
+    .dark-csv-table th {
+        background-color: #242424 !important;
+        color: #C9A84C !important;
+        padding: 10px 12px !important;
+        text-align: left !important;
+        border-bottom: 2px solid #B8960C !important;
+        font-weight: 700 !important;
+    }
+    .dark-csv-table td {
+        padding: 8px 12px !important;
+        border-bottom: 1px solid #2A2A2A !important;
+        color: #E0E0E0 !important;
+    }
+    .dark-csv-table tr:last-child td {
+        border-bottom: none !important;
+    }
+    .dark-csv-table tr:hover {
+        background-color: #2C2C2C !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1462,12 +1524,23 @@ function injectDarkGridTheme() {
             container.dataset.darkThemeInjected = "true";
         }
     });
+    
+    // ADDITIONAL: Attack Streamlit canvas-based dataframes
+    document.querySelectorAll('[data-testid="stDataFrame"]').forEach(df => {
+        df.style.setProperty('background-color', '#2C2C2C', 'important');
+        df.querySelectorAll('canvas, div, [class*="glide"], [class*="dvn"]').forEach(inner => {
+            inner.style.setProperty('background-color', '#2C2C2C', 'important');
+        });
+    });
 }
 
 const gridObserver = new MutationObserver(() => injectDarkGridTheme());
 gridObserver.observe(document.body, { childList: true, subtree: true });
 
 injectDarkGridTheme();
+
+// Also run every 1 second as backup
+setInterval(injectDarkGridTheme, 1000);
 </script>
 """, unsafe_allow_html=True)
 
@@ -3350,7 +3423,8 @@ def employee_dashboard():
                         'Position': row['position']
                     })
                 if hod_data:
-                    st.dataframe(pd.DataFrame(hod_data), use_container_width=True, hide_index=True, theme="dark")
+                    html_table = pd.DataFrame(hod_data).to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+                        st.markdown(html_table, unsafe_allow_html=True)
         except:
             pass
     # ============ PEER RATING ============
@@ -4664,9 +4738,11 @@ def employee_management():
                 
                 if dept_preview:
                     st.markdown("**📋 Department Preview:**")
-                    st.dataframe(pd.DataFrame(dept_preview), use_container_width=True, hide_index=True, theme="dark")
+                    html_table = pd.DataFrame(dept_preview).to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+                    st.markdown(html_table, unsafe_allow_html=True)
             
-            st.dataframe(df.head(), use_container_width=True, theme="dark")
+            html_table = df.head().to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+            st.markdown(html_table, unsafe_allow_html=True)
             if st.button("📤 Upload All", use_container_width=True):
                 success, fail = 0, 0
                 corrected_count = 0
@@ -5132,10 +5208,14 @@ def employee_management():
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("### 🏢 Abuja Region — Department Heads")
-            st.dataframe(pd.DataFrame({'Department': ['Technology Group', 'Facility Management', 'Engineering (MEP)', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations'], 'HOD': ['Emmanuel Etuk', 'David Effiong', 'Sanjeev Purwar', 'Adebayo Sakote', 'Jeff Arikawe', 'Ahmed Karim (VP)', 'Anand Bora', 'Usman Sani', 'David Aiyedun', 'Ibukun Adeogun'], 'Team': [12, 20, 8, 6, 8, 12, 6, 15, 3, 10]}), use_container_width=True, hide_index=True, theme="dark")
+            abuja_df = pd.DataFrame({'Department': ['Technology Group', 'Facility Management', 'Engineering (MEP)', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations'], 'HOD': ['Emmanuel Etuk', 'David Effiong', 'Sanjeev Purwar', 'Adebayo Sakote', 'Jeff Arikawe', 'Ahmed Karim (VP)', 'Anand Bora', 'Usman Sani', 'David Aiyedun', 'Ibukun Adeogun'], 'Team': [12, 20, 8, 6, 8, 12, 6, 15, 3, 10]})
+            html_table = abuja_df.to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+            st.markdown(html_table, unsafe_allow_html=True)
         with col2:
             st.markdown("### 🏢 Lagos Region — Department Heads")
-            st.dataframe(pd.DataFrame({'Department': ['Technology Group', 'Facility Management', 'Engineering (MEP)', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations'], 'HOD': ['Lawal Mohammed', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD'], 'Team': ['TBD']*10}), use_container_width=True, hide_index=True, theme="dark")
+            lagos_df = pd.DataFrame({'Department': ['Technology Group', 'Facility Management', 'Engineering (MEP)', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations'], 'HOD': ['Lawal Mohammed', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD'], 'Team': ['TBD']*10})
+            html_table = lagos_df.to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+            st.markdown(html_table, unsafe_allow_html=True)
         
         st.markdown("---")
         st.markdown("### 👥 Span of Control")
@@ -5251,7 +5331,7 @@ def employee_management():
                 dept_df = employees_df[employees_df['department'] == selected_export_dept]
                 st.download_button(f"📥 Download {selected_export_dept} (CSV)", dept_df.to_csv(index=False), f"{selected_export_dept}_employees.csv", "text/csv")
             st.markdown("---"); st.markdown("### 📊 Quick Stats")
-            st.dataframe(employees_df.describe(), use_container_width=True, theme="dark")
+            st.dataframe(employees_df.describe(), use_container_width=True)
 
 
 def performance_okrs():
@@ -9032,7 +9112,7 @@ def performance_okrs():
                         st.plotly_chart(fig_dept, use_container_width=True)
                     
                     with col2:
-                        st.dataframe(dept_avg_df, use_container_width=True, hide_index=True, theme="dark",
+                        st.dataframe(dept_avg_df, use_container_width=True, hide_index=True,
                                     column_config={
                                         'Department': 'Department',
                                         'Avg Score': st.column_config.NumberColumn('Avg Score', format='%.1f%%'),
@@ -9040,11 +9120,10 @@ def performance_okrs():
                                         'Min': st.column_config.NumberColumn('Min', format='%.0f%%'),
                                         'Max': st.column_config.NumberColumn('Max', format='%.0f%%')
                                     })
-                                    })
                     
                     st.markdown("---")
                     
-                     # ============================================================
+                    # ============================================================
                     # REVIEWER & COMMITTEE RECOMMENDATIONS BREAKDOWN
                     # ============================================================
                     st.subheader("📋 Recommendations Breakdown")
@@ -13213,7 +13292,7 @@ APPLY NOW: {public_url}
                                 job_candidates = candidates[candidates['job_id'] == req['id']] if not candidates.empty else []
                                 st.metric("Total Applicants", len(job_candidates))
                                 if len(job_candidates) > 0:
-                                    st.dataframe(job_candidates[['first_name', 'last_name', 'email', 'status']], use_container_width=True, theme="dark")
+                                    st.dataframe(job_candidates[['first_name', 'last_name', 'email', 'status']], use_container_width=True)
                             except:
                                 st.info("No application data available.")
                     with c2:
@@ -15116,7 +15195,7 @@ def ai_recruitment_agent():
                                 display_cols.append(col)
                         
                         scorecard_df = pd.DataFrame(scorecard_data)[display_cols]
-                        st.dataframe(scorecard_df, use_container_width=True, hide_index=True, theme="dark")
+                        st.dataframe(scorecard_df, use_container_width=True, hide_index=True)
                         
                         # Detailed breakdown for each candidate
                         st.markdown("---")
@@ -15140,7 +15219,7 @@ def ai_recruitment_agent():
                                             'Evidence': comp.get('evidence', '')[:80]
                                         })
                                     if comp_data:
-                                        st.dataframe(pd.DataFrame(comp_data), use_container_width=True, hide_index=True, theme="dark")
+                                        st.dataframe(pd.DataFrame(comp_data), use_container_width=True, hide_index=True)
                                     
                                     # Visual competency bars
                                     for comp in competencies:
@@ -15655,7 +15734,7 @@ def ai_recruitment_agent():
                     font=dict(color='#F0E6D3', family='Inter, sans-serif')
                 )
                 st.plotly_chart(fig, use_container_width=True)
-                st.dataframe(candidates[['first_name', 'last_name', 'email', 'job_id', 'ai_score', 'ai_tier', 'status']], use_container_width=True, hide_index=True, theme="dark")
+                st.dataframe(candidates[['first_name', 'last_name', 'email', 'job_id', 'ai_score', 'ai_tier', 'status']], use_container_width=True, hide_index=True)
         except:
             st.info("Tiering data will appear here.")
     
@@ -16689,7 +16768,7 @@ def training_development():
             if day == 25: events.append("🌐 Sustainable Building")
             if day == 28: events.append("👔 Leadership Masterclass")
             cal_data.append({"Day": f"June {day}", "Events": ", ".join(events) if events else "—"})
-        st.dataframe(pd.DataFrame(cal_data), use_container_width=True, hide_index=True, theme="dark")
+        st.dataframe(pd.DataFrame(cal_data), use_container_width=True, hide_index=True)
     
     # ============ TAB 8: VIDEOS & PODCASTS ============
     with tab8:
@@ -17017,7 +17096,7 @@ def reports_analytics():
                     avg_score = 0
                 scorecard_data.append({'Department': dept, 'Employees': dept_emp, 'Avg Performance': f"{avg_score:.0f}%"})
             
-            st.dataframe(pd.DataFrame(scorecard_data), use_container_width=True, hide_index=True, theme="dark")
+            st.dataframe(pd.DataFrame(scorecard_data), use_container_width=True, hide_index=True)
         else:
             st.info("Employee data loading...")
     
@@ -17694,7 +17773,7 @@ def notifications_page():
             
             if digest_data:
                 digest_df = pd.DataFrame(digest_data)
-                st.dataframe(digest_df, use_container_width=True, hide_index=True, theme="dark")
+                st.dataframe(digest_df, use_container_width=True, hide_index=True)
                 
                 # Chart
                 fig = px.bar(digest_df, x='Category', y='Count', color='Critical',
@@ -19378,7 +19457,7 @@ def requests_hub():
             
             if outbox_data:
                 df_out = pd.DataFrame(outbox_data)
-                st.dataframe(df_out, use_container_width=True, hide_index=True, theme="dark")
+                st.dataframe(df_out, use_container_width=True, hide_index=True)
                 st.download_button("📥 Export CSV", df_out.to_csv(index=False), "outbox.csv", "text/csv")
         else:
             st.info("No requests in outbox.")
@@ -19645,7 +19724,7 @@ def requests_hub():
                             'Status': a.get('status', '')
                         } for a in filtered[-30:]])
                         
-                        st.dataframe(att_df, use_container_width=True, hide_index=True, theme="dark")
+                        st.dataframe(att_df, use_container_width=True, hide_index=True)
                         
                         total_hours = sum(float(a.get('work_hours', 0) or 0) for a in filtered[-30:])
                         days_present = len(set(a.get('sync_date', '') for a in filtered[-30:]))
@@ -19707,7 +19786,7 @@ def requests_hub():
                         'Status': a.get('status', '')
                     } for a in display_att])
                     
-                    st.dataframe(df_all, use_container_width=True, hide_index=True, theme="dark")
+                    st.dataframe(df_all, use_container_width=True, hide_index=True)
                     
                     present_count = len(df_all)
                     on_time = len(df_all[df_all['In'].notna()])
@@ -19778,7 +19857,7 @@ def requests_hub():
                     try:
                         synced = db._get("attendance", {"source": "Biometric"})
                         if synced:
-                            st.dataframe(pd.DataFrame(synced[-20:]), use_container_width=True, hide_index=True, theme="dark")
+                            st.dataframe(pd.DataFrame(synced[-20:]), use_container_width=True, hide_index=True)
                         else:
                             st.info("No synced records yet.")
                     except:
@@ -20020,7 +20099,7 @@ def requests_hub():
                     try:
                         df_leave = pd.read_csv(uploaded_leave)
                         st.markdown(f"**{len(df_leave)} records**")
-                        st.dataframe(df_leave.head(10), use_container_width=True, theme="dark")
+                        st.dataframe(df_leave.head(10), use_container_width=True)
                         
                         if st.button(f"📤 Upload {len(df_leave)} Leave Balances", use_container_width=True, type="primary"):
                             success, errors = 0, 0
