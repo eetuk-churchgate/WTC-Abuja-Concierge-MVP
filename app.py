@@ -919,11 +919,557 @@ st.markdown("""
         width: 20px !important;
         height: 20px !important;
     }
+    
+    /* ===== GLOBAL ROOT FORCE DARK - NUCLEAR OVERRIDE ===== */
+    :root {
+        --dropdown-bg: #1E1E1E !important;
+        --dropdown-border: #333333 !important;
+        --dropdown-text: #FFFFFF !important;
+        --dropdown-hover: #333333 !important;
+        --dropdown-accent: #C9A84C !important;
+    }
+
+    /* 1. FORCE the popup container background (Ignores DOM depth) */
+    div[class*="dropdown-menu"], 
+    div[class*="select__menu"], 
+    ul[role="listbox"],
+    [data-baseweb="popover"],
+    [data-baseweb="menu"],
+    [data-testid="stSelectbox"] [data-baseweb="popover"],
+    [data-testid="stMultiselect"] [data-baseweb="popover"],
+    div[role="listbox"] {
+        background: #1E1E1E !important;
+        background-color: #1E1E1E !important;
+        border: 1px solid #333333 !important;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.9) !important;
+        color: #FFFFFF !important;
+        z-index: 99999999 !important;
+    }
+
+    /* 2. EXPLICITLY target all option text and search input blocks */
+    div[class*="select__option"],
+    div[class*="select__input"],
+    div[class*="select__menu"] input,
+    ul[role="listbox"] li,
+    [data-baseweb="option"],
+    [data-testid="stSelectbox"] [data-baseweb="option"],
+    [data-testid="stMultiselect"] [data-baseweb="option"],
+    div[role="option"] {
+        background-color: transparent !important;
+        background: transparent !important;
+        color: #FFFFFF !important;
+        opacity: 1.0 !important;
+    }
+
+    /* 3. Force input placeholder text to be visible */
+    div[class*="select__placeholder"] {
+        color: #A0A0A0 !important;
+    }
+
+    /* 4. HARD HOVER OVERRIDES */
+    div[class*="select__option"]:hover,
+    div[class*="dropdown-item"]:hover,
+    [data-baseweb="option"]:hover,
+    [data-testid="stSelectbox"] [data-baseweb="option"]:hover,
+    [data-testid="stMultiselect"] [data-baseweb="option"]:hover,
+    div[role="option"]:hover {
+        background-color: #333333 !important;
+        background: #333333 !important;
+        color: #C9A84C !important;
+    }
+
+    /* 5. SELECTED STATE */
+    div[class*="select__option--is-selected"],
+    [aria-selected="true"] {
+        background-color: rgba(201, 168, 76, 0.15) !important;
+        color: #C9A84C !important;
+    }
+
+    /* 6. CRITICAL: Override inline library styles that use "style" attributes */
+    div[style*="background-color: white"],
+    div[style*="background-color: #fff"],
+    div[style*="background: white"],
+    div[style*="background: #fff"] {
+        background: #1E1E1E !important;
+        background-color: #1E1E1E !important;
+    }
+    
+    /* ===== EXTREME OVERRIDE: ELIMINATE WHITE BOXES & BORDERS ===== */
+
+    /* 1. The "White Box" Trick: Override all parent layout containers */
+    html body div[data-testid="stVerticalBlock"],
+    html body div[data-testid="stHorizontalBlock"],
+    html body section[data-testid="stExpander"] {
+        background-color: #141414 !important;
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    /* 2. Target the actual Expander (DETAILS) */
+    html body div[data-testid="stExpander"] > details {
+        background-color: #1E1E1E !important;
+        border: 1px solid #2A2A2A !important; 
+        border-radius: 6px !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6) !important;
+    }
+
+    /* 3. Force the clickable header (SUMMARY) to be dark */
+    html body div[data-testid="stExpander"] > details > summary {
+        background-color: #1E1E1E !important;
+        border: none !important;
+        border-bottom: 1px solid #2A2A2A !important;
+        color: #E0E0E0 !important;
+        border-radius: 6px 6px 0 0 !important;
+    }
+
+    /* 4. The Gold Accent on Hover */
+    html body div[data-testid="stExpander"] > details:hover,
+    html body div[data-testid="stExpander"] > details > summary:hover {
+        border-color: #C9A84C !important;
+        box-shadow: 0 0 8px rgba(201, 168, 76, 0.15) !important;
+    }
+
+    /* 5. FORCE KILL ANY LEFT-OVER WHITE BACKGROUNDS (Brute Force) */
+    div[style*="background-color: white"],
+    div[style*="background-color: #fff"],
+    div[style*="background-color: #FFFFFF"],
+    div[style*="background: white"],
+    div[style*="background: #fff"],
+    section[style*="background-color: white"],
+    section[style*="background: white"] {
+        background-color: #1E1E1E !important;
+        border-color: #2A2A2A !important;
+    }
+    
+    /* ===== BRUTAL FORCE: GLOBAL GOLD ACCENT THEME ===== */
+
+    /* 1. Define the Gold Master Variables */
+    :root {
+        --primary-gold: #C9A84C;
+        --primary-gold-hover: #B3913A;
+        --primary-gold-light: #E8D18C;
+        --primary-gold-shadow: rgba(201, 168, 76, 0.3);
+    }
+
+    /* 2. NUCLEAR TARGET: All Buttons, Pagination, Action Links */
+    html body button,
+    html body input[type="button"],
+    html body input[type="submit"],
+    html body .btn,
+    html body [role="button"],
+    html body .pagination,
+    html body .pagination a,
+    html body .stButton button,
+    html body .stActionButton button {
+        background: var(--primary-gold) !important;
+        background-color: var(--primary-gold) !important;
+        border: 1px solid var(--primary-gold) !important;
+        border-radius: 6px !important;
+        color: #111111 !important;
+        box-shadow: none !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+
+    /* 3. HOVER STATE: Darker Gold */
+    html body button:hover,
+    html body input[type="button"]:hover,
+    html body .btn:hover,
+    html body [role="button"]:hover,
+    html body .stButton button:hover {
+        background: var(--primary-gold-hover) !important;
+        background-color: var(--primary-gold-hover) !important;
+        border-color: var(--primary-gold-hover) !important;
+        box-shadow: 0 0 10px var(--primary-gold-shadow) !important;
+        color: #000000 !important;
+    }
+
+    /* 4. KILL THE RED IN PAGINATION & NAV */
+    html body .pagination .active {
+        background: var(--primary-gold) !important;
+        border-color: var(--primary-gold) !important;
+        color: #000000 !important;
+    }
+    html body .pagination .page-link {
+        background: transparent !important;
+        color: var(--primary-gold) !important;
+        border: 1px solid var(--primary-gold) !important;
+    }
+
+    /* 5. CRITICAL: Override Inline Styling for RED buttons */
+    button[style*="background-color: red"],
+    button[style*="background: red"],
+    button[style*="background-color: #ff"],
+    button[style*="background-color: rgb(255"],
+    button[style*="background-color: #dc"],
+    button[style*="background-color: #CC0000"],
+    button[style*="background: #CC0000"] {
+        background-color: var(--primary-gold) !important;
+        background: var(--primary-gold) !important;
+        border-color: var(--primary-gold) !important;
+        color: #111111 !important;
+    }
+    
+    /* ===== EXTREME FORCE: DIMMING BRIGHT WHITE TABLES & EDITORS ===== */
+
+    /* 1. NUCLEAR BACKGROUND & TEXT OVERRIDE FOR ALL DATA TABLES */
+    html body table,
+    html body div[data-testid="stDataFrame"],
+    html body div[data-testid="stTable"],
+    html body [role="table"],
+    html body [role="grid"],
+    html body .dataframe {
+        background-color: #2C2C2C !important;
+        border: 1px solid #3A3A3A !important;
+        border-radius: 8px !important;
+        color: #E0E0E0 !important;
+    }
+
+    /* 2. TARGET TABLE HEADERS & CELLS */
+    html body table th,
+    html body table td,
+    html body div[data-testid="stDataFrame"] th,
+    html body div[data-testid="stDataFrame"] td,
+    html body div[data-testid="stTable"] td {
+        background-color: #2C2C2C !important; 
+        border-color: #3A3A3A !important;
+        color: #E0E0E0 !important;
+    }
+
+    /* 3. TABLE HEADER SPECIFIC - Gold headers */
+    html body table thead th {
+        background-color: #242424 !important; 
+        color: #C9A84C !important;
+    }
+
+    /* 4. ATTACKING THE RICH TEXT EDITOR (Brute force shadow penetration) */
+    html body div[class*="stTextArea"],
+    html body div[role="textbox"],
+    html body div[contenteditable="true"],
+    html body .DraftEditor-root,
+    html body .ProseMirror,
+    html body .CodeMirror {
+        background-color: #2C2C2C !important;
+        color: #E0E0E0 !important;
+        border: 1px solid #3A3A3A !important;
+        caret-color: #E0E0E0 !important;
+    }
+
+    /* 5. TOOLBAR BUTTONS IN THE TEXT EDITOR */
+    html body div[class*="toolbar"] button,
+    html body div[class*="menu"] button,
+    html body .tox-toolbar button {
+        background-color: #1E1E1E !important;
+        color: #A0A0A0 !important;
+        border: 1px solid #333333 !important;
+    }
+
+    html body div[class*="toolbar"] button:hover {
+        background-color: #333333 !important;
+        color: #C9A84C !important;
+    }
+
+    /* 6. KILL ANY REMNANT WHITE BOXES */
+    div[style*="background-color: white"],
+    div[style*="background-color: #fff"],
+    div[style*="background: white"],
+    div[style*="background: #fff"],
+    div[style*="background-color: rgb(255, 255, 255)"] {
+        background-color: #2C2C2C !important;
+        border-color: #3A3A3A !important;
+    }
+    
+    /* ===== FORCE DARK ON EXTERNAL LIBRARY CLASSES ===== */
+
+    /* TinyMCE / Rich Text Editor specific */
+    .tox-tinymce, 
+    .mce-content-body, 
+    .mce-edit-area,
+    .tox .tox-edit-area {
+        background-color: #2C2C2C !important;
+        border: 1px solid #3A3A3A !important;
+    }
+    .mce-content-body p, 
+    .mce-content-body span, 
+    .mce-content-body div {
+        color: #E0E0E0 !important;
+    }
+
+    /* AG-Grid / Streamlit specific Table classes */
+    .ag-root-wrapper, 
+    .ag-root-wrapper-body, 
+    .ag-header, 
+    .ag-header-row, 
+    .ag-row {
+        background-color: #2C2C2C !important;
+        border-color: #3A3A3A !important;
+        color: #E0E0E0 !important;
+    }
+    .ag-header-cell-text {
+        color: #C9A84C !important;
+    }
+    
+    /* ===== ULTIMATE FALLBACK: Invert colors if penetration fails ===== */
+    iframe, 
+    .tox-tinymce,
+    .mce-content-body {
+        filter: invert(1) hue-rotate(180deg) !important;
+    }
+
+    /* Re-invert images inside the editor so they remain normal */
+    iframe img, 
+    .tox-tinymce img, 
+    .mce-content-body img {
+        filter: invert(1) hue-rotate(180deg) !important;
+    }
+    
+    /* ===== CSV PREVIEW GRID - STREAMLIT AG-GRID SPECIFIC ===== */
+    [data-testid="stDataFrame"], 
+    .stDataFrame, 
+    .ag-root-wrapper, 
+    .ag-root-wrapper-body {
+        background-color: #1E1E1E !important;
+    }
+
+    .ag-theme-streamlit,
+    .ag-theme-streamlit .ag-root-wrapper,
+    .ag-theme-streamlit .ag-root-wrapper-body {
+        background-color: #1E1E1E !important;
+    }
+
+    /* Override AG-Grid CSS Variables (CRITICAL FIX) */
+    .ag-theme-streamlit {
+        --ag-background-color: #1E1E1E !important;
+        --ag-foreground-color: #E0E0E0 !important;
+        --ag-header-background-color: #242424 !important;
+        --ag-header-foreground-color: #C9A84C !important;
+        --ag-border-color: #3A3A3A !important;
+        --ag-row-hover-color: #2C2C2C !important;
+    }
 </style>
+""", unsafe_allow_html=True)
+
+# ADD JAVASCRIPT HERE - RIGHT AFTER THE CSS
+st.markdown("""
+<script>
+// MutationObserver - Watches for dropdown elements and forces dark theme
+const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1) {
+                const dropdowns = node.querySelectorAll('[data-baseweb="menu"], [data-baseweb="popover"], ul[role="listbox"], div[role="listbox"]');
+                dropdowns.forEach(function(dropdown) {
+                    dropdown.style.backgroundColor = '#1E1E1E';
+                    dropdown.style.color = '#FFFFFF';
+                    dropdown.style.border = '1px solid #333333';
+                    
+                    const options = dropdown.querySelectorAll('[data-baseweb="option"], div[role="option"], li');
+                    options.forEach(function(option) {
+                        option.style.backgroundColor = '#1E1E1E';
+                        option.style.color = '#FFFFFF';
+                        option.style.opacity = '1';
+                        
+                        option.addEventListener('mouseenter', function() {
+                            option.style.backgroundColor = '#333333';
+                            option.style.color = '#C9A84C';
+                        });
+                    });
+                });
+            }
+        });
+    });
+});
+
+observer.observe(document.body, { childList: true, subtree: true });
+</script>
+""", unsafe_allow_html=True)
+
+
+st.markdown("""
+<script>
+// Shadow DOM Injection method - Fixes Streamlit expander borders
+function fixBorders(targetNode) {
+    if (targetNode.matches && targetNode.matches('[data-testid="stExpander"]')) {
+        if (targetNode.shadowRoot) {
+            targetNode.shadowRoot.querySelectorAll('div, summary').forEach(el => {
+                el.style.border = '1px solid #2A2A2A';
+                el.style.outline = 'none';
+                el.style.boxShadow = 'none';
+                el.style.backgroundColor = '#1E1E1E';
+            });
+        }
+    }
+}
+
+const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === 1) {
+                fixBorders(node); 
+                node.querySelectorAll('[data-testid="stExpander"]').forEach(fixBorders);
+                
+                // Also fix any parent containers with white backgrounds
+                node.querySelectorAll('div[style*="background"]').forEach(el => {
+                    const style = el.getAttribute('style') || '';
+                    if (style.includes('white') || style.includes('#fff') || style.includes('#FFFFFF')) {
+                        el.style.backgroundColor = '#1E1E1E';
+                        el.style.border = '1px solid #2A2A2A';
+                    }
+                });
+            }
+        });
+    });
+});
+
+observer.observe(document.getElementById('root') || document.body, { childList: true, subtree: true });
+</script>
 """, unsafe_allow_html=True)
 
 
 
+st.markdown("""
+<script>
+// Absolute DOM enforcement: Replaces any red button with Gold
+const buttonFixer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1) {
+                if (node.matches && (node.matches('button, .btn, [role="button"]'))) {
+                    fixButton(node);
+                }
+                node.querySelectorAll('button, .btn, [role="button"]').forEach(fixButton);
+            }
+        });
+    });
+});
+
+function fixButton(el) {
+    el.classList.remove('btn-danger', 'bg-red', 'text-red');
+    el.style.setProperty('background-color', '#C9A84C', 'important');
+    el.style.setProperty('background', '#C9A84C', 'important');
+    el.style.setProperty('border-color', '#C9A84C', 'important');
+    el.style.setProperty('color', '#111111', 'important');
+}
+
+buttonFixer.observe(document.body, { childList: true, subtree: true });
+</script>
+""", unsafe_allow_html=True)
+
+
+
+st.markdown("""
+<script>
+// ===== ULTIMATE BRUTE FORCE: DARK MODE HIJACK =====
+
+function ultimateDarkForce() {
+    // 1. Attack all divs that look like rich text editors regardless of ShadowDOM
+    const allEditorHosts = document.querySelectorAll('div[contenteditable="true"], .tox-edit-area, .mce-content-body, .ProseMirror, .CodeMirror, [data-testid="stTextArea"] div');
+    
+    allEditorHosts.forEach(el => {
+        el.style.setProperty('background-color', '#2C2C2C', 'important');
+        el.style.setProperty('color', '#E0E0E0', 'important');
+        el.style.setProperty('border-color', '#3A3A3A', 'important');
+        
+        el.querySelectorAll('p, span, div, h1, h2, h3, li').forEach(child => {
+            child.style.setProperty('color', '#E0E0E0', 'important');
+            child.style.setProperty('background-color', 'transparent', 'important');
+        });
+    });
+
+    // 2. Attack all Tables and DataGrids
+    document.querySelectorAll('table, .dataframe, [data-testid="stDataFrame"], .ag-root-wrapper').forEach(table => {
+        table.style.setProperty('background-color', '#2C2C2C', 'important');
+        table.style.setProperty('color', '#E0E0E0', 'important');
+        table.style.setProperty('border-color', '#3A3A3A', 'important');
+        
+        table.querySelectorAll('th, td, tr').forEach(cell => {
+            cell.style.setProperty('background-color', '#2C2C2C', 'important');
+            cell.style.setProperty('color', '#E0E0E0', 'important');
+            cell.style.setProperty('border-color', '#3A3A3A', 'important');
+        });
+    });
+
+    // 3. IFRAME HYPER-PENETRATION
+    document.querySelectorAll('iframe').forEach(iframe => {
+        try {
+            let doc;
+            if (iframe.contentDocument) {
+                doc = iframe.contentDocument;
+            } else if (iframe.contentWindow) {
+                doc = iframe.contentWindow.document;
+            }
+
+            if (doc) {
+                const body = doc.querySelector('body') || doc.body;
+                if (body) {
+                    body.style.setProperty('background-color', '#2C2C2C', 'important');
+                    body.style.setProperty('color', '#E0E0E0', 'important');
+                    
+                    body.querySelectorAll('*').forEach(innerEl => {
+                        if (innerEl.tagName !== 'HTML' && innerEl.tagName !== 'HEAD') {
+                            innerEl.style.setProperty('background-color', 'transparent', 'important');
+                            innerEl.style.setProperty('color', '#E0E0E0', 'important');
+                        }
+                    });
+                }
+            }
+        } catch (e) {
+            // Silently skip cross-origin iframes
+        }
+    });
+}
+
+// 4. Firing the nuclear option on a rapid loop
+ultimateDarkForce();
+
+// Run every 500 milliseconds - catches everything
+setInterval(ultimateDarkForce, 500);
+</script>
+""", unsafe_allow_html=True)
+
+
+
+st.markdown("""
+<script>
+// ===== CSV PREVIEW GRID - DEDICATED SHADOW DOM INJECTOR =====
+function injectDarkGridTheme() {
+    document.querySelectorAll('[data-testid="stDataFrame"], .stDataFrame').forEach(container => {
+        if (container.dataset.darkThemeInjected === "true") return;
+
+        const shadowRoot = container.shadowRoot;
+        if (shadowRoot) {
+            const style = document.createElement('style');
+            style.textContent = `
+                .ag-theme-streamlit {
+                    --ag-background-color: #1E1E1E !important;
+                    --ag-foreground-color: #E0E0E0 !important;
+                    --ag-header-background-color: #242424 !important;
+                    --ag-header-foreground-color: #C9A84C !important;
+                    --ag-border-color: #3A3A3A !important;
+                    --ag-row-hover-color: #2C2C2C !important;
+                }
+                .ag-theme-streamlit .ag-root-wrapper {
+                    background-color: #1E1E1E !important;
+                }
+                .ag-theme-streamlit .ag-cell {
+                    color: #E0E0E0 !important;
+                }
+                .ag-theme-streamlit .ag-header-cell {
+                    background-color: #242424 !important;
+                }
+            `;
+            shadowRoot.appendChild(style);
+            container.dataset.darkThemeInjected = "true";
+        }
+    });
+}
+
+const gridObserver = new MutationObserver(() => injectDarkGridTheme());
+gridObserver.observe(document.body, { childList: true, subtree: true });
+
+injectDarkGridTheme();
+</script>
+""", unsafe_allow_html=True)
 
 
 
@@ -2804,7 +3350,7 @@ def employee_dashboard():
                         'Position': row['position']
                     })
                 if hod_data:
-                    st.dataframe(pd.DataFrame(hod_data), use_container_width=True, hide_index=True)
+                    st.dataframe(pd.DataFrame(hod_data), use_container_width=True, hide_index=True, theme="dark")
         except:
             pass
     # ============ PEER RATING ============
@@ -3157,7 +3703,8 @@ def executive_dashboard():
             margin=dict(t=20),
             paper_bgcolor='#1E1E1E',
             plot_bgcolor='#1E1E1E',
-            font=dict(color='#F0E6D3', family='Inter, sans-serif')
+            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+            legend=dict(font=dict(color='#F0E6D3'))
         )
         st.plotly_chart(fig, use_container_width=True)
     
@@ -3167,7 +3714,13 @@ def executive_dashboard():
             dept_counts = emp_df['department'].value_counts()
             fig2 = px.pie(values=dept_counts.values, names=dept_counts.index, hole=0.4,
                          color_discrete_sequence=['#CC0000', '#3182ce', '#38a169', '#d69e2e', '#805ad5', '#dd6b20', '#2b6cb0', '#718096', '#e53e3e', '#319795', '#d53f8c'])
-            fig2.update_layout(height=350, margin=dict(t=20))
+            fig2.update_layout(
+                height=350, 
+                margin=dict(t=20),
+                paper_bgcolor='#1E1E1E',
+                plot_bgcolor='#1E1E1E',
+                font=dict(color='#F0E6D3', family='Inter, sans-serif')
+            )
             st.plotly_chart(fig2, use_container_width=True)
     
     # ============ ROW 2: STRATEGIC PILLARS + GENDER DIVERSITY ============
@@ -3177,7 +3730,6 @@ def executive_dashboard():
     with col1:
         st.subheader("🎯 Strategic Pillars 2026-2027")
         
-        # Load real performance data
         pillar_progress = {
             '1. Occupancy & Revenue Growth': {'progress': 0, 'color': '#CC0000'},
             '2. Process Simplification': {'progress': 0, 'color': '#38a169'},
@@ -3200,12 +3752,12 @@ def executive_dashboard():
         
         for name, data in pillar_progress.items():
             st.markdown(f"""
-            <div style="background:white;padding:0.8rem 1rem;border-radius:8px;margin-bottom:0.5rem;border-left:4px solid {data['color']};">
+            <div style="background:#1E1E1E;padding:0.8rem 1rem;border-radius:8px;margin-bottom:0.5rem;border-left:4px solid {data['color']};">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <span style="font-weight:600;font-size:0.9rem;">{name}</span>
+                    <span style="font-weight:600;font-size:0.9rem;color:#F0E6D3;">{name}</span>
                     <span style="color:{data['color']};font-weight:700;">{data['progress']}%</span>
                 </div>
-                <div style="background:#e0e0e0;height:6px;border-radius:3px;margin-top:0.4rem;">
+                <div style="background:#2A2A2A;height:6px;border-radius:3px;margin-top:0.4rem;">
                     <div style="background:{data['color']};width:{data['progress']}%;height:6px;border-radius:3px;"></div>
                 </div>
             </div>
@@ -3216,13 +3768,19 @@ def executive_dashboard():
         if male_count > 0 or female_count > 0:
             gender_data = pd.DataFrame({'Gender': ['Male', 'Female'], 'Count': [male_count, female_count]})
             fig3 = px.pie(gender_data, values='Count', names='Gender', hole=0.6, color_discrete_sequence=['#3182ce', '#CC0000'])
-            fig3.update_layout(height=300, margin=dict(t=20))
+            fig3.update_layout(
+                height=300, 
+                margin=dict(t=20),
+                paper_bgcolor='#1E1E1E',
+                plot_bgcolor='#1E1E1E',
+                font=dict(color='#F0E6D3', family='Inter, sans-serif')
+            )
             st.plotly_chart(fig3, use_container_width=True)
             
             st.markdown(f"""
             <div style="text-align:center;margin-top:-5rem;position:relative;z-index:1;">
                 <span style="font-size:2rem;font-weight:900;color:#CC0000;">{total_employees}</span><br>
-                <small style="color:#888;">Total Workforce</small>
+                <small style="color:#9a8a78;">Total Workforce</small>
             </div>
             """, unsafe_allow_html=True)
         else:
@@ -3247,8 +3805,16 @@ def executive_dashboard():
         fig4 = go.Figure()
         fig4.add_trace(go.Scatter(x=months, y=actual, mode='lines+markers', name='Actual', line=dict(color='#CC0000', width=3), fill='tozeroy', fillcolor='rgba(204,0,0,0.1)'))
         fig4.add_trace(go.Scatter(x=months, y=target, mode='lines', name='Target', line=dict(color='#4a4a4a', width=2, dash='dash')))
-        fig4.update_layout(height=300, margin=dict(t=20))
+        fig4.update_layout(
+            height=300, 
+            margin=dict(t=20),
+            paper_bgcolor='#1E1E1E',
+            plot_bgcolor='#1E1E1E',
+            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+            legend=dict(font=dict(color='#F0E6D3'))
+        )
         st.plotly_chart(fig4, use_container_width=True)
+
         
         if is_admin or is_sr_mgmt:
             with st.expander("✏️ Edit Revenue Data"):
@@ -4098,9 +4664,9 @@ def employee_management():
                 
                 if dept_preview:
                     st.markdown("**📋 Department Preview:**")
-                    st.dataframe(pd.DataFrame(dept_preview), use_container_width=True, hide_index=True)
+                    st.dataframe(pd.DataFrame(dept_preview), use_container_width=True, hide_index=True, theme="dark")
             
-            st.dataframe(df.head(), use_container_width=True)
+            st.dataframe(df.head(), use_container_width=True, theme="dark")
             if st.button("📤 Upload All", use_container_width=True):
                 success, fail = 0, 0
                 corrected_count = 0
@@ -4468,7 +5034,14 @@ def employee_management():
                 if not region_dept.empty:
                     fig2 = px.bar(region_dept, barmode='stack', 
                                  color_discrete_sequence=['#CC0000', '#d69e2e', '#3182ce', '#38a169', '#dd6b20', '#805ad5', '#2b6cb0', '#718096', '#e53e3e', '#319795', '#d53f8c', '#FFD700'])
-                    fig2.update_layout(height=400, title="Staff Count by Region & Department")
+                    fig2.update_layout(
+                        height=400, 
+                        title="Staff Count by Region & Department",
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                        title_font=dict(color='#C9A84C', family='Georgia, serif')
+                    )
                     st.plotly_chart(fig2, use_container_width=True)
             
             # Department size comparison
@@ -4480,7 +5053,12 @@ def employee_management():
                          color_continuous_scale=['#3182ce', '#d69e2e', '#CC0000'],
                          text='Staff')
             fig3.update_traces(textposition='outside')
-            fig3.update_layout(height=400)
+            fig3.update_layout(
+                height=400,
+                paper_bgcolor='#1E1E1E',
+                plot_bgcolor='#1E1E1E',
+                font=dict(color='#F0E6D3', family='Inter, sans-serif')
+            )
             st.plotly_chart(fig3, use_container_width=True)
             
             # Gender distribution by department
@@ -4492,7 +5070,14 @@ def employee_management():
                 if not gender_dept.empty:
                     fig4 = px.bar(gender_dept, barmode='group',
                                  color_discrete_sequence=['#3182ce', '#CC0000'])
-                    fig4.update_layout(height=400, title="Male/Female Distribution per Department")
+                    fig4.update_layout(
+                        height=400, 
+                        title="Male/Female Distribution per Department",
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                        title_font=dict(color='#C9A84C', family='Georgia, serif')
+                    )
                     st.plotly_chart(fig4, use_container_width=True)
             
             # Export
@@ -4505,6 +5090,7 @@ def employee_management():
             st.download_button("📥 Download Department Report", dept_export.to_csv(index=False), "department_report.csv", "text/csv")
         else:
             st.info("No employee data available.")
+
     
     # ============ TAB 6: ORG CHART ============
     with tab6:
@@ -4546,16 +5132,23 @@ def employee_management():
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("### 🏢 Abuja Region — Department Heads")
-            st.dataframe(pd.DataFrame({'Department': ['Technology Group', 'Facility Management', 'Engineering (MEP)', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations'], 'HOD': ['Emmanuel Etuk', 'David Effiong', 'Sanjeev Purwar', 'Adebayo Sakote', 'Jeff Arikawe', 'Ahmed Karim (VP)', 'Anand Bora', 'Usman Sani', 'David Aiyedun', 'Ibukun Adeogun'], 'Team': [12, 20, 8, 6, 8, 12, 6, 15, 3, 10]}), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame({'Department': ['Technology Group', 'Facility Management', 'Engineering (MEP)', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations'], 'HOD': ['Emmanuel Etuk', 'David Effiong', 'Sanjeev Purwar', 'Adebayo Sakote', 'Jeff Arikawe', 'Ahmed Karim (VP)', 'Anand Bora', 'Usman Sani', 'David Aiyedun', 'Ibukun Adeogun'], 'Team': [12, 20, 8, 6, 8, 12, 6, 15, 3, 10]}), use_container_width=True, hide_index=True, theme="dark")
         with col2:
             st.markdown("### 🏢 Lagos Region — Department Heads")
-            st.dataframe(pd.DataFrame({'Department': ['Technology Group', 'Facility Management', 'Engineering (MEP)', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations'], 'HOD': ['Lawal Mohammed', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD'], 'Team': ['TBD']*10}), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame({'Department': ['Technology Group', 'Facility Management', 'Engineering (MEP)', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations'], 'HOD': ['Lawal Mohammed', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD'], 'Team': ['TBD']*10}), use_container_width=True, hide_index=True, theme="dark")
         
         st.markdown("---")
         st.markdown("### 👥 Span of Control")
         span_data = pd.DataFrame({'Leader': ['Vinay Mahtani', 'Jerome Das', 'Ahmed Karim', 'Emmanuel Etuk', 'David Effiong', 'Sanjeev Purwar', 'All HODs (Avg)'], 'Role': ['GMD', 'COO', 'VP Sales', 'HOD Tech (Abuja)', 'HOD FM (Abuja)', 'HOD Engr (MEP)', 'Heads of Dept'], 'Region': ['Group', 'Group', 'Group', 'Abuja', 'Abuja', 'Abuja', 'Group'], 'Direct Reports': [5, 12, 6, 12, 20, 8, 10]})
         fig2 = px.bar(span_data, x='Leader', y='Direct Reports', color='Region', text='Direct Reports', color_discrete_sequence=['#CC0000', '#3182ce', '#38a169'])
-        fig2.update_layout(height=350); fig2.update_traces(textposition='outside')
+        fig2.update_layout(
+            height=350,
+            paper_bgcolor='#1E1E1E',
+            plot_bgcolor='#1E1E1E',
+            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+            legend=dict(font=dict(color='#F0E6D3'))
+        )
+        fig2.update_traces(textposition='outside')
         st.plotly_chart(fig2, use_container_width=True)
         
         st.markdown("---")
@@ -4583,7 +5176,7 @@ def employee_management():
             st.info(chain)
     
     # ============ TAB 7: DEMOGRAPHICS ============
-     with tab7:
+    with tab7:
         st.subheader("📈 Demographics & Inclusion")
         st.markdown("### 👥 Gender Distribution")
         gender_data = pd.DataFrame({'Gender': ['Male', 'Female'], 'Count': [38, 18]})
@@ -4599,7 +5192,13 @@ def employee_management():
         st.markdown("---"); st.markdown("### 🏢 Department Gender Split")
         dept_gender = pd.DataFrame({'Department': ['Technology Group', 'Facility Management', 'Human Resources', 'Sales & Marketing', 'Accounts & Finance', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering'], 'Male': [10, 10, 3, 6, 4, 3, 10, 1, 4, 3], 'Female': [4, 3, 5, 4, 2, 2, 2, 1, 1, 1]})
         fig2 = px.bar(dept_gender, x='Department', y=['Male', 'Female'], barmode='group', color_discrete_sequence=['#3182ce', '#CC0000'])
-        fig2.update_layout(height=400); st.plotly_chart(fig2, use_container_width=True)
+        fig2.update_layout(
+            height=400,
+            paper_bgcolor='#1E1E1E',
+            plot_bgcolor='#1E1E1E',
+            font=dict(color='#F0E6D3', family='Inter, sans-serif')
+        )
+        st.plotly_chart(fig2, use_container_width=True)
         
         st.markdown("---"); st.markdown("### 📅 Tenure Distribution")
         try:
@@ -4618,7 +5217,14 @@ def employee_management():
                 tenure_df = pd.DataFrame(pd.Series(tenure_data).value_counts()).reset_index()
                 tenure_df.columns = ['Tenure', 'Count']
                 fig3 = px.bar(tenure_df, x='Tenure', y='Count', color='Tenure', color_discrete_sequence=['#CC0000', '#3182ce', '#38a169', '#d69e2e'])
-                fig3.update_layout(height=350, showlegend=False); st.plotly_chart(fig3, use_container_width=True)
+                fig3.update_layout(
+                    height=350, 
+                    showlegend=False,
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                )
+                st.plotly_chart(fig3, use_container_width=True)
         except: pass
         
         st.markdown("---"); st.markdown("### 📊 Grade Distribution")
@@ -4626,7 +5232,13 @@ def employee_management():
             grade_counts = employees_df['grade'].value_counts()
             grade_df = pd.DataFrame({'Grade': grade_counts.index, 'Count': grade_counts.values})
             fig4 = px.pie(grade_df, values='Count', names='Grade', hole=0.4, color_discrete_sequence=['#CC0000', '#3182ce', '#38a169', '#d69e2e', '#805ad5'])
-            fig4.update_layout(height=350); st.plotly_chart(fig4, use_container_width=True)
+            fig4.update_layout(
+                height=350,
+                paper_bgcolor='#1E1E1E',
+                plot_bgcolor='#1E1E1E',
+                font=dict(color='#F0E6D3', family='Inter, sans-serif')
+            )
+            st.plotly_chart(fig4, use_container_width=True)
     
     # ============ TAB 8: EXPORT ============
     with tab8:
@@ -4639,7 +5251,7 @@ def employee_management():
                 dept_df = employees_df[employees_df['department'] == selected_export_dept]
                 st.download_button(f"📥 Download {selected_export_dept} (CSV)", dept_df.to_csv(index=False), f"{selected_export_dept}_employees.csv", "text/csv")
             st.markdown("---"); st.markdown("### 📊 Quick Stats")
-            st.dataframe(employees_df.describe(), use_container_width=True)
+            st.dataframe(employees_df.describe(), use_container_width=True, theme="dark")
 
 
 def performance_okrs():
@@ -8255,7 +8867,14 @@ def performance_okrs():
                         
                         fig_kpi = px.pie(kpi_data, values='Count', names='Status', hole=0.6,
                                         color_discrete_sequence=['#38a169', '#d69e2e', '#a0aec0', '#CC0000'])
-                        fig_kpi.update_layout(height=350, title="KPI Objective Status")
+                        fig_kpi.update_layout(
+                            height=350, 
+                            title="KPI Objective Status",
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                            title_font=dict(color='#C9A84C', family='Georgia, serif')
+                        )
                         st.plotly_chart(fig_kpi, use_container_width=True)
                         
                         # KPI stats
@@ -8270,7 +8889,6 @@ def performance_okrs():
                     
                     with col2:
                         st.subheader("📋 Objective Performance")
-                        # Calculate from actual KPI data
                         at_risk_count = 0
                         behind_count = 0
                         on_track_count = 0
@@ -8291,7 +8909,7 @@ def performance_okrs():
                         
                         total_kpis = at_risk_count + behind_count + on_track_count + completed_kpi_count
                         if total_kpis == 0:
-                            total_kpis = 1  # Avoid division by zero
+                            total_kpis = 1
                         
                         obj_perf = pd.DataFrame({
                             'Performance': ['At Risk', 'Behind Schedule', 'On Track', 'Completed'],
@@ -8309,7 +8927,15 @@ def performance_okrs():
                                         color_discrete_sequence=['#CC0000', '#d69e2e', '#3182ce', '#38a169'],
                                         text='Pct')
                         fig_obj.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
-                        fig_obj.update_layout(height=350, title="Objective Performance Distribution", showlegend=False)
+                        fig_obj.update_layout(
+                            height=350, 
+                            title="Objective Performance Distribution", 
+                            showlegend=False,
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                            title_font=dict(color='#C9A84C', family='Georgia, serif')
+                        )
                         st.plotly_chart(fig_obj, use_container_width=True)
                         
                         for _, row in obj_perf.iterrows():
@@ -8322,9 +8948,7 @@ def performance_okrs():
                     
                     st.markdown("---")
                     
-                    # ============================================================
                     # APPRAISAL COMPLETION STATUS
-                    # ============================================================
                     st.subheader("📋 Appraisal Completion Status")
                     
                     completion_data = {
@@ -8348,7 +8972,14 @@ def performance_okrs():
                     with col1:
                         fig_comp = px.pie(comp_df, values='Count', names='Stage', hole=0.5,
                                          color_discrete_sequence=['#a0aec0', '#3182ce', '#d69e2e', '#FFD700', '#CC0000', '#38a169', '#ff4444'])
-                        fig_comp.update_layout(height=400, title="Appraisal Completion Status")
+                        fig_comp.update_layout(
+                            height=400, 
+                            title="Appraisal Completion Status",
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                            title_font=dict(color='#C9A84C', family='Georgia, serif')
+                        )
                         st.plotly_chart(fig_comp, use_container_width=True)
                     
                     with col2:
@@ -8365,9 +8996,7 @@ def performance_okrs():
                     
                     st.markdown("---")
                     
-                    # ============================================================
                     # AVERAGE SCORE BY DEPARTMENT
-                    # ============================================================
                     st.subheader("📊 Average Score by Department")
                     
                     dept_scores = defaultdict(list)
@@ -8392,17 +9021,25 @@ def performance_okrs():
                                          color_continuous_scale=['#CC0000', '#d69e2e', '#38a169'],
                                          text='Avg Score')
                         fig_dept.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
-                        fig_dept.update_layout(height=400, title="Average Score by Department")
+                        fig_dept.update_layout(
+                            height=400, 
+                            title="Average Score by Department",
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                            title_font=dict(color='#C9A84C', family='Georgia, serif')
+                        )
                         st.plotly_chart(fig_dept, use_container_width=True)
                     
                     with col2:
-                        st.dataframe(dept_avg_df, use_container_width=True, hide_index=True,
+                        st.dataframe(dept_avg_df, use_container_width=True, hide_index=True, theme="dark",
                                     column_config={
                                         'Department': 'Department',
                                         'Avg Score': st.column_config.NumberColumn('Avg Score', format='%.1f%%'),
                                         'Employees': 'Employees',
                                         'Min': st.column_config.NumberColumn('Min', format='%.0f%%'),
                                         'Max': st.column_config.NumberColumn('Max', format='%.0f%%')
+                                    })
                                     })
                     
                     st.markdown("---")
@@ -9214,7 +9851,15 @@ def performance_okrs():
                             region_df = pd.DataFrame({'Region': list(region_recs.keys()), 'Count': list(region_recs.values())})
                             fig2 = px.bar(region_df, x='Region', y='Count', color='Region',
                                          color_discrete_sequence=['#CC0000', '#1a1a1a', '#38a169'])
-                            fig2.update_layout(height=350, title="Recommendations by Region")
+                            fig2.update_layout(
+                                height=350, 
+                                title="Recommendations by Region",
+                                paper_bgcolor='#1E1E1E',
+                                plot_bgcolor='#1E1E1E',
+                                font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                                title_font=dict(color='#C9A84C', family='Georgia, serif'),
+                                legend=dict(font=dict(color='#F0E6D3'))
+                            )
                             st.plotly_chart(fig2, use_container_width=True)
                     
                     st.markdown("---")
@@ -10186,7 +10831,16 @@ def staff_confirmation():
                     if status_data:
                         fig1 = px.pie(values=list(status_data.values()), names=list(status_data.keys()), hole=0.6,
                                     color_discrete_sequence=['#38a169', '#d69e2e', '#3182ce', '#CC0000', '#dd6b20'])
-                        fig1.update_layout(height=350, margin=dict(t=40, b=20, l=20, r=20), title="Status Distribution", title_font_size=13)
+                        fig1.update_layout(
+                            height=350, 
+                            margin=dict(t=40, b=20, l=20, r=20), 
+                            title="Status Distribution", 
+                            title_font_size=13,
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                            title_font=dict(color='#C9A84C', family='Georgia, serif')
+                        )
                         fig1.update_traces(textposition='inside', textinfo='percent+label', textfont_size=10)
                         st.plotly_chart(fig1, use_container_width=True)
                 
@@ -10206,9 +10860,19 @@ def staff_confirmation():
                         dept_df = pd.DataFrame([{'Department': d, **s} for d, s in dept_confirm_data.items()])
                         fig2 = px.bar(dept_df, x='Department', y=['Confirmed', 'Pending', 'Extended'],
                                     barmode='stack', color_discrete_sequence=['#38a169', '#d69e2e', '#3182ce'])
-                        fig2.update_layout(height=350, margin=dict(t=40, b=80, l=20, r=20), title="By Department", 
-                                          title_font_size=13, legend=dict(font=dict(size=9), orientation="h", yanchor="bottom", y=1.02),
-                                          xaxis_tickangle=-45, xaxis_tickfont=dict(size=9))
+                        fig2.update_layout(
+                            height=350, 
+                            margin=dict(t=40, b=80, l=20, r=20), 
+                            title="By Department", 
+                            title_font_size=13, 
+                            legend=dict(font=dict(size=9, color='#F0E6D3'), orientation="h", yanchor="bottom", y=1.02),
+                            xaxis_tickangle=-45, 
+                            xaxis_tickfont=dict(size=9, color='#F0E6D3'),
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                            title_font=dict(color='#C9A84C', family='Georgia, serif')
+                        )
                         st.plotly_chart(fig2, use_container_width=True)
                 
                 st.markdown("---")
@@ -10228,8 +10892,17 @@ def staff_confirmation():
                         region_df = pd.DataFrame([{'Region': r, **s} for r, s in region_data.items()])
                         fig3 = px.bar(region_df, x='Region', y=['Confirmed', 'Pending'], barmode='group',
                                     color_discrete_sequence=['#38a169', '#d69e2e'])
-                        fig3.update_layout(height=350, margin=dict(t=40, b=40, l=20, r=20), title="By Region",
-                                          title_font_size=13, legend=dict(font=dict(size=9), orientation="h", yanchor="bottom", y=1.02))
+                        fig3.update_layout(
+                            height=350, 
+                            margin=dict(t=40, b=40, l=20, r=20), 
+                            title="By Region",
+                            title_font_size=13, 
+                            legend=dict(font=dict(size=9, color='#F0E6D3'), orientation="h", yanchor="bottom", y=1.02),
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                            title_font=dict(color='#C9A84C', family='Georgia, serif')
+                        )
                         st.plotly_chart(fig3, use_container_width=True)
                 
                 with col4:
@@ -10244,9 +10917,19 @@ def staff_confirmation():
                         rating_values = [rating_data.get(r, 0) for r in rating_order]
                         fig4 = px.bar(x=rating_order, y=rating_values, color=rating_order,
                                     color_discrete_sequence=['#38a169', '#3182ce', '#d69e2e', '#dd6b20', '#CC0000'])
-                        fig4.update_layout(height=350, showlegend=False, margin=dict(t=40, b=60, l=20, r=20),
-                                        title="Performance Ratings", title_font_size=13,
-                                        xaxis_tickangle=-30, xaxis_tickfont=dict(size=10))
+                        fig4.update_layout(
+                            height=350, 
+                            showlegend=False, 
+                            margin=dict(t=40, b=60, l=20, r=20),
+                            title="Performance Ratings", 
+                            title_font_size=13,
+                            xaxis_tickangle=-30, 
+                            xaxis_tickfont=dict(size=10, color='#F0E6D3'),
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                            title_font=dict(color='#C9A84C', family='Georgia, serif')
+                        )
                         st.plotly_chart(fig4, use_container_width=True)
                 
                 st.markdown("---")
@@ -10289,7 +10972,7 @@ def staff_confirmation():
                         status = r.get('status', 'Pending')
                         icon = '✅' if 'Approved' in str(status) else '⏳' if 'Pending' in str(status) else '🔄' if 'Extension' in str(status) else '❌'
                         color = '#38a169' if 'Approved' in str(status) else '#d69e2e' if 'Pending' in str(status) else '#3182ce'
-                        st.markdown(f"""<div style="padding:0.3rem 0.6rem;margin:0.15rem 0;border-left:3px solid {color};background:white;border-radius:3px;font-size:0.8rem;"><strong>{icon} {r.get('employee_name','')}</strong> — {r.get('position','')} | {status} | {r.get('review_date','')[:10]}</div>""", unsafe_allow_html=True)
+                        st.markdown(f"""<div style="padding:0.3rem 0.6rem;margin:0.15rem 0;border-left:3px solid {color};background:#1E1E1E;border-radius:3px;font-size:0.8rem;color:#f0e6d3;"><strong style="color:#C9A84C;">{icon} {r.get('employee_name','')}</strong> — {r.get('position','')} | {status} | {r.get('review_date','')[:10]}</div>""", unsafe_allow_html=True)
                 
                 # Export
                 st.markdown("---")
@@ -12530,7 +13213,7 @@ APPLY NOW: {public_url}
                                 job_candidates = candidates[candidates['job_id'] == req['id']] if not candidates.empty else []
                                 st.metric("Total Applicants", len(job_candidates))
                                 if len(job_candidates) > 0:
-                                    st.dataframe(job_candidates[['first_name', 'last_name', 'email', 'status']], use_container_width=True)
+                                    st.dataframe(job_candidates[['first_name', 'last_name', 'email', 'status']], use_container_width=True, theme="dark")
                             except:
                                 st.info("No application data available.")
                     with c2:
@@ -14433,7 +15116,7 @@ def ai_recruitment_agent():
                                 display_cols.append(col)
                         
                         scorecard_df = pd.DataFrame(scorecard_data)[display_cols]
-                        st.dataframe(scorecard_df, use_container_width=True, hide_index=True)
+                        st.dataframe(scorecard_df, use_container_width=True, hide_index=True, theme="dark")
                         
                         # Detailed breakdown for each candidate
                         st.markdown("---")
@@ -14457,7 +15140,7 @@ def ai_recruitment_agent():
                                             'Evidence': comp.get('evidence', '')[:80]
                                         })
                                     if comp_data:
-                                        st.dataframe(pd.DataFrame(comp_data), use_container_width=True, hide_index=True)
+                                        st.dataframe(pd.DataFrame(comp_data), use_container_width=True, hide_index=True, theme="dark")
                                     
                                     # Visual competency bars
                                     for comp in competencies:
@@ -14972,7 +15655,7 @@ def ai_recruitment_agent():
                     font=dict(color='#F0E6D3', family='Inter, sans-serif')
                 )
                 st.plotly_chart(fig, use_container_width=True)
-                st.dataframe(candidates[['first_name', 'last_name', 'email', 'job_id', 'ai_score', 'ai_tier', 'status']], use_container_width=True, hide_index=True)
+                st.dataframe(candidates[['first_name', 'last_name', 'email', 'job_id', 'ai_score', 'ai_tier', 'status']], use_container_width=True, hide_index=True, theme="dark")
         except:
             st.info("Tiering data will appear here.")
     
@@ -16006,7 +16689,7 @@ def training_development():
             if day == 25: events.append("🌐 Sustainable Building")
             if day == 28: events.append("👔 Leadership Masterclass")
             cal_data.append({"Day": f"June {day}", "Events": ", ".join(events) if events else "—"})
-        st.dataframe(pd.DataFrame(cal_data), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(cal_data), use_container_width=True, hide_index=True, theme="dark")
     
     # ============ TAB 8: VIDEOS & PODCASTS ============
     with tab8:
@@ -16334,7 +17017,7 @@ def reports_analytics():
                     avg_score = 0
                 scorecard_data.append({'Department': dept, 'Employees': dept_emp, 'Avg Performance': f"{avg_score:.0f}%"})
             
-            st.dataframe(pd.DataFrame(scorecard_data), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(scorecard_data), use_container_width=True, hide_index=True, theme="dark")
         else:
             st.info("Employee data loading...")
     
@@ -17011,7 +17694,7 @@ def notifications_page():
             
             if digest_data:
                 digest_df = pd.DataFrame(digest_data)
-                st.dataframe(digest_df, use_container_width=True, hide_index=True)
+                st.dataframe(digest_df, use_container_width=True, hide_index=True, theme="dark")
                 
                 # Chart
                 fig = px.bar(digest_df, x='Category', y='Count', color='Critical',
@@ -18695,7 +19378,7 @@ def requests_hub():
             
             if outbox_data:
                 df_out = pd.DataFrame(outbox_data)
-                st.dataframe(df_out, use_container_width=True, hide_index=True)
+                st.dataframe(df_out, use_container_width=True, hide_index=True, theme="dark")
                 st.download_button("📥 Export CSV", df_out.to_csv(index=False), "outbox.csv", "text/csv")
         else:
             st.info("No requests in outbox.")
@@ -18962,7 +19645,7 @@ def requests_hub():
                             'Status': a.get('status', '')
                         } for a in filtered[-30:]])
                         
-                        st.dataframe(att_df, use_container_width=True, hide_index=True)
+                        st.dataframe(att_df, use_container_width=True, hide_index=True, theme="dark")
                         
                         total_hours = sum(float(a.get('work_hours', 0) or 0) for a in filtered[-30:])
                         days_present = len(set(a.get('sync_date', '') for a in filtered[-30:]))
@@ -19024,7 +19707,7 @@ def requests_hub():
                         'Status': a.get('status', '')
                     } for a in display_att])
                     
-                    st.dataframe(df_all, use_container_width=True, hide_index=True)
+                    st.dataframe(df_all, use_container_width=True, hide_index=True, theme="dark")
                     
                     present_count = len(df_all)
                     on_time = len(df_all[df_all['In'].notna()])
@@ -19095,7 +19778,7 @@ def requests_hub():
                     try:
                         synced = db._get("attendance", {"source": "Biometric"})
                         if synced:
-                            st.dataframe(pd.DataFrame(synced[-20:]), use_container_width=True, hide_index=True)
+                            st.dataframe(pd.DataFrame(synced[-20:]), use_container_width=True, hide_index=True, theme="dark")
                         else:
                             st.info("No synced records yet.")
                     except:
@@ -19337,7 +20020,7 @@ def requests_hub():
                     try:
                         df_leave = pd.read_csv(uploaded_leave)
                         st.markdown(f"**{len(df_leave)} records**")
-                        st.dataframe(df_leave.head(10), use_container_width=True)
+                        st.dataframe(df_leave.head(10), use_container_width=True, theme="dark")
                         
                         if st.button(f"📤 Upload {len(df_leave)} Leave Balances", use_container_width=True, type="primary"):
                             success, errors = 0, 0
@@ -19371,7 +20054,7 @@ def requests_hub():
                     except Exception as e:
                         st.error(f"❌ Error: {str(e)}")
     
-    # ============================================================
+     # ============================================================
     # TAB 8: ANALYTICS
     # ============================================================
     with tab8:
@@ -19433,20 +20116,35 @@ def requests_hub():
                     }
                     fig1 = px.pie(values=list(by_status.values()), names=list(by_status.keys()), hole=0.5,
                                 color_discrete_sequence=[status_colors.get(s, '#888') for s in by_status.keys()])
-                    fig1.update_layout(height=350)
+                    fig1.update_layout(
+                        height=350,
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                    )
                     st.plotly_chart(fig1, use_container_width=True)
                 
                 with col2:
                     st.markdown("### By Type")
                     fig2 = px.pie(values=list(by_type.values()), names=list(by_type.keys()), hole=0.5)
-                    fig2.update_layout(height=350)
+                    fig2.update_layout(
+                        height=350,
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                    )
                     st.plotly_chart(fig2, use_container_width=True)
                 
                 st.markdown("---")
                 st.markdown("### By Department")
                 fig3 = px.bar(x=list(by_dept.keys()), y=list(by_dept.values()), color=list(by_dept.values()),
                             color_continuous_scale=['#CC0000', '#d69e2e', '#38a169'])
-                fig3.update_layout(height=350)
+                fig3.update_layout(
+                    height=350,
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                )
                 st.plotly_chart(fig3, use_container_width=True)
                 
                 # Bottleneck analysis
@@ -19461,8 +20159,8 @@ def requests_hub():
                 for stage, count in pending_by_stage.items():
                     color = '#CC0000' if count > 5 else '#d69e2e' if count > 2 else '#38a169'
                     st.markdown(f"""
-                    <div style="display:flex;justify-content:space-between;padding:0.5rem;margin:0.3rem 0;background:white;border-radius:6px;border-left:4px solid {color};">
-                        <strong>{stage}</strong>
+                    <div style="display:flex;justify-content:space-between;padding:0.5rem;margin:0.3rem 0;background:#1E1E1E;border-radius:6px;border-left:4px solid {color};">
+                        <strong style="color:#C9A84C;">{stage}</strong>
                         <span style="font-size:1.2rem;font-weight:700;color:{color};">{count}</span>
                     </div>
                     """, unsafe_allow_html=True)
@@ -21429,7 +22127,6 @@ def advanced_analytics():
         return
     
     # ===== USER ENGAGEMENT TRACKING =====
-    # Track current page view
     if 'page_views' not in st.session_state:
         st.session_state.page_views = {}
     if 'session_start' not in st.session_state:
@@ -21441,7 +22138,6 @@ def advanced_analytics():
     st.session_state.page_views[current_page]['count'] += 1
     st.session_state.page_views[current_page]['last_visit'] = datetime.now().strftime('%Y-%m-%d %H:%M')
     
-    # Save engagement to database
     try:
         db._post("user_engagement", {
             "user_name": st.session_state.user['name'],
@@ -21520,7 +22216,6 @@ def advanced_analytics():
     except:
         eng_df = pd.DataFrame()
     
-    # Engagement metrics
     total_sessions = len(eng_df['session_id'].unique()) if not eng_df.empty and 'session_id' in eng_df.columns else 0
     unique_users_today = 0
     unique_users_week = 0
@@ -21542,7 +22237,6 @@ def advanced_analytics():
             mobile_users = len(eng_df[eng_df['device'] == 'mobile']['user_email'].unique())
             web_users = len(eng_df[eng_df['device'] == 'web']['user_email'].unique())
     
-    # Module engagement
     module_engagement = {}
     if not eng_df.empty and 'module' in eng_df.columns:
         module_counts = eng_df['module'].value_counts()
@@ -21566,12 +22260,10 @@ def advanced_analytics():
     st.markdown("---")
     st.markdown("### 🤖 AI-Powered Insights")
     
-    # Calculate engagement score
     engagement_score = 0
     if total_emp > 0 and unique_users_month > 0:
         engagement_score = int((unique_users_month / total_emp) * 100)
     
-    # Generate AI insights
     insights = []
     
     if engagement_score >= 70:
@@ -21595,14 +22287,13 @@ def advanced_analytics():
         mobile_pct = int((mobile_users / max(unique_users_month, 1)) * 100)
         insights.append(f"📱 **Mobile Adoption:** {mobile_pct}% of users access via mobile app. Optimize mobile experience.")
     
-    # Most engaged modules
     if module_engagement:
         top_module = max(module_engagement, key=module_engagement.get)
         insights.append(f"🔥 **Most Used Module:** '{top_module}' has the highest engagement with {module_engagement[top_module]} views.")
     
     for insight in insights[:5]:
         st.markdown(f"""
-        <div style="background: white; padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; border-left: 4px solid #CC0000;">
+        <div style="background: #1E1E1E; padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; border-left: 4px solid #B8960C; color: #f0e6d3;">
             {insight}
         </div>
         """, unsafe_allow_html=True)
@@ -21681,7 +22372,14 @@ def advanced_analytics():
                 fig3 = px.bar(tenure_df, x='Tenure', y='Count', color='Tenure',
                             title="Employee Tenure Distribution",
                             color_discrete_sequence=['#CC0000', '#d69e2e', '#3182ce', '#38a169'])
-                fig3.update_layout(height=350, showlegend=False)
+                fig3.update_layout(
+                    height=350, 
+                    showlegend=False,
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                    title_font=dict(color='#C9A84C', family='Georgia, serif')
+                )
                 st.plotly_chart(fig3, use_container_width=True)
     
     # ===== TAB 2: PERFORMANCE ANALYTICS =====
@@ -21696,7 +22394,13 @@ def advanced_analytics():
             fig4 = px.pie(values=appraisal_values, names=appraisal_labels, 
                         title="Appraisal Completion Status", hole=0.5,
                         color_discrete_sequence=['#38a169', '#d69e2e', '#a0aec0'])
-            fig4.update_layout(height=350)
+            fig4.update_layout(
+                height=350,
+                paper_bgcolor='#1E1E1E',
+                plot_bgcolor='#1E1E1E',
+                font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                title_font=dict(color='#C9A84C', family='Georgia, serif')
+            )
             st.plotly_chart(fig4, use_container_width=True)
         
         with col2:
@@ -21707,7 +22411,13 @@ def advanced_analytics():
                     fig5 = px.bar(dept_progress, x='department', y='progress', 
                                 title="Avg KPI Progress by Department", color='progress',
                                 color_continuous_scale=['#CC0000', '#d69e2e', '#38a169'])
-                    fig5.update_layout(height=350)
+                    fig5.update_layout(
+                        height=350,
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                        title_font=dict(color='#C9A84C', family='Georgia, serif')
+                    )
                     st.plotly_chart(fig5, use_container_width=True)
             except:
                 st.info("Performance data loading...")
@@ -21727,7 +22437,13 @@ def advanced_analytics():
                 fig6 = px.funnel(x=list(stage_counts.values()), y=list(stage_counts.keys()),
                                title="Recruitment Funnel",
                                color_discrete_sequence=['#CC0000'])
-                fig6.update_layout(height=350)
+                fig6.update_layout(
+                    height=350,
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                    title_font=dict(color='#C9A84C', family='Georgia, serif')
+                )
                 st.plotly_chart(fig6, use_container_width=True)
             else:
                 st.info("Pipeline data will appear as candidates progress.")
@@ -21746,7 +22462,13 @@ def advanced_analytics():
                 fig7 = px.pie(values=list(learning_status.values()), names=list(learning_status.keys()),
                             title="Course Completion Rate", hole=0.5,
                             color_discrete_sequence=['#38a169', '#d69e2e'])
-                fig7.update_layout(height=350)
+                fig7.update_layout(
+                    height=350,
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                    title_font=dict(color='#C9A84C', family='Georgia, serif')
+                )
                 st.plotly_chart(fig7, use_container_width=True)
         
         with col2:
@@ -21760,7 +22482,13 @@ def advanced_analytics():
                     fig8 = px.bar(x=list(dept_enrollments.keys()), y=list(dept_enrollments.values()),
                                 title="Enrollments by Department", color=list(dept_enrollments.values()),
                                 color_continuous_scale=['#CC0000', '#d69e2e', '#38a169'])
-                    fig8.update_layout(height=350)
+                    fig8.update_layout(
+                        height=350,
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                        title_font=dict(color='#C9A84C', family='Georgia, serif')
+                    )
                     st.plotly_chart(fig8, use_container_width=True)
             except:
                 pass
@@ -21787,7 +22515,13 @@ def advanced_analytics():
                 fig9 = px.pie(values=list(idea_status.values()), names=list(idea_status.keys()),
                             title="Ideas by Status", hole=0.5,
                             color_discrete_sequence=['#a0aec0', '#d69e2e', '#3182ce', '#38a169'])
-                fig9.update_layout(height=350)
+                fig9.update_layout(
+                    height=350,
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                    title_font=dict(color='#C9A84C', family='Georgia, serif')
+                )
                 st.plotly_chart(fig9, use_container_width=True)
         
         with col2:
@@ -21801,7 +22535,13 @@ def advanced_analytics():
                     fig10 = px.bar(x=list(idea_categories.keys()), y=list(idea_categories.values()),
                                  title="Ideas by Category", color=list(idea_categories.values()),
                                  color_continuous_scale=['#CC0000', '#d69e2e', '#38a169'])
-                    fig10.update_layout(height=350)
+                    fig10.update_layout(
+                        height=350,
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                        title_font=dict(color='#C9A84C', family='Georgia, serif')
+                    )
                     st.plotly_chart(fig10, use_container_width=True)
         
         if total_emp > 0 and total_ideas > 0:
@@ -21811,7 +22551,7 @@ def advanced_analytics():
             st.metric("Innovation Participation", f"{participation}%", f"{idea_participants} contributors")
             st.progress(participation / 100)
     
-    # ===== TAB 5: USER ENGAGEMENT (MASSIVE UPGRADE) =====
+    # ===== TAB 5: USER ENGAGEMENT =====
     with tab5:
         st.subheader("📱 User Engagement & Platform Analytics")
         
@@ -21849,13 +22589,11 @@ def advanced_analytics():
             col4.metric("💻 Web", web_visits, f"{int(web_visits/total_visits*100)}%" if total_visits > 0 else "")
             col5.metric("🔄 Avg Sessions/User", f"{avg_sessions_per_user:.1f}")
             
-            # RETENTION RATE
             user_visits = filtered.groupby('user_email').size()
             new_users = len(user_visits[user_visits == 1])
             returning_users = len(user_visits[user_visits > 1])
             retention_rate = int(returning_users / (new_users + returning_users) * 100) if (new_users + returning_users) > 0 else 0
             
-            # ENGAGEMENT SCORE
             engagement_score = 0
             if total_visits > 0:
                 engagement_score += min(unique_users / max(total_emp, 1) * 40, 40)
@@ -21866,16 +22604,15 @@ def advanced_analytics():
             score_label = "Excellent" if engagement_score >= 70 else "Good" if engagement_score >= 40 else "Needs Improvement"
             
             st.markdown(f"""
-            <div style="background: white; padding: 1.5rem; border-radius: 12px; text-align: center; border: 2px solid {score_color}; margin: 1rem 0;">
+            <div style="background: #1E1E1E; padding: 1.5rem; border-radius: 12px; text-align: center; border: 2px solid {score_color}; margin: 1rem 0;">
                 <div style="font-size: 3rem; font-weight: 900; color: {score_color};">{engagement_score:.0f}/100</div>
                 <div style="font-size: 1.2rem; color: {score_color}; font-weight: 600;">⭐ Platform Engagement Score: {score_label}</div>
-                <div style="margin-top: 1rem;"><div style="background: #e0e0e0; height: 10px; border-radius: 5px;"><div style="background: {score_color}; width: {engagement_score}%; height: 10px; border-radius: 5px;"></div></div></div>
+                <div style="margin-top: 1rem;"><div style="background: #2A2A2A; height: 10px; border-radius: 5px;"><div style="background: {score_color}; width: {engagement_score}%; height: 10px; border-radius: 5px;"></div></div></div>
             </div>
             """, unsafe_allow_html=True)
             
             st.markdown("---")
             
-            # MOST ACTIVE USERS
             st.subheader("🏆 Most Active Users")
             
             if 'user_email' in filtered.columns:
@@ -21897,7 +22634,7 @@ def advanced_analytics():
                         name = user.get('user_name', user.get('user_email', 'Unknown'))
                         emp_id = user.get('employee_id', 'N/A')
                         dept = user.get('department', 'N/A')
-                        st.markdown(f"""<div style="background: white; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 1rem; border-left: 4px solid #CC0000;"><span style="font-size: 1.5rem;">{medal}</span><div style="flex: 1;"><strong>{name}</strong><br><small style="color: #666;">ID: {emp_id} • {dept}</small></div><div style="text-align: right;"><span style="font-weight: 700; font-size: 1.2rem;">{int(user['visits'])}</span><br><small style="color: #888;">visits</small></div></div>""", unsafe_allow_html=True)
+                        st.markdown(f"""<div style="background: #1E1E1E; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 1rem; border-left: 4px solid #B8960C;"><span style="font-size: 1.5rem;">{medal}</span><div style="flex: 1;"><strong style="color:#C9A84C;">{name}</strong><br><small style="color: #9a8a78;">ID: {emp_id} • {dept}</small></div><div style="text-align: right;"><span style="font-weight: 700; font-size: 1.2rem; color: #C9A84C;">{int(user['visits'])}</span><br><small style="color: #9a8a78;">visits</small></div></div>""", unsafe_allow_html=True)
                 
                 with col2:
                     st.markdown("#### 📊 User Activity Distribution")
@@ -21910,14 +22647,19 @@ def advanced_analytics():
                         pie_data.append({'User': 'Others', 'Visits': others_count})
                     pie_df = pd.DataFrame(pie_data)
                     fig_pie = px.pie(pie_df, values='Visits', names='User', hole=0.4, color_discrete_sequence=['#CC0000', '#1a1a1a', '#4a4a4a', '#3182ce', '#38a169', '#d69e2e'])
-                    fig_pie.update_layout(height=300, margin=dict(t=10, b=10))
+                    fig_pie.update_layout(
+                        height=300, 
+                        margin=dict(t=10, b=10),
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                    )
                     st.plotly_chart(fig_pie, use_container_width=True)
                 
                 st.download_button("📥 Download User Activity Report (CSV)", user_activity.to_csv(index=False), "user_activity_report.csv", "text/csv")
             
             st.markdown("---")
             
-            # MODULE ENGAGEMENT
             st.subheader("📊 Module Engagement Analysis")
             
             if 'module' in filtered.columns:
@@ -21925,19 +22667,30 @@ def advanced_analytics():
                 with col1:
                     module_usage = filtered['module'].value_counts().head(10)
                     fig_mod = px.bar(x=module_usage.index, y=module_usage.values, title="Most Used Modules", color=module_usage.values, color_continuous_scale=['#CC0000', '#d69e2e', '#38a169'])
-                    fig_mod.update_layout(height=350)
+                    fig_mod.update_layout(
+                        height=350,
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                        title_font=dict(color='#C9A84C', family='Georgia, serif')
+                    )
                     st.plotly_chart(fig_mod, use_container_width=True)
                 with col2:
                     if 'device' in filtered.columns:
                         module_device = filtered.groupby(['module', 'device']).size().unstack(fill_value=0)
                         if not module_device.empty:
                             fig_dev = px.bar(module_device, title="Module Usage by Device", barmode='group', color_discrete_sequence=['#3182ce', '#38a169'])
-                            fig_dev.update_layout(height=350)
+                            fig_dev.update_layout(
+                                height=350,
+                                paper_bgcolor='#1E1E1E',
+                                plot_bgcolor='#1E1E1E',
+                                font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                                title_font=dict(color='#C9A84C', family='Georgia, serif')
+                            )
                             st.plotly_chart(fig_dev, use_container_width=True)
             
             st.markdown("---")
             
-            # PEAK USAGE HEATMAP
             st.subheader("🕐 Peak Usage Hours")
             filtered['hour'] = filtered['timestamp'].dt.hour
             filtered['day'] = filtered['timestamp'].dt.day_name()
@@ -21945,12 +22698,18 @@ def advanced_analytics():
             day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
             hourly_usage = hourly_usage.reindex([d for d in day_order if d in hourly_usage.index])
             fig_heat = go.Figure(data=go.Heatmap(z=hourly_usage.values, x=[f'{h}:00' for h in hourly_usage.columns], y=hourly_usage.index, colorscale=[[0, '#f5f5f5'], [0.5, '#CC0000'], [1, '#1a1a1a']]))
-            fig_heat.update_layout(height=300, title="Hourly Usage Heatmap by Day")
+            fig_heat.update_layout(
+                height=300, 
+                title="Hourly Usage Heatmap by Day",
+                paper_bgcolor='#1E1E1E',
+                plot_bgcolor='#1E1E1E',
+                font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                title_font=dict(color='#C9A84C', family='Georgia, serif')
+            )
             st.plotly_chart(fig_heat, use_container_width=True)
             
             st.markdown("---")
             
-            # TRAINING RECOMMENDATIONS
             st.subheader("🎓 Training Recommendations")
             if 'user_email' in filtered.columns:
                 low_engagement = user_activity[user_activity['visits'] < 3].head(10)
@@ -21971,21 +22730,31 @@ def advanced_analytics():
             
             st.markdown("---")
             
-            # DEPARTMENT ENGAGEMENT
             st.subheader("🏢 Department Engagement")
             if 'department' in filtered.columns:
                 dept_activity = filtered.groupby('department').agg(users=('user_email', 'nunique'), visits=('module', 'count')).reset_index().sort_values('visits', ascending=False)
                 col1, col2 = st.columns(2)
                 with col1:
                     fig_dept = px.bar(dept_activity.head(10), x='department', y='visits', title="Visits by Department", color='visits', color_continuous_scale=['#CC0000', '#d69e2e', '#38a169'])
-                    fig_dept.update_layout(height=350)
+                    fig_dept.update_layout(
+                        height=350,
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                        title_font=dict(color='#C9A84C', family='Georgia, serif')
+                    )
                     st.plotly_chart(fig_dept, use_container_width=True)
                 with col2:
                     fig_users = px.bar(dept_activity.head(10), x='department', y='users', title="Unique Users by Department", color='users', color_continuous_scale=['#3182ce', '#38a169', '#d69e2e'])
-                    fig_users.update_layout(height=350)
+                    fig_users.update_layout(
+                        height=350,
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                        title_font=dict(color='#C9A84C', family='Georgia, serif')
+                    )
                     st.plotly_chart(fig_users, use_container_width=True)
             
-            # MODULE PREFERENCES PER DEPARTMENT
             st.subheader("🎯 Module Preferences by Department")
             dept_module = filtered.groupby(['department', 'module']).size().reset_index(name='count')
             for dept in dept_module['department'].unique()[:5]:
