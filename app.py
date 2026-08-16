@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+import plotly.io as pio
 from datetime import datetime, timedelta, date
 import hashlib
 from pathlib import Path
@@ -26,6 +27,60 @@ from PIL import Image
 import calendar
 
 sys.path.append(str(Path(__file__).parent))
+
+# ============================================================
+# GLOBAL PLOTLY DARK THEME - AUTO-APPLIES TO ALL CHARTS
+# ============================================================
+pio.templates["wtc_dark"] = pio.templates["plotly_dark"]
+pio.templates["wtc_dark"].update({
+    "layout": {
+        "paper_bgcolor": "#1E1E1E",
+        "plot_bgcolor": "#1E1E1E",
+        "font": {
+            "color": "#F0E6D3",
+            "family": "Inter, sans-serif"
+        },
+        "title": {
+            "font": {
+                "color": "#C9A84C",
+                "family": "Georgia, serif"
+            }
+        },
+        "legend": {
+            "font": {"color": "#F0E6D3"},
+            "bgcolor": "rgba(0,0,0,0)"
+        },
+        "xaxis": {
+            "gridcolor": "#2A2A2A",
+            "zerolinecolor": "#2A2A2A",
+            "tickfont": {"color": "#F0E6D3"},
+            "title_font": {"color": "#C9A84C"}
+        },
+        "yaxis": {
+            "gridcolor": "#2A2A2A",
+            "zerolinecolor": "#2A2A2A",
+            "tickfont": {"color": "#F0E6D3"},
+            "title_font": {"color": "#C9A84C"}
+        }
+    }
+})
+pio.templates.default = "wtc_dark"
+
+
+
+def make_dark(fig):
+    """Force dark theme on any Plotly figure"""
+    fig.update_layout(
+        paper_bgcolor='#1E1E1E',
+        plot_bgcolor='#1E1E1E',
+        font=dict(color='#F0E6D3'),
+        title_font=dict(color='#C9A84C'),
+        legend=dict(font=dict(color='#F0E6D3'), bgcolor='rgba(0,0,0,0)')
+    )
+    fig.update_xaxes(gridcolor='#2A2A2A', zerolinecolor='#2A2A2A', tickfont=dict(color='#F0E6D3'))
+    fig.update_yaxes(gridcolor='#2A2A2A', zerolinecolor='#2A2A2A', tickfont=dict(color='#F0E6D3'))
+    return fig
+
 
 # =============================================
 # FIX: READ SECRETS FROM HUGGING FACE ENVIRONMENT
@@ -118,91 +173,6 @@ def clear_all_cache():
     """Clear all cached data"""
     st.cache_data.clear()
 
-
-
-# ============ ADDITIONAL CACHED FUNCTIONS FOR PERFORMANCE ============
-@st.cache_data(ttl=300)
-def cached_get_users():
-    """Cached users for role mapping"""
-    try:
-        data = db._get("users")
-        return data if data else []
-    except:
-        return []
-
-@st.cache_data(ttl=300)
-def cached_get_peer_ratings():
-    """Cached peer ratings"""
-    try:
-        data = db._get("peer_ratings")
-        return data if data else []
-    except:
-        return []
-
-@st.cache_data(ttl=300)
-def cached_get_leave_requests():
-    """Cached leave requests"""
-    try:
-        data = db._get("leave_requests")
-        return data if data else []
-    except:
-        return []
-
-@st.cache_data(ttl=300)
-def cached_get_job_requisitions():
-    """Cached job requisitions"""
-    try:
-        data = db.get_all_job_requisitions()
-        return data if data else []
-    except:
-        return []
-
-@st.cache_data(ttl=300)
-def cached_get_training_courses():
-    """Cached training courses"""
-    try:
-        data = db._get("training_courses")
-        return data if data else []
-    except:
-        return []
-
-@st.cache_data(ttl=300)
-def cached_get_employees_with_roles():
-    """Get employees with roles merged - cached"""
-    employees_df = load_employees_cached()
-    if employees_df.empty:
-        return employees_df
-    
-    users_data = cached_get_users()
-    if users_data:
-        role_map = {u.get('email', ''): u.get('role', 'Team Member') for u in users_data if u.get('email')}
-        if 'email' in employees_df.columns:
-            employees_df['role'] = employees_df['email'].map(role_map).fillna('Team Member')
-        else:
-            employees_df['role'] = 'Team Member'
-    else:
-        employees_df['role'] = 'Team Member'
-    
-    return employees_df
-
-def clear_all_caches():
-    """Clear all caches after data modifications"""
-    load_employees_cached.clear()
-    load_performance_cached.clear()
-    load_candidates_cached.clear()
-    load_appraisals_cached.clear()
-    load_engagement_cached.clear()
-    cached_get_users.clear()
-    cached_get_peer_ratings.clear()
-    cached_get_leave_requests.clear()
-    cached_get_job_requisitions.clear()
-    cached_get_training_courses.clear()
-    cached_get_employees_with_roles.clear()
-    st.cache_data.clear()
-
-
-
-
 # ============================================================
 # PAGE CONFIG
 # ============================================================
@@ -212,6 +182,1017 @@ if logo_icon.exists():
     st.set_page_config(page_title="Churchgate Group HRIS", page_icon=str(logo_icon), layout="wide", initial_sidebar_state="expanded")
 else:
     st.set_page_config(page_title="Churchgate Group HRIS", page_icon="🏢", layout="wide", initial_sidebar_state="expanded")
+
+# ============================================================
+# GLOBAL WTC PREMIUM DARK THEME - ULTIMATE FIX
+# ============================================================
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Georgia&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    /* ===== FORCE DARK EVERYWHERE ===== */
+    .stApp, .main, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+        background: #141414 !important;
+    }
+    
+    /* ALL text visible */
+    .stMarkdown, .stText, p, label, span, div, small {
+        color: #f0e6d3 !important;
+    }
+    
+    /* ===== HEADERS - GOLD SERIF ===== */
+    h1, h2, h3 {
+        color: #C9A84C !important;
+        font-family: 'Georgia', serif !important;
+        font-weight: 700 !important;
+    }
+    h4, h5, h6 {
+        color: #f0e6d3 !important;
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 600 !important;
+    }
+    
+    /* ===== SUBHEADERS - GOLD ===== */
+    .stSubheader {
+        color: #C9A84C !important;
+        font-family: 'Georgia', serif !important;
+        font-weight: 700 !important;
+    }
+    
+    /* ===== SELECTBOX LABELS - VISIBLE ===== */
+    [data-testid="stSelectbox"] label,
+    [data-testid="stTextInput"] label,
+    [data-testid="stNumberInput"] label,
+    [data-testid="stDateInput"] label,
+    [data-testid="stMultiselect"] label {
+        color: #C9A84C !important;
+        font-weight: 600 !important;
+        font-size: 0.85rem !important;
+    }
+    
+    /* ===== SELECTBOX VALUES - VISIBLE ===== */
+    [data-testid="stSelectbox"] div,
+    [data-testid="stSelectbox"] span,
+    [data-testid="stSelectbox"] p {
+        color: #f0e6d3 !important;
+    }
+    
+    /* ===== SEARCH INPUT - VISIBLE ===== */
+    input[type="text"], input[type="search"] {
+        background: #1e1e1e !important;
+        color: #f0e6d3 !important;
+        border: 1px solid rgba(184, 150, 12, 0.4) !important;
+        border-radius: 6px !important;
+    }
+    input::placeholder {
+        color: #9a8a78 !important;
+    }
+    
+    /* ===== EXPANDER HEADERS - GOLD NO WHITE GLOW ===== */
+    [data-testid="stExpander"] details {
+        background: #1e1e1e !important;
+        border: 1px solid rgba(184, 150, 12, 0.35) !important;
+        border-radius: 6px !important;
+        margin-bottom: 0.3rem !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    [data-testid="stExpander"] details summary {
+        background: #1e1e1e !important;
+        border-left: 4px solid #B8960C !important;
+        border-radius: 6px !important;
+        padding: 0.6rem 1rem !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    [data-testid="stExpander"] details summary p,
+    [data-testid="stExpander"] details summary span,
+    [data-testid="stExpander"] details summary div {
+        color: #C9A84C !important;
+        font-weight: 600 !important;
+        font-size: 0.9rem !important;
+    }
+    [data-testid="stExpander"] details summary svg {
+        fill: #C9A84C !important;
+        color: #C9A84C !important;
+    }
+    [data-testid="stExpander"] details div {
+        background: #1a1a1a !important;
+    }
+    
+    /* ===== EXPANDER CONTENT - ALL VISIBLE ===== */
+    [data-testid="stExpander"] details div p,
+    [data-testid="stExpander"] details div span,
+    [data-testid="stExpander"] details div small,
+    [data-testid="stExpander"] details div div {
+        color: #f0e6d3 !important;
+    }
+    [data-testid="stExpander"] details div strong {
+        color: #C9A84C !important;
+    }
+    [data-testid="stExpander"] details div small {
+        color: #9a8a78 !important;
+    }
+    
+    /* ===== GLASS CARDS ===== */
+    .glass-card {
+        background: linear-gradient(135deg, #1e1e1e, #252525) !important;
+        border: 1px solid rgba(184, 150, 12, 0.4) !important;
+        border-radius: 12px !important;
+        box-shadow: 0 8px 32px rgba(184, 150, 12, 0.15) !important;
+        padding: 1.5rem !important;
+        margin-bottom: 1rem !important;
+    }
+    .glass-card h1, .glass-card h2, .glass-card h3 {
+        color: #C9A84C !important;
+        font-family: 'Georgia', serif !important;
+    }
+    .glass-card p {
+        color: #9a8a78 !important;
+    }
+    
+    /* ===== CHURCHGATE HEADER ===== */
+    .churchgate-header {
+        background: linear-gradient(135deg, #1a1a1a, #2d2d2d) !important;
+        border: 1px solid rgba(184, 150, 12, 0.4) !important;
+        border-left: 4px solid #C9A84C !important;
+        border-radius: 10px !important;
+        padding: 1rem 1.5rem !important;
+    }
+    .churchgate-header h1 {
+        color: #C9A84C !important;
+        font-family: 'Georgia', serif !important;
+    }
+    .churchgate-header p {
+        color: #9a8a78 !important;
+    }
+    
+    /* ===== KPI CARDS ===== */
+    .kpi-card {
+        background: #1e1e1e !important;
+        border-left: 4px solid #B8960C !important;
+        border-radius: 8px !important;
+        color: #f0e6d3 !important;
+        box-shadow: none !important;
+    }
+    .kpi-card strong {
+        color: #C9A84C !important;
+    }
+    .kpi-card small, .kpi-card p, .kpi-card div {
+        color: #f0e6d3 !important;
+    }
+    
+    /* ===== METRICS ===== */
+    .metric-card, .metric-mini, [data-testid="stMetric"] {
+        background: #1e1e1e !important;
+        border: 1px solid rgba(184, 150, 12, 0.25) !important;
+        border-radius: 8px !important;
+        box-shadow: none !important;
+    }
+    .metric-value, .metric-mini .value, [data-testid="stMetricValue"] {
+        color: #C9A84C !important;
+        font-family: 'Georgia', serif !important;
+    }
+    .metric-label, .metric-mini .label, [data-testid="stMetricLabel"] {
+        color: #9a8a78 !important;
+    }
+    
+    /* ===== MISSION BANNER ===== */
+    .mission-banner {
+        background: #1e1e1e !important;
+        border: 2px solid #B8960C !important;
+        border-radius: 8px !important;
+    }
+    .mission-banner h2, .mission-banner h3 {
+        color: #C9A84C !important;
+    }
+    .mission-banner p {
+        color: #f0e6d3 !important;
+    }
+    
+    /* ===== MISSION ITEMS ===== */
+    .mission-item, .value-card {
+        background: #1e1e1e !important;
+        border: 1px solid rgba(184, 150, 12, 0.3) !important;
+        border-radius: 6px !important;
+    }
+    .mission-item h3, .value-card h4 {
+        color: #C9A84C !important;
+    }
+    .mission-item p, .value-card p {
+        color: #9a8a78 !important;
+    }
+    
+    /* ===== GREETING HEADER ===== */
+    .greeting-header {
+        background: linear-gradient(135deg, #1a1a1a, #2d2d2d) !important;
+        border-left: 4px solid #C9A84C !important;
+        border-radius: 10px !important;
+    }
+    .greeting-header h1 {
+        color: #C9A84C !important;
+        font-family: 'Georgia', serif !important;
+    }
+    .greeting-header p {
+        color: #9a8a78 !important;
+    }
+    
+    /* ===== BUTTONS - GOLD ===== */
+    .stButton > button {
+        background: linear-gradient(135deg, #C9A84C 0%, #8B6914 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 4px !important;
+        font-weight: 600 !important;
+    }
+    
+    /* ===== TABS - GOLD ACCENT (NOT WHITE) ===== */
+    .stTabs [data-baseweb="tab-list"] {
+        background: #1e1e1e !important;
+        border-radius: 6px !important;
+        border: 1px solid rgba(184, 150, 12, 0.3) !important;
+        padding: 4px !important;
+    }
+    .stTabs [data-baseweb="tab"] {
+        color: #C9A84C !important;
+        font-weight: 600 !important;
+        border-radius: 4px !important;
+        background: #1e1e1e !important;
+        border: 1px solid rgba(184, 150, 12, 0.5) !important;
+    }
+    .stTabs [data-baseweb="tab"] * {
+        color: #C9A84C !important;
+        font-weight: 600 !important;
+    }
+    .stTabs [data-baseweb="tab"]:hover {
+        background: rgba(184, 150, 12, 0.2) !important;
+        border-color: #C9A84C !important;
+    }
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #C9A84C 0%, #8B6914 100%) !important;
+        color: white !important;
+        border: 1px solid #C9A84C !important;
+        border-radius: 4px !important;
+    }
+    .stTabs [aria-selected="true"] * {
+        color: white !important;
+    }
+    
+    /* ===== PASSWORD EYE ICON - GOLD VISIBLE ===== */
+    button[aria-label*="password"],
+    [data-testid="stTextInput"] button,
+    [data-testid="stTextInput"] svg,
+    [data-testid="stTextInput"] button svg {
+        color: #C9A84C !important;
+        fill: #C9A84C !important;
+        background: transparent !important;
+    }
+    [data-testid="stTextInput"] button:hover {
+        background: rgba(184, 150, 12, 0.15) !important;
+    }
+    
+    /* ===== SIDEBAR - DARK ===== */
+    [data-testid="stSidebar"] {
+        background: #1a1a1a !important;
+        border-right: 1px solid #2e2e2e !important;
+    }
+    [data-testid="stSidebar"] * {
+        color: #f0e6d3 !important;
+    }
+    [data-testid="stSidebar"] .nav-link span {
+        color: #f0e6d3 !important;
+    }
+    [data-testid="stSidebar"] .nav-link svg {
+        color: #C9A84C !important;
+    }
+    [data-testid="stSidebar"] .nav-link-selected {
+        background: rgba(184, 150, 12, 0.15) !important;
+        border-left: 3px solid #C9A84C !important;
+    }
+    [data-testid="stSidebar"] .nav-link-selected span {
+        color: #C9A84C !important;
+    }
+    
+    /* ===== INPUTS ===== */
+    input, textarea, select {
+        background: #1e1e1e !important;
+        color: #f0e6d3 !important;
+        border: 1px solid rgba(184, 150, 12, 0.3) !important;
+        border-radius: 6px !important;
+    }
+    input:focus, textarea:focus, select:focus {
+        border-color: #B8960C !important;
+        box-shadow: 0 0 0 3px rgba(184, 150, 12, 0.15) !important;
+    }
+    
+    /* ===== EMPLOYEE DASHBOARD - ALL TEXT VISIBLE ===== */
+    
+    /* Running ticker text */
+    .greeting-header + div marquee,
+    [data-testid="stMarkdown"] marquee {
+        color: #f0e6d3 !important;
+        background: #1e1e1e !important;
+        padding: 0.5rem 1rem !important;
+        border-radius: 6px !important;
+        border: 1px solid rgba(184, 150, 12, 0.3) !important;
+    }
+    
+    /* ===== Upcoming Holidays - GOLD TEXT ===== */
+    div[style*="background:linear-gradient(135deg, #f0f8ff"] {
+        background: #2d2d2d !important;
+        border: 1px solid rgba(184, 150, 12, 0.5) !important;
+        border-left: 4px solid #B8960C !important;
+        border-radius: 10px !important;
+    }
+    div[style*="background:linear-gradient(135deg, #f0f8ff"] strong,
+    div[style*="background:linear-gradient(135deg, #f0f8ff"] span,
+    div[style*="background:linear-gradient(135deg, #f0f8ff"] small,
+    div[style*="background:linear-gradient(135deg, #f0f8ff"] div {
+        color: #C9A84C !important;
+    }
+    div[style*="background:linear-gradient(135deg, #f0f8ff"] span[style*="font-size:1.1rem"] {
+        color: #f0e6d3 !important;
+        font-weight: 700 !important;
+    }
+    
+    /* ===== Plotly Charts - DARK GREY background (NOT WHITE) ===== */
+    [data-testid="stPlotlyChart"] {
+        background: #2d2d2d !important;
+        border: 1px solid rgba(184, 150, 12, 0.4) !important;
+        border-radius: 8px !important;
+        padding: 0.5rem !important;
+    }
+    
+    /* ===== Dataframe - VISIBLE TEXT ===== */
+    [data-testid="stDataFrame"] {
+        background: #2d2d2d !important;
+        border: 1px solid rgba(184, 150, 12, 0.4) !important;
+        border-radius: 6px !important;
+    }
+    [data-testid="stDataFrame"] th {
+        color: #C9A84C !important;
+        background: #3d3d3d !important;
+        font-weight: 700 !important;
+        border-bottom: 2px solid #B8960C !important;
+    }
+    [data-testid="stDataFrame"] td {
+        color: #f0e6d3 !important;
+        background: #2d2d2d !important;
+    }
+    [data-testid="stDataFrame"] span,
+    [data-testid="stDataFrame"] p,
+    [data-testid="stDataFrame"] div {
+        color: #f0e6d3 !important;
+    }
+    
+    /* ===== Dropdowns - VISIBLE ===== */
+    [data-testid="stSelectbox"] label {
+        color: #C9A84C !important;
+        font-weight: 600 !important;
+    }
+    [data-testid="stSelectbox"] [data-baseweb="select"] {
+        background: #2d2d2d !important;
+        border: 1px solid rgba(184, 150, 12, 0.5) !important;
+        border-radius: 6px !important;
+    }
+    [data-testid="stSelectbox"] [data-baseweb="select"] * {
+        color: #f0e6d3 !important;
+    }
+    [data-testid="stSelectbox"] [data-baseweb="select"] span {
+        color: #f0e6d3 !important;
+    }
+    
+    /* ===== Sliders - GOLD ===== */
+    [data-testid="stSlider"] label {
+        color: #C9A84C !important;
+        font-weight: 600 !important;
+    }
+    [data-testid="stSlider"] [role="slider"] {
+        background: #C9A84C !important;
+        border: 2px solid #B8960C !important;
+        box-shadow: 0 0 10px rgba(184, 150, 12, 0.6) !important;
+    }
+    [data-testid="stSlider"] input {
+        accent-color: #C9A84C !important;
+    }
+    [data-testid="stSlider"] [data-baseweb="slider"] {
+        background: #B8960C !important;
+    }
+    [data-testid="stSlider"] div[role="slider"] {
+        background: #C9A84C !important;
+        border-color: #B8960C !important;
+    }
+    
+    /* ===== EMPLOYEE & EXECUTIVE DASHBOARD - FIX ALL INLINE STYLES ===== */
+    
+    /* All divs with white background inside main content */
+    .stApp div[style*="background:white"],
+    .stApp div[style*="background: white"] {
+        background: #1e1e1e !important;
+        border: 1px solid rgba(184, 150, 12, 0.3) !important;
+    }
+    
+    /* All divs with white background - force dark */
+    div[style*="background:white"] {
+        background: #1e1e1e !important;
+    }
+    
+    /* Text with #888 color - make visible */
+    [style*="color:#888"],
+    [style*="color: #888"] {
+        color: #9a8a78 !important;
+    }
+    
+    /* Text with #666 color - make visible */
+    [style*="color:#666"],
+    [style*="color: #666"] {
+        color: #f0e6d3 !important;
+    }
+    
+    /* Text with #333 color - make visible */
+    [style*="color:#333"],
+    [style*="color: #333"] {
+        color: #f0e6d3 !important;
+    }
+    
+    /* Strong text inside white divs - GOLD */
+    div[style*="background:white"] strong,
+    div[style*="background: white"] strong {
+        color: #C9A84C !important;
+    }
+    
+    /* Small text inside white divs - visible */
+    div[style*="background:white"] small,
+    div[style*="background: white"] small {
+        color: #9a8a78 !important;
+    }
+    
+    /* Span text inside white divs - visible */
+    div[style*="background:white"] span,
+    div[style*="background: white"] span {
+        color: #f0e6d3 !important;
+    }
+    
+    /* KPI Progress pillars */
+    div[style*="padding:0.7rem"] span,
+    div[style*="padding:0.8rem 1rem"] span {
+        color: #f0e6d3 !important;
+    }
+    
+    /* Profile card */
+    div[style*="padding:1.5rem"] h3 {
+        color: #C9A84C !important;
+    }
+    div[style*="padding:1.5rem"] p {
+        color: #f0e6d3 !important;
+    }
+    
+    /* Recognition Wall */
+    div[style*="border:1px dashed"] p,
+    div[style*="border:1px dashed"] small {
+        color: #f0e6d3 !important;
+    }
+    
+    /* Upcoming Holidays */
+    div[style*="border-left:4px solid #3182ce"] strong,
+    div[style*="border-left:4px solid #3182ce"] span,
+    div[style*="border-left:4px solid #3182ce"] small {
+        color: #f0e6d3 !important;
+    }
+    
+    /* Org Structure cards */
+    div[style*="border-top:3px solid"] strong {
+        color: #C9A84C !important;
+    }
+    div[style*="border-top:3px solid"] small {
+        color: #9a8a78 !important;
+    }
+    
+    /* Department Heads cards */
+    div[style*="border:1px solid #e0e0e0"] strong {
+        color: #C9A84C !important;
+    }
+    div[style*="border:1px solid #e0e0e0"] small {
+        color: #9a8a78 !important;
+    }
+    
+    /* Activity Feed */
+    div[style*="border-left:3px solid #CC0000"] strong {
+        color: #C9A84C !important;
+    }
+    div[style*="border-left:3px solid #CC0000"] small {
+        color: #9a8a78 !important;
+    }
+    
+    /* Alert bar */
+    div[style*="background:#fff3cd"] {
+        background: rgba(184, 150, 12, 0.15) !important;
+        border-left: 4px solid #B8960C !important;
+    }
+    div[style*="background:#fff3cd"] strong {
+        color: #C9A84C !important;
+    }
+    
+    /* Celebration bar */
+    div[style*="background: linear-gradient(135deg, #fff5f5"] {
+        background: rgba(184, 150, 12, 0.1) !important;
+        border: 1px solid rgba(184, 150, 12, 0.4) !important;
+    }
+    div[style*="background: linear-gradient(135deg, #fff5f5"] strong {
+        color: #C9A84C !important;
+    }
+    
+    /* Organogram (Plotly charts) - WHITE BACKGROUND */
+    [data-testid="stPlotlyChart"] {
+        background: #ffffff !important;
+        border-radius: 8px !important;
+        padding: 0.5rem !important;
+    }
+    
+    /* Expander - NO WHITE GLOW */
+    [data-testid="stExpander"] details summary {
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    
+    /* Dataframe - VISIBLE */
+    [data-testid="stDataFrame"] {
+        background: #1e1e1e !important;
+        border: 1px solid rgba(184, 150, 12, 0.3) !important;
+    }
+    [data-testid="stDataFrame"] * {
+        color: #f0e6d3 !important;
+    }
+    [data-testid="stDataFrame"] th {
+        color: #C9A84C !important;
+    }
+    
+    /* ===== FIX: Realtime ticker - VISIBLE ===== */
+    div[style*="background:#d5d5d5"] {
+        background: #1e1e1e !important;
+        border: 1px solid rgba(184, 150, 12, 0.4) !important;
+    }
+    div[style*="background:#d5d5d5"] marquee {
+        color: #C9A84C !important;
+        font-weight: 600 !important;
+    }
+    
+    /* ===== FIX: Upcoming Holidays - GOLD ===== */
+    div[style*="border-left:4px solid #3182ce"] {
+        background: #1e1e1e !important;
+        border: 1px solid rgba(184, 150, 12, 0.3) !important;
+        border-left: 4px solid #B8960C !important;
+    }
+    div[style*="border-left:4px solid #3182ce"] strong,
+    div[style*="border-left:4px solid #3182ce"] span {
+        color: #C9A84C !important;
+    }
+    div[style*="border-left:4px solid #3182ce"] span[style*="font-size:1.1rem"] {
+        color: #f0e6d3 !important;
+    }
+    div[style*="border-left:4px solid #3182ce"] small {
+        color: #9a8a78 !important;
+    }
+    
+    /* ===== FIX: Org Chart expander - DARK/GOLD ===== */
+    [data-testid="stExpander"] details summary {
+        background: #1e1e1e !important;
+        border: 1px solid rgba(184, 150, 12, 0.5) !important;
+        border-left: 4px solid #B8960C !important;
+        box-shadow: none !important;
+    }
+    
+    /* ===== FIX: Organogram - DARK/GOLD not white ===== */
+    [data-testid="stPlotlyChart"] {
+        background: #1e1e1e !important;
+        border: 1px solid rgba(184, 150, 12, 0.4) !important;
+        border-radius: 8px !important;
+        padding: 0.5rem !important;
+    }
+    
+    /* ===== FIX: Department Heads dataframe - VISIBLE ===== */
+    [data-testid="stDataFrame"] {
+        background: #1e1e1e !important;
+        border: 1px solid rgba(184, 150, 12, 0.4) !important;
+        border-radius: 6px !important;
+    }
+    [data-testid="stDataFrame"] * {
+        color: #f0e6d3 !important;
+    }
+    [data-testid="stDataFrame"] th {
+        color: #C9A84C !important;
+        font-weight: 700 !important;
+        background: #2d2d2d !important;
+    }
+    [data-testid="stDataFrame"] td {
+        color: #f0e6d3 !important;
+        background: #1a1a1a !important;
+    }
+    
+    /* ===== FIX: Sliders - VISIBLE ===== */
+    [data-testid="stSlider"] {
+        background: #1e1e1e !important;
+        border: 1px solid rgba(184, 150, 12, 0.3) !important;
+        border-radius: 6px !important;
+        padding: 0.5rem !important;
+    }
+    [data-testid="stSlider"] * {
+        color: #f0e6d3 !important;
+    }
+    [data-testid="stSlider"] label,
+    [data-testid="stSlider"] span {
+        color: #C9A84C !important;
+    }
+    [data-testid="stSlider"] [data-testid="stSliderThumb"] {
+        background: #C9A84C !important;
+        border: 2px solid #B8960C !important;
+    }
+    [data-testid="stSlider"] [data-testid="stSliderTrack"] {
+        background: #B8960C !important;
+    }
+    [data-testid="stSlider"] input {
+        accent-color: #C9A84C !important;
+    }
+    
+    /* ===== FIX: Chart boxes - NOT WHITE ===== */
+    [data-testid="stPlotlyChart"] {
+        background: #1e1e1e !important;
+        border: 1px solid rgba(184, 150, 12, 0.3) !important;
+        border-radius: 8px !important;
+    }
+    
+    /* ===== BADGES ===== */
+    .badge-green { background: rgba(56, 161, 105, 0.2) !important; color: #6bcb77 !important; }
+    .badge-yellow { background: rgba(184, 150, 12, 0.2) !important; color: #C9A84C !important; }
+    .badge-gray { background: rgba(255, 255, 255, 0.1) !important; color: #a0aec0 !important; }
+    .badge-red { background: rgba(204, 0, 0, 0.2) !important; color: #ff6b6b !important; }
+    .badge-escalated { background: rgba(204, 0, 0, 0.3) !important; color: #ff6b6b !important; }
+    
+    /* ===== STATUS BADGES ===== */
+    .status-active { background: rgba(56, 161, 105, 0.2) !important; color: #6bcb77 !important; }
+    .status-pending { background: rgba(184, 150, 12, 0.2) !important; color: #C9A84C !important; }
+    .status-at-risk { background: rgba(204, 0, 0, 0.2) !important; color: #ff6b6b !important; }
+    
+    /* ===== TIER BADGES ===== */
+    .tier-1-badge { background: rgba(56, 161, 105, 0.2) !important; color: #6bcb77 !important; }
+    .tier-2-badge { background: rgba(184, 150, 12, 0.3) !important; color: #C9A84C !important; }
+    .tier-3-badge { background: rgba(204, 0, 0, 0.2) !important; color: #ff6b6b !important; }
+    
+    /* ===== ALERTS ===== */
+    .stAlert {
+        background: #1e1e1e !important;
+        border: 1px solid #2e2e2e !important;
+        color: #f0e6d3 !important;
+    }
+    .stSuccess { background: rgba(56, 161, 105, 0.1) !important; color: #6bcb77 !important; }
+    .stWarning { background: rgba(184, 150, 12, 0.1) !important; color: #C9A84C !important; }
+    .stError { background: rgba(204, 0, 0, 0.1) !important; color: #ff6b6b !important; }
+    .stInfo { background: rgba(184, 150, 12, 0.1) !important; color: #C9A84C !important; }
+    
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar-track { background: #1a1a1a !important; }
+    ::-webkit-scrollbar-thumb { background: #B8960C !important; }
+    
+    /* ===== DIVIDER ===== */
+    hr { border-color: #2e2e2e !important; }
+    
+    /* ===== DATAFRAMES ===== */
+    [data-testid="stDataFrame"] {
+        background: #1e1e1e !important;
+        border: 1px solid #2e2e2e !important;
+    }
+    
+    /* ===== LOGIN PAGE BUTTONS - GOLD ACCENT ===== */
+    [data-testid="stForm"] [data-testid="stFormSubmitButton"] button {
+        background: linear-gradient(135deg, #C9A84C 0%, #8B6914 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 4px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.05em !important;
+    }
+    
+    /* Login form inputs */
+    [data-testid="stForm"] input {
+        background: #1e1e1e !important;
+        color: #f0e6d3 !important;
+        border: 1px solid rgba(184, 150, 12, 0.4) !important;
+        border-radius: 6px !important;
+    }
+    [data-testid="stForm"] input::placeholder {
+        color: #9a8a78 !important;
+    }
+    
+    /* Password eye icon - MAXIMUM AGGRESSIVE */
+    [data-testid="stTextInput"] button {
+        background: #1e1e1e !important;
+        border: 2px solid #B8960C !important;
+        border-radius: 4px !important;
+        padding: 6px !important;
+        cursor: pointer !important;
+    }
+    [data-testid="stTextInput"] button * {
+        color: #C9A84C !important;
+        fill: #C9A84C !important;
+        stroke: #C9A84C !important;
+        opacity: 1 !important;
+        filter: none !important;
+    }
+    [data-testid="stTextInput"] button svg {
+        width: 22px !important;
+        height: 22px !important;
+        min-width: 22px !important;
+        min-height: 22px !important;
+    }
+    [data-testid="stTextInput"] button svg path {
+        fill: #C9A84C !important;
+        stroke: #C9A84C !important;
+        stroke-width: 2px !important;
+    }
+    [data-testid="stTextInput"] button:hover {
+        background: rgba(184, 150, 12, 0.3) !important;
+        border-color: #C9A84C !important;
+    }
+    [data-testid="stTextInput"] button img {
+        filter: invert(65%) sepia(60%) saturate(500%) hue-rotate(5deg) brightness(95%) contrast(90%) !important;
+        opacity: 1 !important;
+        width: 20px !important;
+        height: 20px !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
+
+
+
+
+# ============================================================
+# SIDEBAR - WTC PREMIUM GOLD DARK THEME
+# ============================================================
+st.markdown("""
+<style>
+    /* Sidebar background - Dark premium */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #1a1a1a 0%, #141414 100%) !important;
+        border-right: 1px solid rgba(184, 150, 12, 0.3) !important;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    /* Sidebar all text - Light visible */
+    [data-testid="stSidebar"] * {
+        color: #f0e6d3 !important;
+    }
+    
+    /* Sidebar headers - Gold serif */
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] h4 {
+        color: #C9A84C !important;
+        font-family: 'Georgia', serif !important;
+        font-weight: 700 !important;
+    }
+    
+    /* Sidebar "app" and "Careers" - GOLD VISIBLE (NO GLOW) */
+    [data-testid="stSidebar"] a,
+    [data-testid="stSidebar"] a span,
+    [data-testid="stSidebar"] .stMarkdown a,
+    [data-testid="stSidebar"] a * {
+        color: #C9A84C !important;
+        font-weight: 700 !important;
+        text-decoration: none !important;
+    }
+    [data-testid="stSidebar"] a:hover {
+        color: #ffffff !important;
+    }
+    
+    /* Sidebar logo text */
+    [data-testid="stSidebar"] .stMarkdown strong {
+        color: #C9A84C !important;
+        font-family: 'Georgia', serif !important;
+    }
+    
+    /* Sidebar logo image - NO GOLD CIRCLE, fit properly */
+    [data-testid="stSidebar"] [data-testid="stImage"] {
+        border: none !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stImage"] img {
+        border: none !important;
+        border-radius: 0 !important;
+        max-width: 85% !important;
+        margin: 0 auto !important;
+        display: block !important;
+    }
+    
+    /* Navigation menu items */
+    [data-testid="stSidebar"] .nav-link {
+        color: #f0e6d3 !important;
+        border-radius: 4px !important;
+        margin: 2px 0 !important;
+        transition: all 0.2s !important;
+    }
+    [data-testid="stSidebar"] .nav-link:hover {
+        background: rgba(184, 150, 12, 0.1) !important;
+        border-left: 3px solid #C9A84C !important;
+    }
+    [data-testid="stSidebar"] .nav-link span {
+        color: #f0e6d3 !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+    }
+    
+    /* Navigation icons - Gold */
+    [data-testid="stSidebar"] .nav-link svg {
+        color: #C9A84C !important;
+        fill: #C9A84C !important;
+    }
+    
+    /* Selected navigation item - Gold highlight */
+    [data-testid="stSidebar"] .nav-link-selected {
+        background: linear-gradient(135deg, rgba(201, 168, 76, 0.2) 0%, rgba(139, 105, 20, 0.15) 100%) !important;
+        border-left: 3px solid #C9A84C !important;
+        border-radius: 4px !important;
+    }
+    [data-testid="stSidebar"] .nav-link-selected span {
+        color: #C9A84C !important;
+        font-weight: 700 !important;
+    }
+    [data-testid="stSidebar"] .nav-link-selected svg {
+        color: #C9A84C !important;
+        fill: #C9A84C !important;
+    }
+    
+    /* Sidebar buttons - Gold outline */
+    [data-testid="stSidebar"] .stButton > button {
+        background: transparent !important;
+        color: #C9A84C !important;
+        border: 1px solid rgba(184, 150, 12, 0.4) !important;
+        border-radius: 4px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s !important;
+    }
+    [data-testid="stSidebar"] .stButton > button:hover {
+        background: rgba(184, 150, 12, 0.15) !important;
+        border-color: #C9A84C !important;
+    }
+    
+    /* Sidebar selectboxes */
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] div,
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] span {
+        color: #f0e6d3 !important;
+    }
+    [data-testid="stSidebar"] select {
+        background: #1e1e1e !important;
+        color: #f0e6d3 !important;
+        border: 1px solid rgba(184, 150, 12, 0.3) !important;
+    }
+    
+    /* Sidebar inputs */
+    [data-testid="stSidebar"] input {
+        background: #1e1e1e !important;
+        color: #f0e6d3 !important;
+        border: 1px solid rgba(184, 150, 12, 0.3) !important;
+    }
+    
+    /* Quick Links, Home, Careers - GOLD VISIBLE */
+    [data-testid="stSidebar"] a {
+        color: #C9A84C !important;
+        text-decoration: none !important;
+    }
+    [data-testid="stSidebar"] a:hover {
+        color: #f0e6d3 !important;
+    }
+    
+    /* Footer text - VISIBLE */
+    [data-testid="stSidebar"] .stMarkdown p,
+    [data-testid="stSidebar"] .stMarkdown span {
+        color: #9a8a78 !important;
+    }
+    
+    /* HRIS version text */
+    [data-testid="stSidebar"] .stMarkdown small {
+        color: #C9A84C !important;
+    }
+    
+    /* Sidebar radio buttons */
+    [data-testid="stSidebar"] [data-testid="stRadio"] label {
+        color: #f0e6d3 !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] span {
+        color: #f0e6d3 !important;
+    }
+    
+    /* Sidebar divider */
+    [data-testid="stSidebar"] hr {
+        border-color: rgba(184, 150, 12, 0.3) !important;
+    }
+    
+    /* Sidebar scrollbar */
+    [data-testid="stSidebar"] ::-webkit-scrollbar-track {
+        background: #1a1a1a !important;
+    }
+    [data-testid="stSidebar"] ::-webkit-scrollbar-thumb {
+        background: #B8960C !important;
+    }
+    
+    /* Sidebar collapse button */
+    [data-testid="stSidebar"] button[data-testid="stSidebarCollapseButton"] {
+        color: #C9A84C !important;
+    }
+    
+    /* Sidebar expander */
+    [data-testid="stSidebar"] .streamlit-expanderHeader {
+        background: #1e1e1e !important;
+        border: 1px solid rgba(184, 150, 12, 0.3) !important;
+        color: #C9A84C !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
+
+# ============================================================
+# GLOBAL HEADER STYLING - Standardize all header sizes
+# ============================================================
+st.markdown("""
+<style>
+    /* Section headers (###) - smaller and consistent */
+    h3 {
+        font-size: 1.1rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 0.5rem !important;
+        margin-top: 1rem !important;
+        color: #1a1a1a !important;
+    }
+    
+    /* Sub headers (####) - even smaller */
+    h4 {
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 0.4rem !important;
+        margin-top: 0.8rem !important;
+        color: #2d2d2d !important;
+    }
+    
+    /* Small headers (#####) */
+    h5 {
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 0.3rem !important;
+        margin-top: 0.6rem !important;
+        color: #4a4a4a !important;
+    }
+    
+    /* GLASS CARD HEADERS - Keep these prominent */
+    .glass-card h1 {
+        font-size: 1.5rem !important;
+        font-weight: 800 !important;
+        margin: 0 !important;
+        color: #1a1a1a !important;
+    }
+    
+    .glass-card h3 {
+        font-size: 1.1rem !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+        color: #1a1a1a !important;
+    }
+    
+    .glass-card p {
+        font-size: 0.8rem !important;
+        margin: 0.3rem 0 0 0 !important;
+    }
+    
+    /* Churchgate header - keep prominent */
+    .churchgate-header h1 {
+        font-size: 1.5rem !important;
+        font-weight: 800 !important;
+    }
+    
+    .churchgate-header p {
+        font-size: 0.85rem !important;
+    }
+    
+    /* Streamlit default subheader */
+    .stSubheader {
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Metrics labels */
+    .metric-mini .label {
+        font-size: 0.65rem !important;
+    }
+    
+    /* KPI card titles */
+    .kpi-card strong {
+        font-size: 0.85rem !important;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # =============================================
 # SCROLLABLE TABS FOR ALL MODULES
@@ -1744,7 +2725,7 @@ def employee_dashboard():
     st.markdown("---")
     st.markdown("**Department Heads**")
     try:
-        emp_df = employees_df
+        emp_df = db.get_all_employees()
         if not emp_df.empty:
             hod_df = emp_df[emp_df['grade'].isin(['Manager', 'Senior Manager', 'General Manager', 'Head of Department(HOD)', 'Management', 'Senior Management/C-Level'])]
             dept_list = hod_df['department'].unique()
@@ -1801,13 +2782,18 @@ def employee_dashboard():
             link=dict(source=sources, target=targets, value=values,
                 color=['rgba(204,0,0,0.2)'] * len(sources))
         )])
-        fig.update_layout(height=500)
+        fig.update_layout(
+            height=500,
+            paper_bgcolor='#1E1E1E',
+            plot_bgcolor='#1E1E1E',
+            font=dict(color='#F0E6D3', family='Inter, sans-serif')
+        )
         st.plotly_chart(fig, use_container_width=True)
         
         st.markdown("---")
         st.markdown("### 👥 Department Heads")
         try:
-            emp_df = employees_df
+            emp_df = db.get_all_employees()
             if not emp_df.empty:
                 hod_df = emp_df[emp_df['grade'].isin(['Manager', 'Senior Manager', 'General Manager', 'Head of Department(HOD)', 'Management', 'Senior Management/C-Level'])]
                 hod_data = []
@@ -2165,7 +3151,14 @@ def executive_dashboard():
         fig = go.Figure()
         fig.add_trace(go.Bar(name='Occupancy %', x=portfolio_data['Property'], y=portfolio_data['Occupancy %'], marker_color='#CC0000', text=portfolio_data['Occupancy %'], textposition='outside'))
         fig.add_trace(go.Bar(name='Revenue %', x=portfolio_data['Property'], y=portfolio_data['Revenue %'], marker_color='#4a4a4a', text=portfolio_data['Revenue %'], textposition='outside'))
-        fig.update_layout(height=350, barmode='group', margin=dict(t=20))
+        fig.update_layout(
+            height=350, 
+            barmode='group', 
+            margin=dict(t=20),
+            paper_bgcolor='#1E1E1E',
+            plot_bgcolor='#1E1E1E',
+            font=dict(color='#F0E6D3', family='Inter, sans-serif')
+        )
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:
@@ -2407,9 +3400,19 @@ def executive_dashboard():
         """, unsafe_allow_html=True)
 
 def employee_management():
+    # Cache employees for 5 minutes
+    @st.cache_data(ttl=300)
+    def load_employees_cached():
+        try:
+            df = db.get_all_employees()
+            if df is None or df.empty:
+                return pd.DataFrame()
+            return df
+        except:
+            return pd.DataFrame()
+    
+    employees_df = load_employees_cached()
     track_engagement("Employee Management")
-    # Use globally cached employees with roles
-    employees_df = cached_get_employees_with_roles()
     st.markdown("""<div class="churchgate-header"><h1>👥 Employee Management</h1><p>Comprehensive workforce management | Real-time Data | Churchgate Group</p></div>""", unsafe_allow_html=True)
     
     user_role = st.session_state.user['role'] if st.session_state.user else 'Team Member'
@@ -2433,7 +3436,35 @@ def employee_management():
         'Aba': ['Aba Textile Mills PLC']
     }
     
+    def load_employees():
+        try:
+            df = db.get_all_employees()
+            if df is None or df.empty:
+                df = pd.DataFrame(columns=['employee_id', 'first_name', 'last_name', 'email', 'phone', 'department', 'position', 'grade', 'employment_type', 'join_date', 'status', 'region', 'subsidiary', 'reports_to'])
+            return df
+        except:
+            return pd.DataFrame(columns=['employee_id', 'first_name', 'last_name', 'email', 'phone', 'department', 'position', 'grade', 'employment_type', 'join_date', 'status', 'region', 'subsidiary', 'reports_to'])
     
+    employees_df = load_employees()
+    
+    # Merge role from users table into employees dataframe
+    try:
+        users_data = db._get("users")
+        if users_data:
+            role_map = {}
+            for u in users_data:
+                email = u.get('email', '')
+                role = u.get('role', 'Team Member')
+                if email:
+                    role_map[email] = role
+            if 'email' in employees_df.columns and not employees_df.empty:
+                employees_df['role'] = employees_df['email'].map(role_map).fillna('Team Member')
+            else:
+                employees_df['role'] = 'Team Member'
+        else:
+            employees_df['role'] = 'Team Member'
+    except:
+        employees_df['role'] = 'Team Member'
     
     # Build list of all employee names for Reports To dropdown
     all_employee_names = []
@@ -2446,10 +3477,6 @@ def employee_management():
         'Procurement': '#2b6cb0', 'Security': '#718096', 'Legal': '#e53e3e', 'Operations': '#319795',
         'Engineering': '#d53f8c'
     }
-    
-    # Initialize tab state if not exists
-    if 'emp_mgmt_tab' not in st.session_state:
-        st.session_state.emp_mgmt_tab = 0
     
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
         "📋 Directory", "➕ Add Employee", "📤 Bulk Upload", 
@@ -2487,7 +3514,7 @@ def employee_management():
         with c3: st.metric("🏢 Departments", len(employees_df['department'].unique()) if not employees_df.empty else 0)
         with c4: st.metric("🆕 New This Month", new_this_month)
         
-       # Birthdays this month
+        # Birthdays this month
         st.markdown("---")
         
         # Get today's date
@@ -2503,16 +3530,6 @@ def employee_management():
             ("Benjamin Okhueleigbe", 20), ("Kazeem Tijani", 23), ("Olatunde Obe", 24), ("Geraldine Ejimonye", 25),
             ("Anand Bora", 28), ("Yemisi Kolawole", 29)
         ] if b[1] == current_day]
-        
-        todays_anniversaries = [a for a in [
-            ("Sanjeev Purwar", 29), ("John Peter", 25), ("Geraldine Ejimonye", 17), ("Boniface Ali", 17),
-            ("Robert Akinniyi", 17), ("Safdar Hasnain", 12), ("Charles Onwukwe", 10), ("Magesh Gopal", 10),
-            ("Partab Lalchandani", 10), ("Bamidele Mayaki", 10), ("Nchor Agba", 10), ("Chisom Nwachinemere", 10),
-            ("Dinesh Vadher", 7), ("Olatunde Obe", 6), ("Kefas Mathew", 5), ("Ujunwa Onyemechalu", 3),
-            ("Kayode Oniyide", 3), ("Martins Ezeh", 3), ("Thankgod Ochayi", 3), ("Gabriel Jeremiah", 3),
-            ("Tabitha Mallo", 3), ("Dandy Shemang", 3), ("Alfred Obot", 3), ("Edwin Adobi", 3),
-            ("Shedrack Augustine", 3), ("Soji Alademehin", 2), ("Raphael Ayeomoni", 1), ("David Oyinbo", 1)
-        ] if a[1] == current_day]  # This is years, not day - so this won't match perfectly. Let's just show celebrations differently.
         
         # Today's Celebrations
         if todays_birthdays:
@@ -2580,26 +3597,24 @@ def employee_management():
                     st.markdown(f"**{milestone}**")
                     for name in names:
                         st.markdown(f"• {name}")
-                else:
-                    st.markdown("None this month")
         
         st.markdown("---")
         
         # Search & Filters
         c1, c2, c3, c4, c5 = st.columns([2, 1, 1, 1, 1])
         with c1:
-            search = st.text_input("🔍 Search", placeholder="Name, ID, email, department, position...")
+            search = st.text_input("🔍 Search", placeholder="Name, ID, email, department, position...", key="dir_search")
         with c2:
             all_depts = ['All'] + sorted(list(employees_df['department'].dropna().unique())) if not employees_df.empty else ['All']
-            dept_filter = st.selectbox("Department", all_depts)
+            dept_filter = st.selectbox("Department", all_depts, key="dir_dept_filter")
         with c3:
             all_regions = ['All'] + sorted(list(employees_df['region'].dropna().unique())) if not employees_df.empty and 'region' in employees_df.columns else ['All']
-            region_filter = st.selectbox("Region", all_regions)
+            region_filter = st.selectbox("Region", all_regions, key="dir_region_filter")
         with c4:
             all_grades = ['All'] + sorted(list(employees_df['grade'].dropna().unique())) if not employees_df.empty else ['All']
-            grade_filter = st.selectbox("Grade", all_grades)
+            grade_filter = st.selectbox("Grade", all_grades, key="dir_grade_filter")
         with c5:
-            status_filter = st.selectbox("Status", ["All", "Active", "On Leave", "Probation", "Terminated", "Archived", "Inactive"])
+            status_filter = st.selectbox("Status", ["All", "Active", "On Leave", "Probation", "Terminated", "Archived", "Inactive"], key="dir_status_filter")
         
         filtered_df = employees_df.copy()
         if not filtered_df.empty:
@@ -2628,18 +3643,42 @@ def employee_management():
             items_per_page = 10
             total_pages = max(1, (len(filtered_df) + items_per_page - 1) // items_per_page)
             
+            # Initialize pagination state
             if 'dir_page' not in st.session_state:
                 st.session_state.dir_page = 1
             
+            # Ensure page is within bounds
+            if st.session_state.dir_page > total_pages:
+                st.session_state.dir_page = total_pages
+            
+            # Callback functions for pagination - single click works
+            def go_previous():
+                if st.session_state.dir_page > 1:
+                    st.session_state.dir_page -= 1
+            
+            def go_next():
+                if st.session_state.dir_page < total_pages:
+                    st.session_state.dir_page += 1
+            
             pg_col1, pg_col2, pg_col3 = st.columns([1, 2, 1])
             with pg_col1:
-                if st.button("⬅️ Previous", disabled=st.session_state.dir_page <= 1, use_container_width=True):
-                    st.session_state.dir_page -= 1; st.rerun()
+                # Previous button - on_click callback for instant response
+                st.button("⬅️ Previous", 
+                         disabled=st.session_state.dir_page <= 1, 
+                         use_container_width=True, 
+                         key="prev_page_button",
+                         on_click=go_previous)
+            
             with pg_col2:
                 st.markdown(f"<p style='text-align:center;color:#666;'>Page <strong>{st.session_state.dir_page}</strong> of <strong>{total_pages}</strong></p>", unsafe_allow_html=True)
+            
             with pg_col3:
-                if st.button("Next ➡️", disabled=st.session_state.dir_page >= total_pages, use_container_width=True):
-                    st.session_state.dir_page += 1; st.rerun()
+                # Next button - on_click callback for instant response
+                st.button("Next ➡️", 
+                         disabled=st.session_state.dir_page >= total_pages, 
+                         use_container_width=True, 
+                         key="next_page_button",
+                         on_click=go_next)
             
             start_idx = (st.session_state.dir_page - 1) * items_per_page
             end_idx = min(start_idx + items_per_page, len(filtered_df))
@@ -2733,7 +3772,6 @@ def employee_management():
                                         current_join_date_val = date.today()
                                 else:
                                     current_join_date_val = date.today()
-                                # Ensure join date is within valid range
                                 if current_join_date_val and current_join_date_val >= date(1950, 1, 1) and current_join_date_val <= date.today():
                                     display_date = current_join_date_val
                                 else:
@@ -2745,12 +3783,10 @@ def employee_management():
                                 gender_idx = 0 if current_gender == 'Male' else 1
                                 new_gender = st.selectbox("Gender", gender_options, index=gender_idx, key=f"gen_{emp['employee_id']}_{st.session_state.dir_page}")
                             with ec3:
-                                # Get current role, default to Team Member
                                 current_role = str(emp.get('role', 'Team Member'))
                                 role_options = ['Team Member', 'Team Lead', 'Manager', 'HOD', 'Admin']
                                 role_idx = role_options.index(current_role) if current_role in role_options else 0
-                                new_role = st.selectbox("System Role", role_options, index=role_idx,
-                                    key=f"role_{emp['employee_id']}_{st.session_state.dir_page}")
+                                new_role = st.selectbox("System Role", role_options, index=role_idx, key=f"role_{emp['employee_id']}_{st.session_state.dir_page}")
                                 new_email = st.text_input("Email", value=str(emp.get('email', '')), key=f"eml_{emp['employee_id']}_{st.session_state.dir_page}")
                                 new_leave = st.number_input("Leave Days", value=int(emp.get('leave_balance', 20) or 20), min_value=0, max_value=365, key=f"leave_{emp['employee_id']}_{st.session_state.dir_page}")
                                 
@@ -2778,9 +3814,7 @@ def employee_management():
                                     }, {"employee_id": emp['employee_id']})
                                     db._patch("users", {"role": new_role, "department": new_dept, "name": f"{emp['first_name']} {emp['last_name']}"}, {"email": new_email})
                                     st.success(f"✅ {emp['first_name']} {emp['last_name']} updated!")
-clear_all_caches()
-time.sleep(0.5)
-st.rerun()
+                                    st.cache_data.clear()
                                 except Exception as e:
                                     st.error(f"Update failed: {str(e)}")
                         
@@ -2796,15 +3830,12 @@ st.rerun()
                                 if st.button("🔄 Restore", key=f"restore_{emp['employee_id']}_{st.session_state.dir_page}", use_container_width=True):
                                     db._patch("employees", {"status": "Active"}, {"employee_id": emp['employee_id']})
                                     st.success(f"✅ Restored!")
-clear_all_caches()
-time.sleep(0.5)
-st.rerun()
+                                    st.cache_data.clear()
                             else:
                                 if st.button("📦 Archive", key=f"archive_{emp['employee_id']}_{st.session_state.dir_page}", use_container_width=True):
                                     db._patch("employees", {"status": "Archived"}, {"employee_id": emp['employee_id']})
                                     st.success(f"📦 Archived!")
-clear_all_caches()
-time.sleep(0.5)
+                                    st.cache_data.clear()
                         with action_col3:
                             del_pending_key = f"del_pending_{emp['employee_id']}_{st.session_state.dir_page}"
                             if st.button("🗑️ Delete", key=f"del_{emp['employee_id']}_{st.session_state.dir_page}", use_container_width=True):
@@ -2817,9 +3848,7 @@ time.sleep(0.5)
                                         del st.session_state[del_pending_key]
                                         if ok:
                                             st.success("🗑️ Deleted!")
-clear_all_caches()
-time.sleep(0.5)
-st.rerun()
+                                            st.cache_data.clear()
                                         else:
                                             st.error("Delete failed — the employee may still be referenced by other records (appraisals, documents, etc).")
                                     except Exception as e: st.error(f"Failed: {str(e)}")
@@ -3192,7 +4221,7 @@ st.rerun()
                     st.warning(f"⚠️ {fail} records skipped. Check for duplicate IDs.")
                 
                 st.balloons()
-                clear_all_caches()
+                st.cache_data.clear()
     
     # ============ TAB 4: GENERATE LOGINS ============
     with tab4:
@@ -3205,51 +4234,46 @@ st.rerun()
         
         st.markdown("### ⚡ Quick Single Employee")
         
-        # Employee selector dropdown - OUTSIDE FORM
-        selected_emp = st.selectbox("👤 Select Employee", ["Select employee..."] + emp_options_list, key="single_emp_dropdown")
+        # Single employee - NOT in form, use session state
+        selected_emp = st.selectbox("👤 Select Employee", ["Select employee..."] + emp_options_list, key="single_emp_select")
         
-        # Auto-fill from selection
+        # Auto-fill using session state
         if selected_emp != "Select employee...":
             selected_name = selected_emp.split(" — ")[0].strip()
             emp_match = employees_df[employees_df.apply(lambda x: f"{x['first_name']} {x['last_name']}".strip() == selected_name, axis=1)]
             if not emp_match.empty:
                 emp_row = emp_match.iloc[0]
-                emp_full_name = f"{emp_row['first_name']} {emp_row['last_name']}"
-                emp_db_email = emp_row.get('email', '')
-                emp_db_dept = emp_row.get('department', '')
-                emp_db_id = emp_row.get('employee_id', '')
-                emp_db_position = emp_row.get('position', '')
-            else:
-                emp_full_name = selected_name
-                emp_db_email = ''
-                emp_db_dept = ''
-                emp_db_id = ''
-                emp_db_position = ''
-        else:
-            emp_full_name = ''
-            emp_db_email = ''
-            emp_db_dept = ''
-            emp_db_id = ''
-            emp_db_position = ''
+                # Store in session state
+                st.session_state.single_email = emp_row.get('email', '')
+                st.session_state.single_name = f"{emp_row['first_name']} {emp_row['last_name']}"
+                st.session_state.single_dept = emp_row.get('department', '')
+                st.session_state.single_id = emp_row.get('employee_id', '')
+                st.session_state.single_position = emp_row.get('position', '')
         
-        # Form fields - OUTSIDE FORM for real-time updates
+        # Input fields with session state defaults
         c1, c2 = st.columns(2)
         with c1:
-            single_email = st.text_input("Employee Email *", value=emp_db_email, placeholder="e.g., employee@churchgate.com", key="single_email_input")
-            single_name = st.text_input("Full Name *", value=emp_full_name, key="single_name_input")
+            single_email = st.text_input("Employee Email *", 
+                value=st.session_state.get('single_email', ''), 
+                key="single_email_input")
+            single_name = st.text_input("Full Name *", 
+                value=st.session_state.get('single_name', ''), 
+                key="single_name_input")
             single_pw = st.text_input("Password", value="churchgate2026", key="single_pw_input")
         with c2:
             dept_options = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin']
-            dept_idx = dept_options.index(emp_db_dept) if emp_db_dept in dept_options else 0
-            single_dept = st.selectbox("Department", dept_options, index=dept_idx, key="single_dept_input")
-            single_role = st.selectbox("Role", ['Team Member', 'Team Lead', 'Manager', 'HOD', 'Admin'], key="single_role_input")
-            single_id = st.text_input("Employee ID", value=emp_db_id, placeholder="e.g., AN00001", key="single_id_input")
+            current_dept = st.session_state.get('single_dept', 'Senior Management')
+            dept_idx = dept_options.index(current_dept) if current_dept in dept_options else 0
+            single_dept = st.selectbox("Department", dept_options, index=dept_idx, key="single_dept_select")
+            single_role = st.selectbox("Role", ['Team Member', 'Team Lead', 'Manager', 'HOD', 'Admin'], key="single_role_select")
+            single_id = st.text_input("Employee ID", 
+                value=st.session_state.get('single_id', ''), 
+                key="single_id_input")
         
-        # Submit button - NOT in form
-        if st.button("🔑 Create Single Login", use_container_width=True, type="primary", key="single_login_btn"):
+        if st.button("🔑 Create Single Login", use_container_width=True, type="primary", key="single_login_button"):
             if single_email and single_name:
                 try:
-                    db.create_user(single_id, single_name, single_email, single_pw, single_role, single_dept, emp_db_position or 'Staff')
+                    db.create_user(single_id, single_name, single_email, single_pw, single_role, single_dept, st.session_state.get('single_position', 'Staff'))
                     st.success(f"✅ Login created for {single_name}!")
                     st.info(f"🔗 Login at: https://hris.churchgate.com")
                     try:
@@ -3266,99 +4290,97 @@ st.rerun()
         
         st.markdown("---")
         st.markdown("### 👥 Bulk Generate Logins")
+        
         if not employees_df.empty:
-            default_pw = st.text_input("Default Password for Bulk", value="churchgate2026", key="bulk_pw_input")
+            default_pw = st.text_input("Default Password for Bulk", value="churchgate2026", key="bulk_pw")
             
             # Search bar
-            bulk_search = st.text_input("🔍 Search employees", placeholder="Type name, department, or email...", key="bulk_search_input")
+            bulk_search = st.text_input("🔍 Search employees", placeholder="Type name, department, or email...", key="bulk_search")
             
-            # Build employee list with current login status
-            emp_list = []
+            # Get existing users
             try:
                 existing_users = db._get("users")
-                existing_emails = {u.get('email', '') for u in (existing_users or [])}
+                existing_emails = {u.get('email', ''): u for u in (existing_users or [])}
             except:
-                existing_emails = set()
+                existing_emails = {}
+            
+            # Build employee list with login status
+            emp_display_list = []
+            emp_data_map = {}
             
             for _, emp in employees_df.iterrows():
+                full_name = f"{emp['first_name']} {emp['last_name']}"
                 emp_email = str(emp.get('email', ''))
-                emp_name = f"{emp['first_name']} {emp['last_name']}"
                 emp_dept = emp.get('department', '')
+                emp_id = emp.get('employee_id', '')
+                emp_role = str(emp.get('role', 'Team Member'))
                 
+                # Check if has login
+                has_login = emp_email in existing_emails
+                login_status = "✅" if has_login else "❌"
+                
+                # Filter by search
                 if bulk_search:
                     search_term = bulk_search.lower()
-                    if search_term not in emp_name.lower() and search_term not in emp_dept.lower() and search_term not in emp_email.lower():
+                    if search_term not in full_name.lower() and search_term not in emp_dept.lower() and search_term not in emp_email.lower():
                         continue
                 
-                has_login = emp_email in existing_emails
-                emp_list.append({
-                    'Select': False,
-                    'Name': emp_name,
-                    'ID': emp['employee_id'],
+                # Display with login status
+                display = f"{login_status} | {full_name} | {emp_dept} | {emp_email or 'No Email'}"
+                emp_display_list.append(display)
+                emp_data_map[display] = {
+                    'Name': full_name,
                     'Email': emp_email,
                     'Department': emp_dept,
-                    'Role': str(emp.get('role', 'Team Member')),
-                    'Has Login': '✅ Yes' if has_login else '❌ No'
-                })
+                    'ID': emp_id,
+                    'Role': emp_role,
+                    'Has Login': has_login
+                }
             
-            # Display with checkboxes
-            st.markdown("**Select employees to generate logins:**")
+            # Show legend
+            st.markdown("**Legend:** ✅ = Already has login | ❌ = No login yet")
             
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("✅ Select All Without Login", use_container_width=True, key="select_all_btn"):
-                    for emp in emp_list:
-                        if emp['Has Login'] == '❌ No':
-                            emp['Select'] = True
-                    st.rerun()
-            with col2:
-                if st.button("🔄 Deselect All", use_container_width=True, key="deselect_all_btn"):
-                    for emp in emp_list:
-                        emp['Select'] = False
-                    st.rerun()
+            # MULTISELECT with login status
+            selected_displays = st.multiselect(
+                "Select employees to generate logins",
+                emp_display_list,
+                key="bulk_multiselect",
+                help="✅ = Already has login | ❌ = Needs login"
+            )
             
-            # Table with checkboxes
-            for i, emp in enumerate(emp_list):
-                cols = st.columns([0.5, 2, 1, 2, 1, 1, 1])
-                with cols[0]:
-                    emp['Select'] = st.checkbox("", value=emp['Select'], key=f"sel_{i}", label_visibility="collapsed")
-                with cols[1]:
-                    st.markdown(f"<small>{emp['Name'][:25]}</small>", unsafe_allow_html=True)
-                with cols[2]:
-                    st.markdown(f"<small>{emp['Department'][:15]}</small>", unsafe_allow_html=True)
-                with cols[3]:
-                    st.markdown(f"<small>{emp['Email'][:25]}</small>", unsafe_allow_html=True)
-                with cols[4]:
-                    st.markdown(f"<small>{emp['Role']}</small>", unsafe_allow_html=True)
-                with cols[5]:
-                    st.markdown(f"<small>{emp['Has Login']}</small>", unsafe_allow_html=True)
-                with cols[6]:
-                    st.markdown(f"<small>{emp['ID']}</small>", unsafe_allow_html=True)
+            # Show selected count with breakdown
+            selected_with_login = [d for d in selected_displays if emp_data_map[d]['Has Login']]
+            selected_without_login = [d for d in selected_displays if not emp_data_map[d]['Has Login']]
             
-            selected = [e for e in emp_list if e['Select']]
-            st.markdown(f"**{len(selected)} employee(s) selected**")
+            st.markdown(f"**{len(selected_displays)} selected:** {len(selected_without_login)} need login, {len(selected_with_login)} already have login")
             
-            # Bulk generate button - NOT in form
-            if st.button(f"🔑 Generate Logins for {len(selected)} Selected", use_container_width=True, disabled=len(selected)==0, key="bulk_gen_btn"):
+            if st.button("🔑 Generate Logins for Selected", use_container_width=True, type="primary", key="bulk_generate_button", disabled=len(selected_displays)==0):
                 count = 0
-                for emp in selected:
-                    if emp['Email'] and emp['Email'] != 'N/A' and '@' in emp['Email']:
-                        try:
-                            db.create_user(emp['ID'], emp['Name'], emp['Email'], default_pw, emp['Role'], emp['Department'], 'Staff')
-                            try:
-                                from utils.email_service import EmailService
-                                EmailService().send_welcome_email(emp['Name'], emp['Email'], "https://hris.churchgate.com")
-                            except:
-                                pass
-                            count += 1
-                        except Exception as e:
-                            st.warning(f"Failed for {emp['Name']}: {str(e)}")
-                st.success(f"✅ {count} logins generated!")
-                st.info(f"🔗 Login URL: https://hris.churchgate.com")
-                st.info(f"🔑 Default password: **{default_pw}**")
+                skipped = 0
+                progress_bar = st.progress(0)
                 
-                login_df = pd.DataFrame(selected)
-                st.download_button("📥 Download Login List", login_df[['Name', 'Email', 'ID', 'Department', 'Role']].to_csv(index=False), "logins.csv", "text/csv")
+                for idx, display in enumerate(selected_displays):
+                    emp = emp_data_map.get(display)
+                    if emp and emp['Email'] and '@' in emp['Email']:
+                        if emp['Has Login']:
+                            skipped += 1
+                            st.warning(f"⚠️ {emp['Name']} already has login - skipped")
+                        else:
+                            try:
+                                db.create_user(emp['ID'], emp['Name'], emp['Email'], default_pw, emp['Role'], emp['Department'], 'Staff')
+                                count += 1
+                                try:
+                                    from utils.email_service import EmailService
+                                    EmailService().send_welcome_email(emp['Name'], emp['Email'], "https://hris.churchgate.com")
+                                except:
+                                    pass
+                            except:
+                                st.warning(f"Failed for {emp['Name']}")
+                    
+                    progress_bar.progress((idx + 1) / len(selected_displays))
+                
+                st.success(f"✅ {count} logins generated! ({skipped} skipped - already had login)")
+                st.info(f"🔑 Default password: **{default_pw}**")
         else:
             st.info("No employees found.")
     
@@ -3420,7 +4442,14 @@ st.rerun()
                                 fig = px.pie(values=grade_counts.values, names=grade_counts.index, 
                                            hole=0.6, title="Grade Distribution",
                                            color_discrete_sequence=[color, '#d69e2e', '#3182ce', '#38a169', '#888'])
-                                fig.update_layout(height=200, margin=dict(t=30, b=0, l=0, r=0), showlegend=False)
+                                fig.update_layout(
+                                    height=200, 
+                                    margin=dict(t=30, b=0, l=0, r=0), 
+                                    showlegend=False,
+                                    paper_bgcolor='#1E1E1E',
+                                    plot_bgcolor='#1E1E1E',
+                                    font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                                )
                                 st.plotly_chart(fig, use_container_width=True)
                     
                     # Staff list
@@ -3505,7 +4534,12 @@ st.rerun()
         sources += [17, 17, 18, 18]; targets += [18, 19, 19, 20]; values += [10, 5, 12, 30]
         
         fig = go.Figure(data=[go.Sankey(node=dict(pad=20, thickness=18, label=labels, color=colors), link=dict(source=sources, target=targets, value=values, color=['rgba(204,0,0,0.2)']*len(sources)))])
-        fig.update_layout(height=600)
+        fig.update_layout(
+            height=600,
+            paper_bgcolor='#1E1E1E',
+            plot_bgcolor='#1E1E1E',
+            font=dict(color='#F0E6D3', family='Inter, sans-serif')
+        )
         st.plotly_chart(fig, use_container_width=True)
         
         st.markdown("---")
@@ -3549,12 +4583,18 @@ st.rerun()
             st.info(chain)
     
     # ============ TAB 7: DEMOGRAPHICS ============
-    with tab7:
+     with tab7:
         st.subheader("📈 Demographics & Inclusion")
         st.markdown("### 👥 Gender Distribution")
         gender_data = pd.DataFrame({'Gender': ['Male', 'Female'], 'Count': [38, 18]})
         fig = px.pie(gender_data, values='Count', names='Gender', hole=0.5, color_discrete_sequence=['#3182ce', '#CC0000'])
-        fig.update_layout(height=350); st.plotly_chart(fig, use_container_width=True)
+        fig.update_layout(
+            height=350,
+            paper_bgcolor='#1E1E1E',
+            plot_bgcolor='#1E1E1E',
+            font=dict(color='#F0E6D3', family='Inter, sans-serif')
+        )
+        st.plotly_chart(fig, use_container_width=True)
         
         st.markdown("---"); st.markdown("### 🏢 Department Gender Split")
         dept_gender = pd.DataFrame({'Department': ['Technology Group', 'Facility Management', 'Human Resources', 'Sales & Marketing', 'Accounts & Finance', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering'], 'Male': [10, 10, 3, 6, 4, 3, 10, 1, 4, 3], 'Female': [4, 3, 5, 4, 2, 2, 2, 1, 1, 1]})
@@ -3613,62 +4653,261 @@ def performance_okrs():
     
     
     # ============================================================
-    # CSS INJECTION
+    # CSS INJECTION - WTC PREMIUM DARK THEME
     # ============================================================
     st.markdown("""
     <style>
+    /* ===== WTC PREMIUM DARK THEME ===== */
+    :root {
+        --gold: #B8960C;
+        --gold-light: #C9A84C;
+        --dark: #141414;
+        --card-bg: #1e1e1e;
+        --card-border: #2e2e2e;
+        --text-primary: #f0e6d3;
+        --text-muted: #9a8a78;
+        --font-serif: 'Georgia', 'Times New Roman', serif;
+        --font-sans: 'Helvetica Neue', Arial, sans-serif;
+    }
+    
+    /* Main app background */
+    .stApp {
+        background: var(--dark);
+    }
+    
+    /* All text default */
+    .stMarkdown, .stText, p, label, span {
+        color: var(--text-primary);
+    }
+    
+    /* Glass card - Dark premium */
     .glass-card {
-        background: rgba(255, 255, 255, 0.85);
+        background: linear-gradient(135deg, #1e1e1e, #252525);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
-        border-radius: 16px;
-        border: 1px solid rgba(204, 0, 0, 0.1);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+        border-radius: 12px;
+        border: 1px solid rgba(184, 150, 12, 0.3);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         padding: 1.5rem;
         margin-bottom: 1rem;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .glass-card:hover { box-shadow: 0 12px 40px rgba(204, 0, 0, 0.12); transform: translateY(-2px); }
+    .glass-card:hover { 
+        box-shadow: 0 12px 40px rgba(184, 150, 12, 0.15); 
+        transform: translateY(-2px); 
+    }
+    
+    /* KPI Card - Dark with gold border */
     .kpi-card {
-        background: white; border-radius: 12px; padding: 1rem; margin: 0.4rem 0;
-        border-left: 5px solid #CC0000; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: all 0.25s ease;
+        background: var(--card-bg); 
+        border-radius: 8px; 
+        padding: 1rem; 
+        margin: 0.4rem 0;
+        border-left: 4px solid var(--gold); 
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
+        transition: all 0.25s ease;
+        color: var(--text-primary);
     }
-    .kpi-card:hover { box-shadow: 0 6px 20px rgba(204, 0, 0, 0.15); transform: translateX(4px); }
+    .kpi-card:hover { 
+        box-shadow: 0 6px 20px rgba(184, 150, 12, 0.2); 
+        transform: translateX(4px); 
+    }
+    
+    /* Region header - Dark with gold */
     .region-header {
-        background: linear-gradient(135deg, #1a1a1a, #2d2d2d); color: white; padding: 1rem 1.5rem;
-        border-radius: 12px; margin: 1rem 0 0.5rem 0; font-weight: 700; font-size: 1.1rem; border-left: 5px solid #CC0000;
+        background: linear-gradient(135deg, #1a1a1a, #2d2d2d); 
+        color: var(--gold-light); 
+        padding: 1rem 1.5rem;
+        border-radius: 10px; 
+        margin: 1rem 0 0.5rem 0; 
+        font-weight: 700; 
+        font-size: 1.1rem; 
+        border-left: 5px solid var(--gold);
+        font-family: var(--font-serif);
     }
+    
+    /* Subsidiary header - Dark with gold */
     .subsidiary-header {
-        background: linear-gradient(135deg, #2d2d2d, #3d3d3d); color: white; padding: 0.7rem 1.2rem;
-        border-radius: 10px; margin: 0.4rem 0 0.4rem 1.5rem; font-weight: 600; border-left: 4px solid #CC0000;
+        background: linear-gradient(135deg, #222, #333); 
+        color: var(--text-primary); 
+        padding: 0.7rem 1.2rem;
+        border-radius: 8px; 
+        margin: 0.4rem 0 0.4rem 1.5rem; 
+        font-weight: 600; 
+        border-left: 4px solid var(--gold);
     }
+    
+    /* Metric mini - Dark with gold values */
     .metric-mini {
-        background: rgba(255,255,255,0.9); border-radius: 10px; padding: 0.8rem 1rem;
-        text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); backdrop-filter: blur(8px);
+        background: rgba(30, 30, 30, 0.95); 
+        border-radius: 8px; 
+        padding: 0.8rem 1rem;
+        text-align: center; 
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
+        border: 1px solid rgba(184, 150, 12, 0.2);
     }
-    .metric-mini .value { font-size: 1.5rem; font-weight: 700; color: #CC0000; }
-    .metric-mini .label { font-size: 0.7rem; color: #888; text-transform: uppercase; }
-    .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; margin: 2px; }
-    .badge-green { background: #c6f6d5; color: #22543d; }
-    .badge-yellow { background: #fefcbf; color: #744210; }
-    .badge-gray { background: #e2e8f0; color: #2d3748; }
-    .badge-red { background: #fed7d7; color: #742a2a; }
-    .badge-escalated { background: #fbb6ce; color: #742a2a; }
+    .metric-mini .value { 
+        font-size: 1.5rem; 
+        font-weight: 700; 
+        color: var(--gold-light); 
+        font-family: var(--font-serif); 
+    }
+    .metric-mini .label { 
+        font-size: 0.65rem; 
+        color: var(--text-muted); 
+        text-transform: uppercase; 
+    }
+    
+    /* Badges - Gold/amber tones */
+    .badge { 
+        display: inline-block; 
+        padding: 3px 10px; 
+        border-radius: 12px; 
+        font-size: 0.7rem; 
+        font-weight: 600; 
+        margin: 2px; 
+    }
+    .badge-green { background: rgba(56, 161, 105, 0.2); color: #6bcb77; }
+    .badge-yellow { background: rgba(184, 150, 12, 0.2); color: var(--gold-light); }
+    .badge-gray { background: rgba(255, 255, 255, 0.1); color: #a0aec0; }
+    .badge-red { background: rgba(204, 0, 0, 0.2); color: #ff6b6b; }
+    .badge-escalated { background: rgba(204, 0, 0, 0.3); color: #ff6b6b; }
+    
+    /* Certificate card - Gold premium */
     .certificate-card {
-        background: linear-gradient(135deg, #fffef5, #fff8e1);
-        border: 2px solid #d69e2e;
-        border-radius: 16px;
+        background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+        border: 2px solid var(--gold);
+        border-radius: 12px;
         padding: 2rem;
         text-align: center;
-        box-shadow: 0 8px 32px rgba(214, 158, 46, 0.2);
+        box-shadow: 0 8px 32px rgba(184, 150, 12, 0.2);
     }
+    
+    /* Pulse dot - Gold */
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .pulse-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #38a169; animation: pulse 2s infinite; margin-right: 6px; }
-    input[type="number"] { border: 2px solid #e0e0e0; border-radius: 8px; padding: 8px 12px; font-size: 1rem; transition: all 0.2s; }
-    input[type="number"]:focus { border-color: #CC0000; box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.1); outline: none; }
+    .pulse-dot { 
+        display: inline-block; 
+        width: 8px; 
+        height: 8px; 
+        border-radius: 50%; 
+        background: var(--gold-light); 
+        animation: pulse 2s infinite; 
+        margin-right: 6px; 
+    }
+    
+    /* Inputs - Dark with gold focus */
+    input[type="number"], input[type="text"], input[type="email"], textarea, select {
+        border: 2px solid var(--card-border); 
+        border-radius: 6px; 
+        padding: 8px 12px; 
+        font-size: 1rem; 
+        background: var(--card-bg) !important;
+        color: var(--text-primary) !important;
+        transition: all 0.2s; 
+    }
+    input[type="number"]:focus, input[type="text"]:focus, textarea:focus, select:focus { 
+        border-color: var(--gold) !important; 
+        box-shadow: 0 0 0 3px rgba(184, 150, 12, 0.15) !important; 
+        outline: none; 
+    }
+    
+    /* Scrollbar - Gold */
     ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb { background: #CC0000; border-radius: 3px; }
+    ::-webkit-scrollbar-track { background: #1a1a1a; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+    
+    /* Headers - Serif font with gold */
+    h1, h2, h3 {
+        font-family: var(--font-serif);
+        color: var(--gold-light);
+    }
+    
+    h4, h5, h6 {
+        font-family: var(--font-sans);
+        color: var(--text-primary);
+    }
+    
+    /* Streamlit expanders */
+    .streamlit-expanderHeader {
+        background: var(--card-bg) !important;
+        border: 1px solid var(--card-border) !important;
+        border-radius: 6px !important;
+        color: var(--text-primary) !important;
+    }
+    
+    /* Streamlit metrics */
+    [data-testid="stMetric"] {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 8px;
+        padding: 10px;
+    }
+    [data-testid="stMetricValue"] {
+        color: var(--gold-light);
+        font-family: var(--font-serif);
+    }
+    [data-testid="stMetricLabel"] {
+        color: var(--text-muted);
+    }
+    
+    /* Streamlit buttons */
+    .stButton > button {
+        background: linear-gradient(135deg, #C9A84C 0%, #8B6914 100%);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+    }
+    .stButton > button:hover {
+        opacity: 0.85;
+        transform: translateY(-1px);
+    }
+    
+    /* Streamlit tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        background: var(--card-bg);
+        border-radius: 6px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        color: var(--text-muted);
+    }
+    .stTabs [aria-selected="true"] {
+        background: var(--gold) !important;
+        color: white !important;
+    }
+    
+    /* Streamlit sidebar */
+    [data-testid="stSidebar"] {
+        background: #1a1a1a;
+        border-right: 1px solid var(--card-border);
+    }
+    
+    /* Dataframes */
+    [data-testid="stDataFrame"] {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 6px;
+    }
+    
+    /* Success/Warning/Error messages */
+    .stAlert {
+        background: var(--card-bg) !important;
+        border: 1px solid var(--card-border) !important;
+        color: var(--text-primary) !important;
+    }
+    
+    /* Info boxes */
+    .stInfo {
+        background: rgba(184, 150, 12, 0.1) !important;
+        border: 1px solid rgba(184, 150, 12, 0.3) !important;
+        color: var(--gold-light) !important;
+    }
+    
+    /* Divider */
+    hr {
+        border-color: var(--card-border) !important;
+    }
     </style>
     """, unsafe_allow_html=True)
     
@@ -4816,15 +6055,12 @@ def performance_okrs():
                     st.warning(f"🔄 Awaiting {reviewer_type} re-review")
     
     # ============================================================
-    # TAB 4: HOD REVIEW
+    # TAB 4: HOD REVIEW - ALL SECTIONS GROUPED + PAGINATED
     # ============================================================
     with tab4:
         st.markdown('<div class="glass-card"><h3>👔 HOD Review Hub</h3></div>', unsafe_allow_html=True)
         if not is_hod: st.info("This section is for Managers, HODs, and Admins only.")
         else:
-            # ============================================================
-            # FY SELECTOR FOR HOD REVIEW
-            # ============================================================
             CYCLE_TO_FY = {
                 'Half-Year Appraisal': 'FY 26/27',
                 'Full-Year Appraisal': 'FY 25/26',
@@ -4847,107 +6083,221 @@ def performance_okrs():
             hod_cycle = hod_cycles[0]
             st.caption(f"📊 Viewing: **{hod_fy}**")
             
-            # View toggle for Admins
-            if is_admin:
-                view_mode = st.radio("👁️ View Mode", ["👔 HOD View", "🔐 Admin View"], 
-                    horizontal=True, key="hod_view_mode")
-            else:
-                view_mode = "👔 HOD View"
-            
-            is_dept_view = (view_mode == "👔 HOD View")
-            
-            # ===== SECTION 1: KPI APPROVAL =====
-            st.markdown("### 📊 Team KPI Submissions")
+            # ===== SECTION 1: TEAM KPI SUBMISSIONS - GROUPED + PAGINATED =====
+            st.markdown("<h5 style='margin-bottom:0.5rem;'>📊 Team KPI Submissions</h5>", unsafe_allow_html=True)
             try:
                 all_perf = db._get("performance_data"); team_submissions = {}
                 for row in (all_perf or []):
                     if row.get('submission_status') == 'Submitted':
-
                         kpi_list = json.loads(row.get('kpi_data', '[]')) if row.get('kpi_data') else []
-                        matching = [k for k in kpi_list if k.get('cycle', '') in hod_cycles]
+                        matching = kpi_list
                         if not matching:
                             continue
                         clean_name = ' '.join(str(row.get('user_name', '')).split())
-                        if not is_dept_view or get_employee_dept(clean_name) == user_dept:
+                        if is_admin or get_employee_dept(clean_name) == user_dept:
                             if clean_name not in team_submissions: team_submissions[clean_name] = []
                             team_submissions[clean_name].append({'pillar': row.get('pillar_name', ''), 'kpis': matching, 'row_id': row.get('id')})
+                
                 if team_submissions:
                     st.success(f"📋 {len(team_submissions)} team member(s)")
                     pillar_order = get_pillars(hod_fy)
-                    pillar_order = sorted(pillar_order, key=lambda x: int(x.split('.')[0]) if x.split('.')[0].isdigit() else 99)
+                    
+                    # Group by department
+                    dept_submissions = {}
                     for emp_name, submissions in team_submissions.items():
-                        with st.expander(f"👤 {emp_name}", expanded=False):
-                            ordered_subs = sorted(submissions, key=lambda x: pillar_order.index(x['pillar']) if x['pillar'] in pillar_order else 99)
-                            for sub in ordered_subs:
-                                total_weight = sum(kpi.get('weight', 0) for kpi in sub['kpis'])
-                                st.markdown(f"**{sub['pillar']} (Weight: {total_weight}%)**")
-                                for kpi in sub['kpis']:
-                                    st.markdown(f"• {kpi.get('kpi', 'N/A')} — Target: {kpi.get('target', 'N/A')} — Weight: {kpi.get('weight', 'N/A')}%")
-                                st.markdown("")
-                            hod_comment = st.text_area(f"💬 Comment", key=f"hod_comment_{emp_name}")
-                            c1, c2 = st.columns(2)
-                            with c1:
-                                if st.button(f"✅ Approve", key=f"app_{emp_name}", type="primary"):
-                                    for sub in submissions:
-                                        db._patch("performance_data", {"submission_status": "Approved", "progress": 100, "status": "On Track"}, {"id": sub['row_id']})
-                                    emp_email_addr = get_employee_email(emp_name)
-                                    if emp_email_addr: send_kpi_notification('approved', emp_name, emp_email_addr)
-                                    log_audit("KPIs Approved", f"HOD approved KPIs for {emp_name}")
-                                    st.success("✅ Approved!"); st.balloons(); time.sleep(1); st.rerun()
-                            with c2:
-                                if st.button(f"🔄 Revise", key=f"rev_{emp_name}"):
-                                    if hod_comment:
-                                        for sub in submissions: db._patch("performance_data", {"submission_status": "Draft"}, {"id": sub['row_id']})
+                        dept = get_employee_dept(emp_name)
+                        if dept not in dept_submissions:
+                            dept_submissions[dept] = {}
+                        dept_submissions[dept][emp_name] = submissions
+                    
+                    # Flatten for pagination
+                    all_submission_items = []
+                    for dept in sorted(dept_submissions.keys()):
+                        for emp_name, submissions in dept_submissions[dept].items():
+                            all_submission_items.append((dept, emp_name, submissions))
+                    
+                    # Pagination
+                    if 'hod_kpi_page' not in st.session_state:
+                        st.session_state.hod_kpi_page = 1
+                    
+                    items_per_page = 5
+                    total_pages = max(1, (len(all_submission_items) + items_per_page - 1) // items_per_page)
+                    
+                    if st.session_state.hod_kpi_page > total_pages:
+                        st.session_state.hod_kpi_page = total_pages
+                    
+                    pg_col1, pg_col2, pg_col3 = st.columns([1, 2, 1])
+                    with pg_col1:
+                        def go_kpi_prev():
+                            if st.session_state.hod_kpi_page > 1:
+                                st.session_state.hod_kpi_page -= 1
+                        st.button("⬅️ Previous", disabled=st.session_state.hod_kpi_page <= 1, use_container_width=True, key="kpi_prev_btn", on_click=go_kpi_prev)
+                    with pg_col2:
+                        st.markdown(f"<p style='text-align:center;color:#666;'>Page <strong>{st.session_state.hod_kpi_page}</strong> of <strong>{total_pages}</strong></p>", unsafe_allow_html=True)
+                    with pg_col3:
+                        def go_kpi_next():
+                            if st.session_state.hod_kpi_page < total_pages:
+                                st.session_state.hod_kpi_page += 1
+                        st.button("Next ➡️", disabled=st.session_state.hod_kpi_page >= total_pages, use_container_width=True, key="kpi_next_btn", on_click=go_kpi_next)
+                    
+                    start_idx = (st.session_state.hod_kpi_page - 1) * items_per_page
+                    end_idx = min(start_idx + items_per_page, len(all_submission_items))
+                    current_items = all_submission_items[start_idx:end_idx]
+                    
+                    # Group current page by department
+                    current_depts = {}
+                    for dept, emp_name, submissions in current_items:
+                        if dept not in current_depts:
+                            current_depts[dept] = []
+                        current_depts[dept].append((emp_name, submissions))
+                    
+                    # Display
+                    for dept in sorted(current_depts.keys()):
+                        dept_items = current_depts[dept]
+                        dept_total = len(dept_submissions[dept])
+                        
+                        st.markdown(f"""
+                        <div style="background:linear-gradient(135deg, #1a1a1a, #2d2d2d);color:white;padding:0.8rem 1.2rem;border-radius:10px;margin:0.8rem 0 0.4rem 0;font-weight:700;border-left:5px solid #CC0000;">
+                            🏭 {dept} ({dept_total} submission(s) total)
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        for emp_name, submissions in dept_items:
+                            with st.expander(f"👤 {emp_name}", expanded=False):
+                                ordered_subs = sorted(submissions, key=lambda x: pillar_order.index(x['pillar']) if x['pillar'] in pillar_order else 99)
+                                for sub in ordered_subs:
+                                    total_weight = sum(kpi.get('weight', 0) for kpi in sub['kpis'])
+                                    st.markdown(f"**{sub['pillar']} (Weight: {total_weight}%)**")
+                                    for kpi in sub['kpis']:
+                                        st.markdown(f"• {kpi.get('kpi', 'N/A')} — Target: {kpi.get('target', 'N/A')} — Weight: {kpi.get('weight', 'N/A')}%")
+                                    st.markdown("")
+                                hod_comment = st.text_area(f"💬 Comment", key=f"hod_comment_{emp_name}")
+                                c1, c2 = st.columns(2)
+                                with c1:
+                                    if st.button(f"✅ Approve", key=f"app_{emp_name}", type="primary"):
+                                        for sub in submissions:
+                                            db._patch("performance_data", {"submission_status": "Approved", "progress": 100, "status": "On Track"}, {"id": sub['row_id']})
                                         emp_email_addr = get_employee_email(emp_name)
-                                        if emp_email_addr: send_kpi_notification('revision_requested', emp_name, emp_email_addr)
-                                        st.warning("🔄 Revision requested"); time.sleep(1); st.rerun()
-                                    else: st.error("❌ Please provide a comment!")
-                else: st.info("No pending KPI submissions.")
+                                        if emp_email_addr: send_kpi_notification('approved', emp_name, emp_email_addr)
+                                        log_audit("KPIs Approved", f"HOD approved KPIs for {emp_name}")
+                                        st.success("✅ Approved!"); st.balloons()
+                                with c2:
+                                    if st.button(f"🔄 Revise", key=f"rev_{emp_name}"):
+                                        if hod_comment:
+                                            for sub in submissions: db._patch("performance_data", {"submission_status": "Draft"}, {"id": sub['row_id']})
+                                            emp_email_addr = get_employee_email(emp_name)
+                                            if emp_email_addr: send_kpi_notification('revision_requested', emp_name, emp_email_addr)
+                                            st.warning("🔄 Revision requested")
+                                        else: st.error("❌ Please provide a comment!")
+                else:
+                    st.info("No pending KPI submissions.")
             except Exception as e: st.error(f"Error: {str(e)}")
             
-            # ===== SECTION 1B: APPROVED KPIs PREVIEW =====
-            st.markdown("---"); st.markdown("### ✅ Team Approved KPIs")
+            # ===== SECTION 1B: APPROVED KPIs - GROUPED + PAGINATED =====
+            st.markdown("---"); st.markdown("<h5 style='margin-bottom:0.5rem;'>✅ Team Approved KPIs</h5>", unsafe_allow_html=True)
             try:
                 all_perf = db._get("performance_data"); team_approved = {}
                 for row in all_perf:
                     if row.get('submission_status') == 'Approved':
                         kpi_list = json.loads(row.get('kpi_data', '[]')) if row.get('kpi_data') else []
-                        matching = [k for k in kpi_list if k.get('cycle', '') in hod_cycles]
+                        matching = [k for k in kpi_list if k.get('cycle', '') == hod_cycle]
                         if not matching:
                             continue
                         clean_name = ' '.join(str(row.get('user_name', '')).split())
-                        if not is_dept_view or get_employee_dept(clean_name) == user_dept:
+                        if is_admin or get_employee_dept(clean_name) == user_dept:
                             if clean_name not in team_approved: team_approved[clean_name] = []
                             team_approved[clean_name].append({'pillar': row.get('pillar_name', ''), 'kpis': json.loads(row.get('kpi_data', '[]')) if row.get('kpi_data') else [], 'weight': row.get('weight', 0)})
+                
                 if team_approved:
                     st.success(f"✅ {len(team_approved)} team member(s) with approved KPIs")
                     pillar_order = get_pillars(hod_fy)
-                    pillar_order = sorted(pillar_order, key=lambda x: int(x.split('.')[0]) if x.split('.')[0].isdigit() else 99)
+                    
+                    # Group by department
+                    dept_approved = {}
                     for emp_name, kpi_data in team_approved.items():
-                        with st.expander(f"✅ {emp_name} — {len(kpi_data)} pillar(s) approved", expanded=False):
-                            combined = {}
-                            for entry in kpi_data:
-                                p_name = entry['pillar']
-                                if p_name not in combined: combined[p_name] = {'kpis': [], 'weight': 0, 'seen_kpis': set()}
-                                combined[p_name]['weight'] = max(combined[p_name]['weight'], entry['weight'])
-                                for kpi in entry['kpis']:
-                                    kpi_title = kpi.get('kpi', '')
-                                    if kpi_title and kpi_title not in combined[p_name]['seen_kpis']:
-                                        combined[p_name]['seen_kpis'].add(kpi_title)
-                                        combined[p_name]['kpis'].append(kpi)
-                            for p_name in pillar_order:
-                                if p_name in combined:
-                                    data = combined[p_name]
-                                    st.markdown(f"**{p_name} (Weight: {sum(k.get('weight',0) for k in data['kpis'])}%)**")
-                                    for kpi in data['kpis']: st.markdown(f"• {kpi.get('kpi','N/A')} — Target: {kpi.get('target','N/A')} — Weight: {kpi.get('weight','N/A')}%")
-                                    st.markdown("")
-                else: st.info("No team members have approved KPIs yet.")
+                        dept = get_employee_dept(emp_name)
+                        if dept not in dept_approved:
+                            dept_approved[dept] = {}
+                        dept_approved[dept][emp_name] = kpi_data
+                    
+                    # Flatten for pagination
+                    all_approved_items = []
+                    for dept in sorted(dept_approved.keys()):
+                        for emp_name, kpi_data in dept_approved[dept].items():
+                            all_approved_items.append((dept, emp_name, kpi_data))
+                    
+                    # Pagination
+                    if 'hod_approved_page' not in st.session_state:
+                        st.session_state.hod_approved_page = 1
+                    
+                    items_per_page = 5
+                    total_pages = max(1, (len(all_approved_items) + items_per_page - 1) // items_per_page)
+                    
+                    if st.session_state.hod_approved_page > total_pages:
+                        st.session_state.hod_approved_page = total_pages
+                    
+                    pg_col1, pg_col2, pg_col3 = st.columns([1, 2, 1])
+                    with pg_col1:
+                        def go_appr_prev():
+                            if st.session_state.hod_approved_page > 1:
+                                st.session_state.hod_approved_page -= 1
+                        st.button("⬅️ Previous", disabled=st.session_state.hod_approved_page <= 1, use_container_width=True, key="appr_prev_btn", on_click=go_appr_prev)
+                    with pg_col2:
+                        st.markdown(f"<p style='text-align:center;color:#666;'>Page <strong>{st.session_state.hod_approved_page}</strong> of <strong>{total_pages}</strong></p>", unsafe_allow_html=True)
+                    with pg_col3:
+                        def go_appr_next():
+                            if st.session_state.hod_approved_page < total_pages:
+                                st.session_state.hod_approved_page += 1
+                        st.button("Next ➡️", disabled=st.session_state.hod_approved_page >= total_pages, use_container_width=True, key="appr_next_btn", on_click=go_appr_next)
+                    
+                    start_idx = (st.session_state.hod_approved_page - 1) * items_per_page
+                    end_idx = min(start_idx + items_per_page, len(all_approved_items))
+                    current_items = all_approved_items[start_idx:end_idx]
+                    
+                    # Group current page by department
+                    current_depts = {}
+                    for dept, emp_name, kpi_data in current_items:
+                        if dept not in current_depts:
+                            current_depts[dept] = []
+                        current_depts[dept].append((emp_name, kpi_data))
+                    
+                    # Display
+                    for dept in sorted(current_depts.keys()):
+                        dept_items = current_depts[dept]
+                        dept_total = len(dept_approved[dept])
+                        
+                        st.markdown(f"""
+                        <div style="background:linear-gradient(135deg, #1a1a1a, #2d2d2d);color:white;padding:0.8rem 1.2rem;border-radius:10px;margin:0.8rem 0 0.4rem 0;font-weight:700;border-left:5px solid #38a169;">
+                            🏭 {dept} ({dept_total} approved total)
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        for emp_name, kpi_data in dept_items:
+                            with st.expander(f"✅ {emp_name} — {len(kpi_data)} pillar(s) approved", expanded=False):
+                                combined = {}
+                                for entry in kpi_data:
+                                    p_name = entry['pillar']
+                                    if p_name not in combined: combined[p_name] = {'kpis': [], 'weight': 0, 'seen_kpis': set()}
+                                    combined[p_name]['weight'] = max(combined[p_name]['weight'], entry['weight'])
+                                    for kpi in entry['kpis']:
+                                        kpi_title = kpi.get('kpi', '')
+                                        if kpi_title and kpi_title not in combined[p_name]['seen_kpis']:
+                                            combined[p_name]['seen_kpis'].add(kpi_title)
+                                            combined[p_name]['kpis'].append(kpi)
+                                for p_name in pillar_order:
+                                    if p_name in combined:
+                                        data = combined[p_name]
+                                        st.markdown(f"**{p_name} (Weight: {sum(k.get('weight',0) for k in data['kpis'])}%)**")
+                                        for kpi in data['kpis']: st.markdown(f"• {kpi.get('kpi','N/A')} — Target: {kpi.get('target','N/A')} — Weight: {kpi.get('weight','N/A')}%")
+                                        st.markdown("")
+                else:
+                    st.info("No team members have approved KPIs yet.")
             except: pass
             
-            # ===== SECTION 2: APPRAISAL REVIEW =====
-            st.markdown("---"); st.markdown("### 📝 Appraisal Review")
+            # ===== SECTION 2: APPRAISAL REVIEW - GROUPED + PAGINATED =====
+            st.markdown("---"); st.markdown("<h5 style='margin-bottom:0.5rem;'>📝 Appraisal Review</h5>", unsafe_allow_html=True)
             
-            # Refresh self_assessments from database
+            # Refresh self_assessments from database (YOUR ORIGINAL)
             try:
                 all_appraisals_db = db.get_all_appraisals()
                 for a in all_appraisals_db:
@@ -4968,143 +6318,248 @@ def performance_okrs():
             except:
                 pass
             
-            submitted_appraisals = {k: v for k, v in st.session_state.self_assessments.items() 
-                                   if (not is_dept_view or get_employee_dept(k) == user_dept)
-                                   and v['status'] in ['Submitted', 'Awaiting HOD Re-review', 'Escalated from TL', 'Escalated to HOD from TL']
-                                   and (v.get('cycle_name', '') in hod_cycles or v.get('cycle_name', '') == '')}
+            if is_admin:
+                submitted_appraisals = {k: v for k, v in st.session_state.self_assessments.items() 
+                                       if v['status'] in ['Submitted', 'Awaiting HOD Re-review', 'Escalated from TL', 'Escalated to HOD from TL']
+                                       and v.get('cycle_name', '') == hod_cycle}
+            else:
+                submitted_appraisals = {k: v for k, v in st.session_state.self_assessments.items() 
+                                       if get_employee_dept(k) == user_dept 
+                                       and v['status'] in ['Submitted', 'Awaiting HOD Re-review', 'Escalated from TL', 'Escalated to HOD from TL']
+                                       and v.get('cycle_name', '') == hod_cycle}
             
             if submitted_appraisals:
                 st.success(f"📋 {len(submitted_appraisals)} appraisal(s) for review")
                 
+                # Group by department
+                dept_appraisals = {}
                 for staff_name, assessment in submitted_appraisals.items():
-                    is_escalated = 'Escalated' in assessment.get('status', '')
-                    is_re_review = assessment.get('status') == 'Awaiting HOD Re-review'
+                    dept = get_employee_dept(staff_name)
+                    if dept not in dept_appraisals:
+                        dept_appraisals[dept] = {}
+                    dept_appraisals[dept][staff_name] = assessment
+                
+                sorted_depts = sorted(dept_appraisals.keys())
+                
+                # Flatten for pagination
+                all_appraisal_items = []
+                for dept in sorted_depts:
+                    for staff_name, assessment in dept_appraisals[dept].items():
+                        all_appraisal_items.append((dept, staff_name, assessment))
+                
+                # Pagination
+                if 'hod_appraisal_page' not in st.session_state:
+                    st.session_state.hod_appraisal_page = 1
+                
+                items_per_page = 5
+                total_pages = max(1, (len(all_appraisal_items) + items_per_page - 1) // items_per_page)
+                
+                if st.session_state.hod_appraisal_page > total_pages:
+                    st.session_state.hod_appraisal_page = total_pages
+                
+                pg_col1, pg_col2, pg_col3 = st.columns([1, 2, 1])
+                with pg_col1:
+                    def go_prev_page():
+                        if st.session_state.hod_appraisal_page > 1:
+                            st.session_state.hod_appraisal_page -= 1
+                    st.button("⬅️ Previous", disabled=st.session_state.hod_appraisal_page <= 1, use_container_width=True, key="hod_prev_page_btn", on_click=go_prev_page)
+                with pg_col2:
+                    st.markdown(f"<p style='text-align:center;color:#666;'>Page <strong>{st.session_state.hod_appraisal_page}</strong> of <strong>{total_pages}</strong></p>", unsafe_allow_html=True)
+                with pg_col3:
+                    def go_next_page():
+                        if st.session_state.hod_appraisal_page < total_pages:
+                            st.session_state.hod_appraisal_page += 1
+                    st.button("Next ➡️", disabled=st.session_state.hod_appraisal_page >= total_pages, use_container_width=True, key="hod_next_page_btn", on_click=go_next_page)
+                
+                start_idx = (st.session_state.hod_appraisal_page - 1) * items_per_page
+                end_idx = min(start_idx + items_per_page, len(all_appraisal_items))
+                current_page_items = all_appraisal_items[start_idx:end_idx]
+                
+                # Group current page by department
+                current_dept_groups = {}
+                for dept, staff_name, assessment in current_page_items:
+                    if dept not in current_dept_groups:
+                        current_dept_groups[dept] = []
+                    current_dept_groups[dept].append((staff_name, assessment))
+                
+                # Display
+                for dept in sorted(current_dept_groups.keys()):
+                    dept_items = current_dept_groups[dept]
+                    dept_count = len(dept_appraisals[dept])
                     
-                    expander_title = f"{'🚨 ESCALATED: ' if is_escalated else '🔄 RE-REVIEW: ' if is_re_review else '📋 '}{staff_name} | {get_employee_dept(staff_name)}"
+                    st.markdown(f"""
+                    <div style="background:linear-gradient(135deg, #1a1a1a, #2d2d2d);color:white;padding:0.8rem 1.2rem;border-radius:10px;margin:0.8rem 0 0.4rem 0;font-weight:700;border-left:5px solid #CC0000;">
+                        🏭 {dept} ({dept_count} appraisal(s) total)
+                    </div>
+                    """, unsafe_allow_html=True)
                     
-                    with st.expander(expander_title, expanded=True):
-                        if is_re_review:
-                            st.warning(f"⚠️ Staff rejected your review (Rejection #{assessment.get('reject_count', 1)})")
-                            st.markdown(f"**Rejection Reason:** {assessment.get('rejection_comment', 'No comment provided')}")
-                            
-                            db_rej_docs = assessment.get('rejection_docs', '')
-                            if db_rej_docs:
-                                try:
-                                    docs = json.loads(db_rej_docs) if isinstance(db_rej_docs, str) else db_rej_docs
-                                    if docs and isinstance(docs, list) and len(docs) > 0:
-                                        st.markdown("**📎 Rejection Documents:**")
-                                        for doc_url in docs:
-                                            file_name = doc_url.split('/')[-1]
-                                            parts = file_name.split('_', 3)
-                                            import urllib.parse
-                                            display_name = parts[-1] if len(parts) >= 4 else file_name
-                                            display_name = urllib.parse.unquote(display_name)
-                                            st.markdown(f"- 📄 [{display_name}]({doc_url})")
-                                except: pass
+                    for staff_name, assessment in dept_items:
+                        is_escalated = 'Escalated' in assessment.get('status', '')
+                        is_re_review = assessment.get('status') == 'Awaiting HOD Re-review'
                         
-                        st.markdown(f"**👤 Staff Comments:** {assessment.get('comments', 'N/A')}")
+                        expander_title = f"{'🚨 ESCALATED: ' if is_escalated else '🔄 RE-REVIEW: ' if is_re_review else '📋 '}{staff_name}"
                         
-                        # EVIDENCE FILES - Check all sources
-                        st.markdown("---")
-                        st.markdown("### 📎 Evidence Files")
-                        
-                        has_files = False
-                        sources_to_check = []
-                        
-                        try:
-                            db_appraisal = db._get("appraisals", {"user_name": staff_name})
-                            if db_appraisal:
-                                for app in db_appraisal:
-                                    if app.get('evidence_files'): sources_to_check.append(app.get('evidence_files'))
-                        except: pass
-                        
-                        if assessment.get('evidence_files'): sources_to_check.append(assessment.get('evidence_files'))
-                        
-                        for db_evidence in sources_to_check:
-                            if db_evidence and not has_files:
-                                try:
-                                    evidence = json.loads(db_evidence) if isinstance(db_evidence, str) else db_evidence
-                                    if evidence and isinstance(evidence, dict):
-                                        for pillar, urls in evidence.items():
-                                            if urls and isinstance(urls, list) and len(urls) > 0:
-                                                has_files = True
-                                                st.markdown(f"**{pillar}**")
-                                                for url in urls:
-                                                    file_name = url.split('/')[-1]
-                                                    parts = file_name.split('_', 3)
-                                                    display_name = parts[-1] if len(parts) >= 4 else file_name
-                                                    import urllib.parse
-                                                    display_name = urllib.parse.unquote(display_name)
-                                                    st.markdown(f"- 📄 [{display_name}]({url})")
-                                except: pass
-                        
-                        if not has_files: st.info("📎 No evidence files attached")
-                        
-                        # SCORE REVIEW with Averages
-                        st.markdown("---"); st.markdown("### 📊 Score Review")
-                        
-                        hod_scores = {}
-                        pillar_order = get_pillars(hod_fy)
-                        pillar_order = sorted(pillar_order, key=lambda x: int(x.split('.')[0]) if x.split('.')[0].isdigit() else 99)
-                        
-                        staff_total = 0
-                        staff_count = 0
-                        hod_total = 0
-                        hod_count = 0
-                        
-                        for pillar in pillar_order:
-                            pillar_scores = {k: v for k, v in sorted(assessment['scores'].items(), key=natural_sort_key) if k.startswith(pillar)}
-                            if pillar_scores:
-                                pillar_staff_avg = sum(int(v) for v in pillar_scores.values()) / len(pillar_scores)
-                                st.markdown(f"**{pillar}** (Staff Avg: {pillar_staff_avg:.0f}%)")
-                                for score_key, staff_score in pillar_scores.items():
-                                    kpi_index = int(score_key.rsplit('_', 1)[1]) if '_' in score_key and score_key.rsplit('_', 1)[1].isdigit() else 0
-                                    kpi_name = f"KPI {kpi_index + 1}"
+                        with st.expander(expander_title, expanded=False):
+                            if is_re_review:
+                                st.warning(f"⚠️ Staff rejected your review (Rejection #{assessment.get('reject_count', 1)})")
+                                st.markdown(f"**Rejection Reason:** {assessment.get('rejection_comment', 'No comment provided')}")
+                                
+                                db_rej_docs = assessment.get('rejection_docs', '')
+                                if db_rej_docs:
                                     try:
-                                        all_p = db._get("performance_data")
-                                        for row in (all_p or []):
-                                            if row.get('user_name') == staff_name and row.get('pillar_name') == pillar:
-                                                kpi_list = json.loads(row.get('kpi_data', '[]')) if row.get('kpi_data') else []
-                                                if kpi_index < len(kpi_list): kpi_name = kpi_list[kpi_index].get('kpi', kpi_name)
-                                                break
+                                        docs = json.loads(db_rej_docs) if isinstance(db_rej_docs, str) else db_rej_docs
+                                        if docs and isinstance(docs, list) and len(docs) > 0:
+                                            st.markdown("**📎 Rejection Documents:**")
+                                            for doc_url in docs:
+                                                    file_name = doc_url.split('/')[-1]
+                                                    parts = file_name.split('_', 3)
+                                                    import urllib.parse
+                                                    display_name = parts[-1] if len(parts) >= 4 else file_name
+                                                    display_name = urllib.parse.unquote(display_name)
+                                                    st.markdown(f"- 📄 [{display_name}]({doc_url})")
                                     except: pass
-                                    
-                                    kpi_comment = assessment.get('pillar_comments', {}).get(pillar, '')
-                                    st.markdown(f"**{kpi_name}**")
-                                    if kpi_comment:
-                                        st.markdown(f"<div style='background:#faf8f2;padding:0.6rem;border-radius:4px;border-left:3px solid #D4AF37;font-size:0.8rem;margin-top:0.3rem;'>💬 {kpi_comment}</div>", unsafe_allow_html=True)
-                                    
-                                    c1, c2 = st.columns(2)
-                                    with c1: st.markdown(f"<small>Staff: {staff_score}%</small>", unsafe_allow_html=True)
-                                    with c2:
-                                        prev_hod = assessment.get('hod_scores', {}).get(score_key, 0) if is_re_review else 0
-                                        hod_scores[score_key] = st.number_input("HOD Score", 0, 100, int(prev_hod) if prev_hod else 0, 1, key=f"hod_{staff_name}_{score_key}")
-                                    
-                                    staff_total += int(staff_score)
-                                    staff_count += 1
-                                    hod_total += int(hod_scores[score_key])
-                                    hod_count += 1
-                                st.markdown("---")
-                        
-                        # TOTAL AVERAGES
-                        staff_avg = staff_total / staff_count if staff_count > 0 else 0
-                        hod_avg = hod_total / hod_count if hod_count > 0 else 0
-                        
-                        c1, c2, c3 = st.columns(3)
-                        with c1:
-                            st.metric("📊 Staff Overall Avg", f"{staff_avg:.1f}%")
-                        with c2:
-                            st.metric("👔 HOD Overall Avg", f"{hod_avg:.1f}%")
-                        with c3:
-                            diff = staff_avg - hod_avg
-                            st.metric("📈 Difference", f"{diff:+.1f}%")
-                        
-                        hod_overall = st.text_area(f"Your Overall Comments *", value=assessment.get('hod_comments', '') if is_re_review else '', key=f"hod_app_{staff_name}")
-                        
-                        if is_re_review or is_escalated:
+                            
+                            st.markdown(f"**👤 Staff Comments:** {assessment.get('comments', 'N/A')}")
+                            
+                            st.markdown("---")
+                            st.markdown("### 📎 Evidence Files")
+                            
+                            has_files = False
+                            sources_to_check = []
+                            
+                            try:
+                                db_appraisal = db._get("appraisals", {"user_name": staff_name})
+                                if db_appraisal:
+                                    for app in db_appraisal:
+                                        if app.get('evidence_files'): sources_to_check.append(app.get('evidence_files'))
+                            except: pass
+                            
+                            if assessment.get('evidence_files'): sources_to_check.append(assessment.get('evidence_files'))
+                            
+                            for db_evidence in sources_to_check:
+                                if db_evidence and not has_files:
+                                    try:
+                                        evidence = json.loads(db_evidence) if isinstance(db_evidence, str) else db_evidence
+                                        if evidence and isinstance(evidence, dict):
+                                            for pillar, urls in evidence.items():
+                                                if urls and isinstance(urls, list) and len(urls) > 0:
+                                                    has_files = True
+                                                    st.markdown(f"**{pillar}**")
+                                                    for url in urls:
+                                                        file_name = url.split('/')[-1]
+                                                        parts = file_name.split('_', 3)
+                                                        display_name = parts[-1] if len(parts) >= 4 else file_name
+                                                        import urllib.parse
+                                                        display_name = urllib.parse.unquote(display_name)
+                                                        st.markdown(f"- 📄 [{display_name}]({url})")
+                                    except: pass
+                            
+                            if not has_files: st.info("📎 No evidence files attached")
+                            
+                            # SCORE REVIEW - YOUR ORIGINAL LOGIC UNTOUCHED
+                            st.markdown("---"); st.markdown("### 📊 Score Review")
+                            
+                            hod_scores = {}
+                            pillar_order = get_pillars(hod_fy)
+                            
+                            staff_total = 0
+                            staff_count = 0
+                            hod_total = 0
+                            hod_count = 0
+                            
+                            for pillar in pillar_order:
+                                pillar_scores = {k: v for k, v in sorted(assessment['scores'].items(), key=natural_sort_key) if k.startswith(pillar)}
+                                if pillar_scores:
+                                    pillar_staff_avg = sum(int(v) for v in pillar_scores.values()) / len(pillar_scores)
+                                    st.markdown(f"**{pillar}** (Staff Avg: {pillar_staff_avg:.0f}%)")
+                                    for score_key, staff_score in pillar_scores.items():
+                                        kpi_index = int(score_key.rsplit('_', 1)[1]) if '_' in score_key and score_key.rsplit('_', 1)[1].isdigit() else 0
+                                        kpi_name = f"KPI {kpi_index + 1}"
+                                        try:
+                                            all_p = db._get("performance_data")
+                                            for row in (all_p or []):
+                                                if row.get('user_name') == staff_name and row.get('pillar_name') == pillar:
+                                                    kpi_list = json.loads(row.get('kpi_data', '[]')) if row.get('kpi_data') else []
+                                                    if kpi_index < len(kpi_list): kpi_name = kpi_list[kpi_index].get('kpi', kpi_name)
+                                                    break
+                                        except: pass
+                                        
+                                        kpi_comment = assessment.get('pillar_comments', {}).get(pillar, '')
+                                        st.markdown(f"**{kpi_name}**")
+                                        if kpi_comment:
+                                            st.markdown(f"<div style='background:#faf8f2;padding:0.6rem;border-radius:4px;border-left:3px solid #D4AF37;font-size:0.8rem;margin-top:0.3rem;'>💬 {kpi_comment}</div>", unsafe_allow_html=True)
+                                        
+                                        c1, c2 = st.columns(2)
+                                        with c1: st.markdown(f"<small>Staff: {staff_score}%</small>", unsafe_allow_html=True)
+                                        with c2:
+                                            prev_hod = assessment.get('hod_scores', {}).get(score_key, 0) if is_re_review else 0
+                                            hod_scores[score_key] = st.number_input("HOD Score", 0, 100, int(prev_hod) if prev_hod else 0, 1, key=f"hod_{staff_name}_{score_key}")
+                                        
+                                        staff_total += int(staff_score)
+                                        staff_count += 1
+                                        hod_total += int(hod_scores[score_key])
+                                        hod_count += 1
+                                    st.markdown("---")
+                            
+                            staff_avg = staff_total / staff_count if staff_count > 0 else 0
+                            hod_avg = hod_total / hod_count if hod_count > 0 else 0
+                            
                             c1, c2, c3 = st.columns(3)
                             with c1:
-                                if st.button(f"✅ Submit Revised Review", key=f"submit_{staff_name}", type="primary"):
+                                st.metric("📊 Staff Overall Avg", f"{staff_avg:.1f}%")
+                            with c2:
+                                st.metric("👔 HOD Overall Avg", f"{hod_avg:.1f}%")
+                            with c3:
+                                diff = staff_avg - hod_avg
+                                st.metric("📈 Difference", f"{diff:+.1f}%")
+                            
+                            hod_overall = st.text_area(f"Your Overall Comments *", value=assessment.get('hod_comments', '') if is_re_review else '', key=f"hod_app_{staff_name}")
+                            
+                            if is_re_review or is_escalated:
+                                c1, c2, c3 = st.columns(3)
+                                with c1:
+                                    if st.button(f"✅ Submit Revised Review", key=f"submit_{staff_name}", type="primary"):
+                                        if not hod_overall: st.error("❌ Comments required!")
+                                        else:
+                                            st.session_state.self_assessments[staff_name].update({'status': 'Approved', 'hod_scores': hod_scores, 'hod_comments': hod_overall, 'acceptance': None, 'reviewer_type': 'HOD'})
+                                            try: db.save_appraisal(staff_name, assessment.get('email', ''), get_employee_dept(staff_name), st.session_state.appraisal_cycle_name, 'Approved', assessment['scores'], assessment.get('comments', ''), assessment.get('pillar_comments', {}), hod_scores, hod_overall, {}, None, None, assessment.get('date', ''))
+                                            except: pass
+                                            emp_email = get_employee_email(staff_name)
+                                            if emp_email:
+                                                try: EmailService().send_email(emp_email, f"📝 Updated HOD Review", f"Dear {staff_name},\n\nYour HOD has submitted an updated review.\n\nHOD Comments: {hod_overall}\n\nChurchgate Group HR")
+                                                except: pass
+                                            log_audit('HOD Revised Review', f'{staff_name} revised by HOD')
+                                            st.success("✅ Submitted!"); st.balloons()
+                                with c2:
+                                    if st.button(f"✋ Stand Firm - Escalate", key=f"standfirm_{staff_name}"):
+                                        hod_overall = hod_overall or assessment.get('hod_comments', 'Standing firm.')
+                                        st.session_state.self_assessments[staff_name].update({'status': 'Escalated from TL' if is_escalated else 'Approved', 'acceptance': 'Rejected', 'hod_scores': hod_scores if hod_scores else assessment.get('hod_scores', {}), 'hod_comments': hod_overall, 'sr_decision': 'Pending Committee'})
+                                        try: db.save_appraisal(staff_name, assessment.get('email', ''), get_employee_dept(staff_name), st.session_state.appraisal_cycle_name, 'Escalated from TL' if is_escalated else 'Approved', assessment['scores'], assessment.get('comments', ''), assessment.get('pillar_comments', {}), st.session_state.self_assessments[staff_name].get('hod_scores', {}), hod_overall, {}, 'Rejected', 'Pending Committee', assessment.get('date', ''))
+                                        except: pass
+                                        try:
+                                            sr_emails = employees_df[employees_df['department'] == 'Senior Management']['email'].dropna().tolist() if not employees_df.empty else []
+                                            for sr_email in sr_emails:
+                                                if sr_email and '@' in str(sr_email): EmailService().send_email(sr_email, f"🚨 Appraisal Escalated: {staff_name}", f"Dear Committee Member,\n\n{staff_name}'s appraisal has been escalated.\n\nHOD: {user_name}\n\nChurchgate Group HR")
+                                        except: pass
+                                        emp_email = get_employee_email(staff_name)
+                                        if emp_email:
+                                            try: EmailService().send_email(emp_email, f"🚨 Appraisal Escalated", f"Dear {staff_name},\n\nYour appraisal has been escalated to the Appraisal Committee.\n\nChurchgate Group HR")
+                                            except: pass
+                                        log_audit('HOD Escalated', f'{staff_name} escalated')
+                                        st.warning("✋ Escalated!")
+                                with c3:
+                                    if st.button(f"💬 Request Staff Revision", key=f"sendback_{staff_name}"):
+                                        st.session_state.self_assessments[staff_name]['status'] = 'Revision Requested by HOD'
+                                        try: db.save_appraisal(staff_name, assessment.get('email', ''), get_employee_dept(staff_name), st.session_state.appraisal_cycle_name, 'Revision Requested by HOD', assessment['scores'], assessment.get('comments', ''), assessment.get('pillar_comments', {}), assessment.get('hod_scores', {}), assessment.get('hod_comments', ''), {}, None, None, assessment.get('date', ''))
+                                        except: pass
+                                        emp_email = get_employee_email(staff_name)
+                                        if emp_email:
+                                            try: EmailService().send_email(emp_email, f"🔄 Revision Requested", f"Dear {staff_name},\n\nYour HOD has requested revisions.\n\nChurchgate Group HR")
+                                            except: pass
+                                        log_audit('HOD Requested Revision', f'{staff_name} sent back')
+                                        st.info("💬 Revision requested")
+                            else:
+                                if st.button(f"✅ Submit HOD Review", key=f"submit_{staff_name}", type="primary"):
                                     if not hod_overall: st.error("❌ Comments required!")
                                     else:
                                         st.session_state.self_assessments[staff_name].update({'status': 'Approved', 'hod_scores': hod_scores, 'hod_comments': hod_overall, 'acceptance': None, 'reviewer_type': 'HOD'})
@@ -5112,51 +6567,10 @@ def performance_okrs():
                                         except: pass
                                         emp_email = get_employee_email(staff_name)
                                         if emp_email:
-                                            try: EmailService().send_email(emp_email, f"📝 Updated HOD Review", f"Dear {staff_name},\n\nYour HOD has submitted an updated review.\n\nHOD Comments: {hod_overall}\n\nChurchgate Group HR")
+                                            try: EmailService().send_email(emp_email, f"📝 HOD Review Complete", f"Dear {staff_name},\n\nYour HOD has completed your review.\n\nHOD Comments: {hod_overall}\n\nChurchgate Group HR")
                                             except: pass
-                                        log_audit('HOD Revised Review', f'{staff_name} revised by HOD')
-                                        st.success("✅ Submitted!"); st.balloons(); time.sleep(1.5); st.rerun()
-                            with c2:
-                                if st.button(f"✋ Stand Firm - Escalate", key=f"standfirm_{staff_name}"):
-                                    hod_overall = hod_overall or assessment.get('hod_comments', 'Standing firm.')
-                                    st.session_state.self_assessments[staff_name].update({'status': 'Escalated from TL' if is_escalated else 'Approved', 'acceptance': 'Rejected', 'hod_scores': hod_scores if hod_scores else assessment.get('hod_scores', {}), 'hod_comments': hod_overall, 'sr_decision': 'Pending Committee'})
-                                    try: db.save_appraisal(staff_name, assessment.get('email', ''), get_employee_dept(staff_name), st.session_state.appraisal_cycle_name, 'Escalated from TL' if is_escalated else 'Approved', assessment['scores'], assessment.get('comments', ''), assessment.get('pillar_comments', {}), st.session_state.self_assessments[staff_name].get('hod_scores', {}), hod_overall, {}, 'Rejected', 'Pending Committee', assessment.get('date', ''))
-                                    except: pass
-                                    try:
-                                        sr_emails = employees_df[employees_df['department'] == 'Senior Management']['email'].dropna().tolist() if not employees_df.empty else []
-                                        for sr_email in sr_emails:
-                                            if sr_email and '@' in str(sr_email): EmailService().send_email(sr_email, f"🚨 Appraisal Escalated: {staff_name}", f"Dear Committee Member,\n\n{staff_name}'s appraisal has been escalated.\n\nHOD: {user_name}\n\nChurchgate Group HR")
-                                    except: pass
-                                    emp_email = get_employee_email(staff_name)
-                                    if emp_email:
-                                        try: EmailService().send_email(emp_email, f"🚨 Appraisal Escalated", f"Dear {staff_name},\n\nYour appraisal has been escalated to the Appraisal Committee.\n\nChurchgate Group HR")
-                                        except: pass
-                                    log_audit('HOD Escalated', f'{staff_name} escalated')
-                                    st.warning("✋ Escalated!"); time.sleep(1.5); st.rerun()
-                            with c3:
-                                if st.button(f"💬 Request Staff Revision", key=f"sendback_{staff_name}"):
-                                    st.session_state.self_assessments[staff_name]['status'] = 'Revision Requested by HOD'
-                                    try: db.save_appraisal(staff_name, assessment.get('email', ''), get_employee_dept(staff_name), st.session_state.appraisal_cycle_name, 'Revision Requested by HOD', assessment['scores'], assessment.get('comments', ''), assessment.get('pillar_comments', {}), assessment.get('hod_scores', {}), assessment.get('hod_comments', ''), {}, None, None, assessment.get('date', ''))
-                                    except: pass
-                                    emp_email = get_employee_email(staff_name)
-                                    if emp_email:
-                                        try: EmailService().send_email(emp_email, f"🔄 Revision Requested", f"Dear {staff_name},\n\nYour HOD has requested revisions.\n\nChurchgate Group HR")
-                                        except: pass
-                                    log_audit('HOD Requested Revision', f'{staff_name} sent back')
-                                    st.info("💬 Revision requested"); time.sleep(1.5); st.rerun()
-                        else:
-                            if st.button(f"✅ Submit HOD Review", key=f"submit_{staff_name}", type="primary"):
-                                if not hod_overall: st.error("❌ Comments required!")
-                                else:
-                                    st.session_state.self_assessments[staff_name].update({'status': 'Approved', 'hod_scores': hod_scores, 'hod_comments': hod_overall, 'acceptance': None, 'reviewer_type': 'HOD'})
-                                    try: db.save_appraisal(staff_name, assessment.get('email', ''), get_employee_dept(staff_name), st.session_state.appraisal_cycle_name, 'Approved', assessment['scores'], assessment.get('comments', ''), assessment.get('pillar_comments', {}), hod_scores, hod_overall, {}, None, None, assessment.get('date', ''))
-                                    except: pass
-                                    emp_email = get_employee_email(staff_name)
-                                    if emp_email:
-                                        try: EmailService().send_email(emp_email, f"📝 HOD Review Complete", f"Dear {staff_name},\n\nYour HOD has completed your review.\n\nHOD Comments: {hod_overall}\n\nChurchgate Group HR")
-                                        except: pass
-                                    log_audit('HOD Review', f'{staff_name} reviewed by HOD')
-                                    st.success("✅ Submitted!"); st.balloons(); time.sleep(1.5); st.rerun()
+                                        log_audit('HOD Review', f'{staff_name} reviewed by HOD')
+                                        st.success("✅ Submitted!"); st.balloons()
             else:
                 st.info("No pending appraisals.")
     
@@ -5506,7 +6920,13 @@ def performance_okrs():
                 cat_df = pd.DataFrame(list(cat_counts.items()), columns=['Category', 'Count'])
                 fig = px.pie(cat_df, values='Count', names='Category', hole=0.4, 
                            color_discrete_sequence=['#CC0000', '#1a1a1a', '#4a4a4a', '#3182ce', '#38a169', '#d69e2e', '#718096', '#2d3748'])
-                fig.update_layout(height=350, margin=dict(t=10, b=10))
+                fig.update_layout(
+                    height=350, 
+                    margin=dict(t=10, b=10),
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                )
                 st.plotly_chart(fig, use_container_width=True)
         
         # Achievement timeline
@@ -5883,7 +7303,13 @@ def performance_okrs():
                             region_chart_data.append({'Region': region, 'Completed': total_c, 'Rejected': total_r})
                     if region_chart_data:
                         chart_df = pd.DataFrame(region_chart_data)
-                        fig = px.bar(chart_df, x='Region', y=['Completed', 'Rejected'], barmode='group', color_discrete_sequence=['#38a169', '#CC0000']); fig.update_layout(height=350)
+                        fig = px.bar(chart_df, x='Region', y=['Completed', 'Rejected'], barmode='group', color_discrete_sequence=['#38a169', '#CC0000'])
+                        fig.update_layout(
+                            height=350,
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                        )
                         st.plotly_chart(fig, use_container_width=True)
                 
                 # ============================================================
@@ -5933,7 +7359,13 @@ def performance_okrs():
                                     if reviews: dept_avg_scores[dept] = sum(r['avg_score'] for r in reviews) / len(reviews)
                         if dept_avg_scores:
                             dept_avg_df = pd.DataFrame({'Department': list(dept_avg_scores.keys()), 'Avg Reviewer Score': list(dept_avg_scores.values())})
-                            fig = px.bar(dept_avg_df, x='Department', y='Avg Reviewer Score', color='Avg Reviewer Score', color_continuous_scale=['#38a169', '#d69e2e', '#CC0000']); fig.update_layout(height=350)
+                            fig = px.bar(dept_avg_df, x='Department', y='Avg Reviewer Score', color='Avg Reviewer Score', color_continuous_scale=['#38a169', '#d69e2e', '#CC0000'])
+                            fig.update_layout(
+                                height=350,
+                                paper_bgcolor='#1E1E1E',
+                                plot_bgcolor='#1E1E1E',
+                                font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                            )
                             st.plotly_chart(fig, use_container_width=True)
                 
                 # ============================================================
@@ -6478,7 +7910,14 @@ def performance_okrs():
                 dept_avg = all_perf_data[all_perf_data['department'] == user_dept]['progress'].mean() if not all_perf_data.empty and 'progress' in all_perf_data.columns else 0
                 group_avg = all_perf_data['progress'].mean() if not all_perf_data.empty and 'progress' in all_perf_data.columns else 0
                 bench_data = pd.DataFrame({'Metric': ['My Score', 'Dept Average', 'Group Average', 'Target'], 'Score': [total_prog, dept_avg, group_avg, 85]})
-                fig = px.bar(bench_data, x='Metric', y='Score', color='Metric', color_discrete_sequence=['#CC0000', '#4a4a4a', '#888888', '#38a169']); fig.add_hline(y=85, line_dash="dash", line_color="#38a169"); fig.update_layout(height=350)
+                fig = px.bar(bench_data, x='Metric', y='Score', color='Metric', color_discrete_sequence=['#CC0000', '#4a4a4a', '#888888', '#38a169'])
+                fig.add_hline(y=85, line_dash="dash", line_color="#38a169")
+                fig.update_layout(
+                    height=350,
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                )
                 st.plotly_chart(fig, use_container_width=True)
             
             st.markdown("---"); st.subheader("📜 My Appraisal History")
@@ -6968,7 +8407,7 @@ def performance_okrs():
                     
                     st.markdown("---")
                     
-                    # ============================================================
+                     # ============================================================
                     # REVIEWER & COMMITTEE RECOMMENDATIONS BREAKDOWN
                     # ============================================================
                     st.subheader("📋 Recommendations Breakdown")
@@ -6981,21 +8420,33 @@ def performance_okrs():
                         sc = get_emp_score(emp_name)
                         if sc == 0: continue
                         
-                        # Reviewer recommendation
-                        comments = assessment.get('hod_comments', '') or assessment.get('tl_comments', '')
-                        if assessment.get('acceptance') == 'Accepted':
-                            if 'promot' in comments.lower():
-                                reviewer_recs['Promote'] += 1
-                            elif 'salary' in comments.lower() or 'increment' in comments.lower():
-                                reviewer_recs['Salary Review'] += 1
-                            elif 'train' in comments.lower() or 'develop' in comments.lower():
-                                reviewer_recs['Training'] += 1
-                            elif 'pip' in comments.lower() or 'improve' in comments.lower():
-                                reviewer_recs['PIP'] += 1
-                            elif 'status quo' in comments.lower() or 'maintain' in comments.lower():
-                                reviewer_recs['Status Quo'] += 1
+                        # Get comments - check ALL possible sources
+                        comments = assessment.get('hod_comments', '') or assessment.get('tl_comments', '') or assessment.get('comments', '')
+                        
+                        # Check acceptance status
+                        acceptance = assessment.get('acceptance', '')
+                        status = assessment.get('status', '')
+                        
+                        # Count recommendation if accepted OR completed
+                        if acceptance == 'Accepted' or status == 'Completed':
+                            if comments and isinstance(comments, str) and len(comments.strip()) > 0:
+                                comments_lower = comments.lower()
+                                if 'promot' in comments_lower:
+                                    reviewer_recs['Promote'] += 1
+                                elif 'salary' in comments_lower or 'increment' in comments_lower:
+                                    reviewer_recs['Salary Review'] += 1
+                                elif 'train' in comments_lower or 'develop' in comments_lower or 'mentor' in comments_lower:
+                                    reviewer_recs['Training'] += 1
+                                elif 'pip' in comments_lower or 'improve' in comments_lower or 'underperform' in comments_lower:
+                                    reviewer_recs['PIP'] += 1
+                                elif 'status quo' in comments_lower or 'maintain' in comments_lower:
+                                    reviewer_recs['Status Quo'] += 1
+                                elif 'exceed' in comments_lower or 'outstanding' in comments_lower or 'excellent' in comments_lower:
+                                    reviewer_recs['Exceeds Expectations'] += 1
+                                else:
+                                    reviewer_recs['Completed - No Specific Rec'] += 1
                             else:
-                                reviewer_recs['Completed - No Specific Rec'] += 1
+                                reviewer_recs['Completed - No Comments'] += 1
                         
                         # Committee recommendation
                         sr_decision = assessment.get('sr_decision', '')
@@ -7009,11 +8460,11 @@ def performance_okrs():
                     col1, col2, col3 = st.columns(3)
                     
                     with col1:
-                        st.subheader("Reviewer Recommendation")
+                        st.markdown("<h5>Reviewer Recommendation</h5>", unsafe_allow_html=True)
                         if reviewer_recs:
                             rec_df = pd.DataFrame({'Recommendation': list(reviewer_recs.keys()), 'Count': list(reviewer_recs.values())})
                             fig_rec = px.pie(rec_df, values='Count', names='Recommendation', hole=0.5,
-                                            color_discrete_sequence=['#38a169', '#3182ce', '#d69e2e', '#CC0000', '#FFD700', '#a0aec0'])
+                                            color_discrete_sequence=['#38a169', '#3182ce', '#d69e2e', '#CC0000', '#FFD700', '#a0aec0', '#FF6B35'])
                             fig_rec.update_layout(height=300)
                             st.plotly_chart(fig_rec, use_container_width=True)
                             st.caption(f"Total Participants: {sum(reviewer_recs.values())}")
@@ -7021,7 +8472,7 @@ def performance_okrs():
                             st.info("No recommendations yet.")
                     
                     with col2:
-                        st.subheader("Committee Decision")
+                        st.markdown("<h5>Committee Decision</h5>", unsafe_allow_html=True)
                         if committee_recs:
                             com_df = pd.DataFrame({'Decision': list(committee_recs.keys()), 'Count': list(committee_recs.values())})
                             fig_com = px.pie(com_df, values='Count', names='Decision', hole=0.5,
@@ -7033,7 +8484,7 @@ def performance_okrs():
                             st.info("No committee decisions yet.")
                     
                     with col3:
-                        st.subheader("Classification Summary")
+                        st.markdown("<h5>Classification Summary</h5>", unsafe_allow_html=True)
                         class_counts = defaultdict(int)
                         for e in all_emps_scored:
                             class_counts[e['class']] += 1
@@ -7280,10 +8731,10 @@ def performance_okrs():
                                                         <br><small>Status: <span class="badge {status_badge}">{e['status']}</span> | Rejections: {e['reject_count']}</small>
                                                     </div>
                                                 </div>
-                                                {f'<small>💬 Employee: {e["comments"][:100]}...</small><br>' if e['comments'] and e['comments'] != 'N/A' else ''}
-                                                {f'<small>👔 HOD: {e["hod_comments"][:100]}...</small><br>' if e.get('hod_comments') else ''}
-                                                {f'<small>👥 TL: {e["tl_comments"][:100]}...</small><br>' if e.get('tl_comments') else ''}
-                                                {f'<small>🚫 Rejection: {e["rejection"][:100]}...</small>' if e.get('rejection') else ''}
+                                                {f'<div style="margin-top:0.5rem;padding:0.5rem;background:#f8f9fa;border-radius:4px;"><small>💬 <strong>Employee:</strong> {e["comments"]}</small></div>' if e['comments'] and e['comments'] != 'N/A' else ''}
+                                                {f'<div style="margin-top:0.3rem;padding:0.5rem;background:#f0f4ff;border-radius:4px;"><small>👔 <strong>HOD:</strong> {e["hod_comments"]}</small></div>' if e.get('hod_comments') else ''}
+                                                {f'<div style="margin-top:0.3rem;padding:0.5rem;background:#f0fff4;border-radius:4px;"><small>👥 <strong>TL:</strong> {e["tl_comments"]}</small></div>' if e.get('tl_comments') else ''}
+                                                {f'<div style="margin-top:0.3rem;padding:0.5rem;background:#fff5f5;border-radius:4px;"><small>🚫 <strong>Rejection:</strong> {e["rejection"]}</small></div>' if e.get('rejection') else ''}
                                             </div>
                                             """, unsafe_allow_html=True)
                 else:
@@ -7650,7 +9101,12 @@ def performance_okrs():
                                      title="Score Distribution")
                     fig.add_vline(x=avg_score, line_dash="dash", line_color="#d69e2e", 
                                  annotation_text=f"Avg: {avg_score:.1f}%")
-                    fig.update_layout(height=300)
+                    fig.update_layout(
+                        height=300,
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                    )
                     st.plotly_chart(fig, use_container_width=True)
             
             # ============================================================
@@ -7739,7 +9195,14 @@ def performance_okrs():
                             rec_df = pd.DataFrame({'Recommendation': list(rec_summary.keys()), 'Count': list(rec_summary.values())})
                             fig = px.pie(rec_df, values='Count', names='Recommendation', hole=0.5,
                                         color_discrete_sequence=['#38a169', '#3182ce', '#d69e2e', '#CC0000', '#FFD700', '#a0aec0'])
-                            fig.update_layout(height=350, title="Recommendations from Reviews")
+                            fig.update_layout(
+                                height=350, 
+                                title="Recommendations from Reviews",
+                                paper_bgcolor='#1E1E1E',
+                                plot_bgcolor='#1E1E1E',
+                                font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                                title_font=dict(color='#C9A84C', family='Georgia, serif')
+                            )
                             st.plotly_chart(fig, use_container_width=True)
                     
                     with c2:
@@ -11791,13 +13254,23 @@ APPLY NOW: {public_url}
                     tier3 = len(candidates[candidates['ai_tier'].str.contains('Tier 3', na=False)]) if 'ai_tier' in candidates.columns else 0
                     tier4 = len(candidates[candidates['ai_tier'].str.contains('Tier 4', na=False)]) if 'ai_tier' in candidates.columns else 0
                     fig = px.pie(values=[tier1, tier2, tier3, tier4, total-screened], names=['T1⭐','T2👍','T3🔶','T4❌','Pending'], hole=0.5, color_discrete_sequence=['#38a169','#d69e2e','#dd6b20','#CC0000','#a0aec0'])
-                    fig.update_layout(height=350)
+                    fig.update_layout(
+                        height=350,
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                    )
                     st.plotly_chart(fig, use_container_width=True)
                 with col2:
                     scores = candidates[candidates['ai_score'] > 0]['ai_score'].dropna() if 'ai_score' in candidates.columns else []
                     if len(scores) > 0:
                         fig2 = px.histogram(scores, nbins=10, color_discrete_sequence=['#CC0000'])
-                        fig2.update_layout(height=350)
+                        fig2.update_layout(
+                            height=350,
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                        )
                         st.plotly_chart(fig2, use_container_width=True)
             
             st.markdown("---")
@@ -12270,14 +13743,27 @@ APPLY NOW: {public_url}
                 with col1:
                     fig = px.pie(values=list(dept_data.values()), names=list(dept_data.keys()), hole=0.5,
                                color_discrete_sequence=['#CC0000', '#d69e2e', '#3182ce', '#38a169', '#dd6b20', '#805ad5'])
-                    fig.update_layout(height=350, title="Onboarding by Department")
+                    fig.update_layout(
+                        height=350, 
+                        title="Onboarding by Department",
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                        title_font=dict(color='#C9A84C', family='Georgia, serif')
+                    )
                     st.plotly_chart(fig, use_container_width=True)
                 with col2:
                     # Progress distribution
                     progress_data = [o.get('progress', 0) for o in onboard_list]
                     fig2 = px.histogram(progress_data, nbins=5, title="Progress Distribution",
                                       color_discrete_sequence=['#CC0000'])
-                    fig2.update_layout(height=350)
+                    fig2.update_layout(
+                        height=350,
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                        title_font=dict(color='#C9A84C', family='Georgia, serif')
+                    )
                     st.plotly_chart(fig2, use_container_width=True)
                 
                 # Upcoming start dates
@@ -12587,7 +14073,14 @@ APPLY NOW: {public_url}
                         status_data[s] = status_data.get(s, 0) + 1
                     fig = px.pie(values=list(status_data.values()), names=list(status_data.keys()), hole=0.5,
                                color_discrete_sequence=['#38a169', '#d69e2e', '#3182ce', '#CC0000', '#a0aec0'])
-                    fig.update_layout(height=350, title="Status Distribution")
+                    fig.update_layout(
+                        height=350, 
+                        title="Status Distribution",
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                        title_font=dict(color='#C9A84C', family='Georgia, serif')
+                    )
                     st.plotly_chart(fig, use_container_width=True)
                 with col2:
                     check_types = {}
@@ -12599,7 +14092,14 @@ APPLY NOW: {public_url}
                     if check_types:
                         fig2 = px.bar(x=list(check_types.keys()), y=list(check_types.values()),
                                     color=list(check_types.values()), color_continuous_scale=['#CC0000', '#d69e2e', '#38a169'])
-                        fig2.update_layout(height=350, title="Check Types Requested")
+                        fig2.update_layout(
+                            height=350, 
+                            title="Check Types Requested",
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                            title_font=dict(color='#C9A84C', family='Georgia, serif')
+                        )
                         st.plotly_chart(fig2, use_container_width=True)
                 
                 st.download_button("📥 Export BG Check Report (CSV)", 
@@ -12629,13 +14129,23 @@ APPLY NOW: {public_url}
         
         funnel = pd.DataFrame({'Stage': ['Applied', 'Screened', 'Interviewed', 'Offered', 'Hired'], 'Count': [total_apps, int(total_apps*0.6), int(total_apps*0.25), int(total_apps*0.1), int(total_apps*0.05)]})
         fig = px.funnel(funnel, x='Count', y='Stage', color_discrete_sequence=['#CC0000'])
-        fig.update_layout(height=350)
+        fig.update_layout(
+            height=350,
+            paper_bgcolor='#1E1E1E',
+            plot_bgcolor='#1E1E1E',
+            font=dict(color='#F0E6D3', family='Inter, sans-serif')
+        )
         st.plotly_chart(fig, use_container_width=True)
         
         st.markdown("---")
         st.markdown("### 🌍 Diversity & Inclusion")
         div_data = pd.DataFrame({'Category': ['Male', 'Female', 'Other'], 'Applicants': [28, 17, 2]})
         fig2 = px.pie(div_data, values='Applicants', names='Category', hole=0.5, color_discrete_sequence=['#3182ce', '#CC0000', '#718096'])
+        fig2.update_layout(
+            paper_bgcolor='#1E1E1E',
+            plot_bgcolor='#1E1E1E',
+            font=dict(color='#F0E6D3', family='Inter, sans-serif')
+        )
         st.plotly_chart(fig2, use_container_width=True)
         
         st.markdown("---")
@@ -13456,6 +14966,11 @@ def ai_recruitment_agent():
                 st.markdown("---")
                 div_data = pd.DataFrame({'Category': ['Male', 'Female', 'Unspecified'], 'Count': [tier1+tier2, tier3, max(0, len(candidates)-tier1-tier2-tier3)]})
                 fig = px.pie(div_data, values='Count', names='Category', hole=0.5, color_discrete_sequence=['#3182ce', '#CC0000', '#718096'])
+                fig.update_layout(
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                )
                 st.plotly_chart(fig, use_container_width=True)
                 st.dataframe(candidates[['first_name', 'last_name', 'email', 'job_id', 'ai_score', 'ai_tier', 'status']], use_container_width=True, hide_index=True)
         except:
@@ -13481,7 +14996,12 @@ def ai_recruitment_agent():
                     skill_scores[skill] = random.randint(10, 35)
             skills_df = pd.DataFrame({'Skill': list(skill_scores.keys()), 'Score': list(skill_scores.values())})
             fig = px.bar(skills_df, x='Skill', y='Score', color='Score', color_continuous_scale=['#CC0000', '#d69e2e', '#38a169'])
-            fig.update_layout(height=350)
+            fig.update_layout(
+                height=350,
+                paper_bgcolor='#1E1E1E',
+                plot_bgcolor='#1E1E1E',
+                font=dict(color='#F0E6D3', family='Inter, sans-serif')
+            )
             st.plotly_chart(fig, use_container_width=True)
             
             st.markdown("---")
@@ -14627,7 +16147,12 @@ def reports_analytics():
                     pillar_avg = perf_data.groupby('pillar_name')['progress'].mean().reset_index()
                     fig = px.bar(pillar_avg, x='pillar_name', y='progress', color='progress',
                                color_continuous_scale=['#CC0000', '#d69e2e', '#38a169'])
-                    fig.update_layout(height=300)
+                    fig.update_layout(
+                        height=300,
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                    )
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.info("Set KPIs in Performance & OKRs to see data.")
@@ -14640,7 +16165,12 @@ def reports_analytics():
                 dept_health = emp_df.groupby('department').size().reset_index(name='count')
                 fig2 = px.treemap(dept_health, path=['department'], values='count', color='count',
                                 color_continuous_scale=['#CC0000', '#d69e2e', '#38a169'])
-                fig2.update_layout(height=300)
+                fig2.update_layout(
+                    height=300,
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                )
                 st.plotly_chart(fig2, use_container_width=True)
     
     # ============ WORKFORCE ANALYTICS ============
@@ -14660,13 +16190,27 @@ def reports_analytics():
                 dept_counts = emp_df['department'].value_counts()
                 fig = px.bar(x=dept_counts.index, y=dept_counts.values, color=dept_counts.values,
                            color_continuous_scale=['#CC0000', '#d69e2e', '#38a169'])
-                fig.update_layout(height=350, xaxis_title="Department", yaxis_title="Employees")
+                fig.update_layout(
+                    height=350, 
+                    xaxis_title="Department", 
+                    yaxis_title="Employees",
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                    xaxis=dict(gridcolor='#2A2A2A', tickfont=dict(color='#F0E6D3')),
+                    yaxis=dict(gridcolor='#2A2A2A', tickfont=dict(color='#F0E6D3'))
+                )
                 st.plotly_chart(fig, use_container_width=True)
         with col2:
             exp_data = pd.DataFrame({'Experience': ['0-2 yrs', '3-5 yrs', '6-10 yrs', '10+ yrs'], 'Count': [8, 15, 22, 12]})
             fig = px.pie(exp_data, values='Count', names='Experience', hole=0.4,
                        color_discrete_sequence=['#CC0000', '#d69e2e', '#3182ce', '#38a169'])
-            fig.update_layout(height=350)
+            fig.update_layout(
+                height=350,
+                paper_bgcolor='#1E1E1E',
+                plot_bgcolor='#1E1E1E',
+                font=dict(color='#F0E6D3', family='Inter, sans-serif')
+            )
             st.plotly_chart(fig, use_container_width=True)
         
         st.markdown("---")
@@ -14674,7 +16218,12 @@ def reports_analytics():
         if not emp_df.empty:
             heatmap_data = emp_df.groupby(['department', 'grade']).size().unstack(fill_value=0)
             fig3 = px.imshow(heatmap_data, text_auto=True, aspect="auto", color_continuous_scale='Reds')
-            fig3.update_layout(height=400)
+            fig3.update_layout(
+                height=400,
+                paper_bgcolor='#1E1E1E',
+                plot_bgcolor='#1E1E1E',
+                font=dict(color='#F0E6D3', family='Inter, sans-serif')
+            )
             st.plotly_chart(fig3, use_container_width=True)
     
     # ============ RECRUITMENT FUNNEL ============
@@ -14705,7 +16254,12 @@ def reports_analytics():
             funnel = pd.DataFrame({'Stage': ['Applied', 'Screened', 'Interviewed', 'Offered', 'Hired'], 
                                   'Count': [total_candidates, int(total_candidates*0.6), int(total_candidates*0.25), int(total_candidates*0.1), int(total_candidates*0.05)]})
             fig = px.funnel(funnel, x='Count', y='Stage', color_discrete_sequence=['#CC0000'])
-            fig.update_layout(height=350)
+            fig.update_layout(
+                height=350,
+                paper_bgcolor='#1E1E1E',
+                plot_bgcolor='#1E1E1E',
+                font=dict(color='#F0E6D3', family='Inter, sans-serif')
+            )
             st.plotly_chart(fig, use_container_width=True)
         with col2:
             st.subheader("⏱️ Time-to-Hire Prediction")
@@ -14725,11 +16279,22 @@ def reports_analytics():
                     dept_scores = perf_data.groupby('department')['progress'].mean().reset_index()
                     fig = px.bar(dept_scores, x='department', y='progress', color='progress',
                                color_continuous_scale=['#CC0000', '#d69e2e', '#38a169'])
-                    fig.update_layout(height=350)
+                    fig.update_layout(
+                        height=350,
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                    )
                     st.plotly_chart(fig, use_container_width=True)
                 with col2:
                     fig2 = px.box(perf_data, x='pillar_name', y='progress', color='pillar_name')
-                    fig2.update_layout(height=350, showlegend=False)
+                    fig2.update_layout(
+                        height=350, 
+                        showlegend=False,
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                    )
                     st.plotly_chart(fig2, use_container_width=True)
                 
                 st.markdown("---")
@@ -14740,7 +16305,13 @@ def reports_analytics():
                 fig3 = go.Figure()
                 fig3.add_trace(go.Scatter(x=forecast_data['Month'], y=forecast_data['Predicted'], mode='lines+markers', name='Forecast', line=dict(color='#CC0000', width=3)))
                 fig3.add_trace(go.Scatter(x=forecast_data['Month'], y=forecast_data['Target'], mode='lines', name='Target', line=dict(color='#38a169', width=2, dash='dash')))
-                fig3.update_layout(height=300)
+                fig3.update_layout(
+                    height=300,
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                    legend=dict(font=dict(color='#F0E6D3'))
+                )
                 st.plotly_chart(fig3, use_container_width=True)
             else:
                 st.info("Set KPIs to see performance trends.")
@@ -14776,7 +16347,12 @@ def reports_analytics():
             with col1:
                 gender_df = pd.DataFrame({'Gender': ['Male', 'Female'], 'Count': [male_count, female_count]})
                 fig = px.pie(gender_df, values='Count', names='Gender', hole=0.5, color_discrete_sequence=['#3182ce', '#CC0000'])
-                fig.update_layout(height=400)
+                fig.update_layout(
+                    height=400,
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                )
                 st.plotly_chart(fig, use_container_width=True)
             with col2:
                 st.metric("Male", f"{round(male_count/total_emp*100)}%" if total_emp > 0 else "N/A")
@@ -14816,13 +16392,24 @@ def reports_analytics():
             fig = go.Figure()
             fig.add_trace(go.Bar(name='Revenue (₦B)', x=fin_data['Month'], y=fin_data['Revenue'], marker_color='#CC0000'))
             fig.add_trace(go.Bar(name='Cost (₦B)', x=fin_data['Month'], y=fin_data['Cost'], marker_color='#4a4a4a'))
-            fig.update_layout(height=350, barmode='group')
+            fig.update_layout(
+                height=350, 
+                barmode='group',
+                paper_bgcolor='#1E1E1E',
+                plot_bgcolor='#1E1E1E',
+                font=dict(color='#F0E6D3', family='Inter, sans-serif')
+            )
             st.plotly_chart(fig, use_container_width=True)
         with col2:
             props = list(metrics['portfolio_data'].keys())
             occ_vals = [metrics['portfolio_data'][p]['occupancy'] for p in props]
             fig2 = px.bar(x=props, y=occ_vals, color=occ_vals, color_continuous_scale=['#CC0000', '#d69e2e', '#38a169'])
-            fig2.update_layout(height=350)
+            fig2.update_layout(
+                height=350,
+                paper_bgcolor='#1E1E1E',
+                plot_bgcolor='#1E1E1E',
+                font=dict(color='#F0E6D3', family='Inter, sans-serif')
+            )
             st.plotly_chart(fig2, use_container_width=True)
     
     # ============ COMPARATIVE ANALYSIS ============
@@ -14846,7 +16433,14 @@ def reports_analytics():
                 fig = go.Figure()
                 fig.add_trace(go.Bar(name=dept1, x=comp_data['Metric'], y=comp_data[dept1], marker_color='#CC0000'))
                 fig.add_trace(go.Bar(name=dept2, x=comp_data['Metric'], y=comp_data[dept2], marker_color='#3182ce'))
-                fig.update_layout(height=350, barmode='group')
+                fig.update_layout(
+                    height=350, 
+                    barmode='group',
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                    legend=dict(font=dict(color='#F0E6D3'))
+                )
                 st.plotly_chart(fig, use_container_width=True)
     
     # ============ ATTRITION RISK ============
@@ -14862,7 +16456,14 @@ def reports_analytics():
         })
         fig = px.bar(risk_data, x='Department', y=['Low Risk', 'Medium Risk', 'High Risk'],
                     color_discrete_sequence=['#38a169', '#d69e2e', '#CC0000'])
-        fig.update_layout(height=400, barmode='stack')
+        fig.update_layout(
+            height=400, 
+            barmode='stack',
+            paper_bgcolor='#1E1E1E',
+            plot_bgcolor='#1E1E1E',
+            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+            legend=dict(font=dict(color='#F0E6D3'))
+        )
         st.plotly_chart(fig, use_container_width=True)
     
     # ============ TRAINING DASHBOARD ============
@@ -14877,7 +16478,14 @@ def reports_analytics():
         })
         fig = px.bar(training_data, x='Department', y=['Completed', 'In Progress', 'Not Started'],
                     color_discrete_sequence=['#38a169', '#d69e2e', '#CC0000'])
-        fig.update_layout(height=400, barmode='stack')
+        fig.update_layout(
+            height=400, 
+            barmode='stack',
+            paper_bgcolor='#1E1E1E',
+            plot_bgcolor='#1E1E1E',
+            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+            legend=dict(font=dict(color='#F0E6D3'))
+        )
         st.plotly_chart(fig, use_container_width=True)
     
     # ============ COST PER HIRE ============
@@ -14893,7 +16501,12 @@ def reports_analytics():
         cost_data = pd.DataFrame({'Month': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
                                  'Cost': [400000, 380000, 450000, 420000, 480000, 450000]})
         fig = px.line(cost_data, x='Month', y='Cost', markers=True, color_discrete_sequence=['#CC0000'])
-        fig.update_layout(height=350)
+        fig.update_layout(
+            height=350,
+            paper_bgcolor='#1E1E1E',
+            plot_bgcolor='#1E1E1E',
+            font=dict(color='#F0E6D3', family='Inter, sans-serif')
+        )
         st.plotly_chart(fig, use_container_width=True)
     
     # ============ EXPORT ALL ============
@@ -15403,7 +17016,12 @@ def notifications_page():
                 # Chart
                 fig = px.bar(digest_df, x='Category', y='Count', color='Critical',
                            color_continuous_scale=['#38a169', '#d69e2e', '#CC0000'])
-                fig.update_layout(height=300)
+                fig.update_layout(
+                    height=300,
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                )
                 st.plotly_chart(fig, use_container_width=True)
 
 def my_documents():
@@ -15843,7 +17461,12 @@ def ideas_box():
                 if categories:
                     cat_df = pd.DataFrame({'Category': list(categories.keys()), 'Count': list(categories.values())})
                     fig = px.pie(cat_df, values='Count', names='Category', hole=0.5)
-                    fig.update_layout(height=300)
+                    fig.update_layout(
+                        height=300,
+                        paper_bgcolor='#1E1E1E',
+                        plot_bgcolor='#1E1E1E',
+                        font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                    )
                     st.plotly_chart(fig, use_container_width=True)
             
             # Top contributors
@@ -16373,7 +17996,13 @@ def personal_goals():
             with col1:
                 fig = px.pie(values=list(pillar_data.values()), names=list(pillar_data.keys()), hole=0.5,
                            color_discrete_sequence=list(pillar_colors.values()))
-                fig.update_layout(height=350, showlegend=False)
+                fig.update_layout(
+                    height=350, 
+                    showlegend=False,
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                )
                 st.plotly_chart(fig, use_container_width=True)
             with col2:
                 for p in pillars:
@@ -19280,6 +20909,12 @@ def lms_dashboard():
                 
                 fig = px.pie(values=list(dept_data.values()), names=list(dept_data.keys()), hole=0.5,
                            title="Enrollments by Department")
+                fig.update_layout(
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                    title_font=dict(color='#C9A84C', family='Georgia, serif')
+                )
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 st.info("No enrollment data yet.")
@@ -19753,7 +21388,13 @@ def audit_log_viewer():
                 counts = [hour_data[h] for h in hours]
                 fig = px.bar(x=hours, y=counts, labels={'x': 'Hour', 'y': 'Events'}, 
                            title="Activity by Hour", color_discrete_sequence=['#CC0000'])
-                fig.update_layout(height=300)
+                fig.update_layout(
+                    height=300,
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                    title_font=dict(color='#C9A84C', family='Georgia, serif')
+                )
                 st.plotly_chart(fig, use_container_width=True)
         
         with col2:
@@ -19766,7 +21407,13 @@ def audit_log_viewer():
             if top_users:
                 fig2 = px.bar(x=[u[0] for u in top_users], y=[u[1] for u in top_users],
                             title="Top Users by Activity", color_discrete_sequence=['#3182ce'])
-                fig2.update_layout(height=300)
+                fig2.update_layout(
+                    height=300,
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                    title_font=dict(color='#C9A84C', family='Georgia, serif')
+                )
                 st.plotly_chart(fig2, use_container_width=True)
 
 def advanced_analytics():
@@ -19976,7 +21623,13 @@ def advanced_analytics():
                 fig = px.bar(x=dept_counts.index, y=dept_counts.values, 
                            title="Headcount by Department", color=dept_counts.values,
                            color_continuous_scale=['#CC0000', '#d69e2e', '#38a169'])
-                fig.update_layout(height=400)
+                fig.update_layout(
+                    height=400,
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                    title_font=dict(color='#C9A84C', family='Georgia, serif')
+                )
                 st.plotly_chart(fig, use_container_width=True)
         
         with col2:
@@ -19985,7 +21638,13 @@ def advanced_analytics():
                 fig2 = px.pie(values=grade_counts.values, names=grade_counts.index, 
                             title="Grade Distribution", hole=0.5,
                             color_discrete_sequence=['#CC0000', '#d69e2e', '#3182ce', '#38a169', '#805ad5'])
-                fig2.update_layout(height=400)
+                fig2.update_layout(
+                    height=400,
+                    paper_bgcolor='#1E1E1E',
+                    plot_bgcolor='#1E1E1E',
+                    font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                    title_font=dict(color='#C9A84C', family='Georgia, serif')
+                )
                 st.plotly_chart(fig2, use_container_width=True)
         
         # Gender diversity
