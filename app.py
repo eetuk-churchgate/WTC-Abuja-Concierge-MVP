@@ -22685,36 +22685,36 @@ def ai_dlp_monitor_dashboard():
         </div>
         """, unsafe_allow_html=True)
     with col3:
-            st.markdown("""
-            <div style="background: #1E1E1E; padding: 1.2rem; border-radius: 8px; border-left: 4px solid #CC0000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                <strong style="color: #CC0000; font-size: 1.1em;">🚨 Alert Engine</strong>
-                <br><small style="color: #A0A0A0;">Status: ✅ Ready</small>
-                <br><small style="color: #A0A0A0;">Email: SendGrid</small>
-                <br><small style="color: #A0A0A0;">Cooldown: 1 hour per entity</small>
-            </div>
-            """, unsafe_allow_html=True)
+        st.markdown("""
+        <div style="background: #1E1E1E; padding: 1.2rem; border-radius: 8px; border-left: 4px solid #CC0000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+            <strong style="color: #CC0000; font-size: 1.1em;">🚨 Alert Engine</strong>
+            <br><small style="color: #A0A0A0;">Status: ✅ Ready</small>
+            <br><small style="color: #A0A0A0;">Email: SendGrid</small>
+            <br><small style="color: #A0A0A0;">Cooldown: 1 hour per entity</small>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.divider()
+    
+    # ============================================================
+    # AI-POWERED REAL-TIME ANALYTICS COMMAND CENTER
+    # ============================================================
+    st.markdown("### 🤖 AI-Powered Real-Time Analytics")
+    
+    analytics_tabs = st.tabs([
+        "📊 Threat Analytics", "📈 Trend Analysis", "🔮 Predictive Intelligence", 
+        "📋 Executive Report", "🌍 Geographic Analysis", "🏢 Entity Risk Matrix"
+    ])
+    
+    # ===== TAB 1: THREAT ANALYTICS =====
+    with analytics_tabs[0]:
+        st.subheader("📊 Real-Time Threat Analytics")
         
-        st.divider()
-        
-        # ============================================================
-        # AI-POWERED REAL-TIME ANALYTICS COMMAND CENTER
-        # ============================================================
-        st.markdown("### 🤖 AI-Powered Real-Time Analytics")
-        
-        analytics_tabs = st.tabs([
-            "📊 Threat Analytics", "📈 Trend Analysis", "🔮 Predictive Intelligence", 
-            "📋 Executive Report", "🌍 Geographic Analysis", "🏢 Entity Risk Matrix"
-        ])
-        
-        # ===== TAB 1: THREAT ANALYTICS =====
-        with analytics_tabs[0]:
-            st.subheader("📊 Real-Time Threat Analytics")
+        if st.session_state.dlp_alerts:
+            threat_df = pd.DataFrame(st.session_state.dlp_alerts)
             
-            if st.session_state.dlp_alerts:
-                threat_df = pd.DataFrame(st.session_state.dlp_alerts)
-                
-                col1, col2 = st.columns(2)
-                with col1:
+            col1, col2 = st.columns(2)
+            with col1:
                     severity_counts = threat_df['Severity'].value_counts()
                     fig_sev = px.pie(values=severity_counts.values, names=severity_counts.index, 
                                     hole=0.5, title="Alert Severity Distribution",
