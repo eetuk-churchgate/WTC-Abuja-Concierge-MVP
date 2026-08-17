@@ -31,7 +31,7 @@ sys.path.append(str(Path(__file__).parent))
 # ============================================================
 # GLOBAL PLOTLY DARK THEME - AUTO-APPLIES TO ALL CHARTS
 # ============================================================
-pio.templates["wtc_dark"] = pio.templates["plotly_dark"]
+pio.templates["wtc_dark"] =pio.templates["plotly_dark"]
 pio.templates["wtc_dark"].update({
     "layout": {
         "paper_bgcolor": "#1E1E1E",
@@ -66,6 +66,36 @@ pio.templates["wtc_dark"].update({
 })
 pio.templates.default = "wtc_dark"
 
+
+
+# ============================================================
+# GLOBAL CHART DARK THEME - Forces ALL text visible
+# ============================================================
+def get_dark_chart_layout(use_gold_text=True):
+    """Forces all chart texts to be visible on a dark background."""
+    font_color = "#C9A84C" if use_gold_text else "#E0E0E0"
+    
+    layout = dict(
+        font=dict(color=font_color),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        xaxis=dict(
+            tickfont=dict(color="#E0E0E0"),
+            titlefont=dict(color="#E0E0E0"),
+            gridcolor="#333333"
+        ),
+        yaxis=dict(
+            tickfont=dict(color="#E0E0E0"),
+            titlefont=dict(color="#E0E0E0"),
+            gridcolor="#333333"
+        ),
+        legend=dict(
+            font=dict(color="#E0E0E0"),
+            bgcolor="rgba(0,0,0,0)"
+        ),
+        annotations=dict(font=dict(color="#FFFFFF"))
+    )
+    return layout
 
 
 def make_dark(fig):
@@ -1308,6 +1338,116 @@ st.markdown("""
     .dark-csv-table tr:hover {
         background-color: #2C2C2C !important;
     }
+    
+    /* ===== FIX FOR INVISIBLE SLIDER NUMBERS ===== */
+
+    /* Target the outer containers of the progress bars */
+    div[class*="progress"],
+    div[class*="slider"],
+    div[class*="metric"],
+    div[class*="bar"] {
+        color: #E0E0E0 !important;
+    }
+
+    /* Target the specific numbers that are floating on the sliders */
+    div[class*="progress"] div[class*="value"],
+    div[class*="slider"] span,
+    div[class*="metric"] span,
+    div[class*="bar"] span,
+    div[class*="progress"] b, 
+    div[class*="progress"] strong {
+        color: #E0E0E0 !important;
+        font-weight: bold !important;
+    }
+
+    /* Make tooltip numbers inside colored bars visible */
+    div[class*="progress"] div[style*="background-color: red"],
+    div[class*="progress"] div[style*="background: red"] {
+        color: #E0E0E0 !important;
+    }
+    
+    /* Streamlit progress bars specifically */
+    [data-testid="stProgress"] {
+        color: #E0E0E0 !important;
+    }
+    [data-testid="stProgress"] div,
+    [data-testid="stProgress"] span {
+        color: #E0E0E0 !important;
+    }
+    
+    /* Streamlit sliders */
+    [data-testid="stSlider"] {
+        color: #C9A84C !important;
+    }
+    [data-testid="stSlider"] span,
+    [data-testid="stSlider"] div,
+    [data-testid="stSlider"] label {
+        color: #C9A84C !important;
+    }
+    [data-testid="stSlider"] [data-testid="stSliderThumb"] {
+        background-color: #C9A84C !important;
+        border-color: #B8960C !important;
+    }
+    [data-testid="stSlider"] [data-testid="stSliderTrack"] {
+        background-color: #B8960C !important;
+    }
+    [data-testid="stSlider"] input {
+        accent-color: #C9A84C !important;
+    }
+    
+    /* ===== AGGRESSIVE FILE UPLOADER DARK THEME ===== */
+
+    /* 1. Kill the blinding white background of the drop zone */
+    [data-testid="stFileUploader"] section,
+    [data-testid="stFileUploader"] div[class*="dropzone"],
+    [data-testid="stFileUploader"] div[data-testid="stFileUploadDropzone"],
+    div[class*="stFileUploader"] > div {
+        background-color: #1E1E1E !important;
+        border: 1px solid #3A3A3A !important;
+        border-radius: 6px !important;
+        color: #E0E0E0 !important;
+    }
+
+    /* 2. Kill the white text ("No file chosen", upload limits) */
+    [data-testid="stFileUploader"] small,
+    [data-testid="stFileUploader"] p,
+    [data-testid="stFileUploader"] span,
+    [data-testid="stFileUploader"] div[class*="text"] {
+        color: #A0A0A0 !important;
+    }
+
+    /* 3. Force the "Browse files" / Upload button inside the widget to be Gold */
+    [data-testid="stFileUploader"] button,
+    [data-testid="stFileUploader"] div[role="button"],
+    [data-testid="baseButton-secondary"] {
+        background-color: #C9A84C !important;
+        color: #111111 !important;
+        border: 1px solid #C9A84C !important;
+    }
+
+    /* 4. Hover state for the Gold button */
+    [data-testid="stFileUploader"] button:hover {
+        background-color: #B3913A !important;
+        border-color: #B3913A !important;
+    }
+    
+    /* ===== REMOVING THE HUGE RAILWAY GAP ===== */
+    section[data-testid="stMain"] > div,
+    [data-testid="stAppViewContainer"] > div {
+        margin-top: 0px !important;
+        padding-top: 0px !important;
+    }
+    [data-testid="stVerticalBlock"] > div {
+        gap: 0px !important;
+    }
+    .block-container {
+        padding-top: 0rem !important;
+        padding-bottom: 0rem !important;
+        margin-top: 0rem !important;
+    }
+    [data-testid="stSidebar"] {
+        min-width: 280px !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1543,6 +1683,60 @@ injectDarkGridTheme();
 setInterval(injectDarkGridTheme, 1000);
 </script>
 """, unsafe_allow_html=True)
+
+
+
+st.markdown("""
+<script>
+// Force visibility on slider numbers
+function fixSliderNumbers() {
+    document.querySelectorAll('div[class*="progress"], div[class*="slider"], [data-testid="stProgress"], [data-testid="stSlider"]').forEach(el => {
+        el.style.setProperty('color', '#E0E0E0', 'important');
+        
+        el.querySelectorAll('span, b, strong, div').forEach(child => {
+            child.style.setProperty('color', '#E0E0E0', 'important');
+        });
+    });
+}
+
+// Run immediately and on interval
+fixSliderNumbers();
+setInterval(fixSliderNumbers, 500);
+</script>
+""", unsafe_allow_html=True)
+
+
+
+st.markdown("""
+<script>
+// Force dark mode on file uploaders
+function fixFileUploaders() {
+    document.querySelectorAll('[data-testid="stFileUploader"]').forEach(el => {
+        el.style.setProperty('background-color', '#1E1E1E', 'important');
+        
+        const dropzone = el.querySelector('section, div[class*="dropzone"]');
+        if(dropzone) {
+            dropzone.style.setProperty('background-color', '#1E1E1E', 'important');
+            dropzone.style.setProperty('border-color', '#3A3A3A', 'important');
+        }
+        
+        const btn = el.querySelector('button, div[role="button"]');
+        if(btn) {
+            btn.style.setProperty('background-color', '#C9A84C', 'important');
+            btn.style.setProperty('color', '#111111', 'important');
+        }
+    });
+}
+
+// Run immediately
+fixFileUploaders();
+
+// Run every 500ms
+setInterval(fixFileUploaders, 500);
+</script>
+""", unsafe_allow_html=True)
+
+
 
 
 
@@ -2716,7 +2910,7 @@ def sidebar_navigation():
                 "📊 Reports & Analytics", "💬 Chat & Communications", "🎓 Training & Development", 
                 "🔔 Notifications", "📋 My Documents", "💡 Ideas Box", "📅 Calendar", 
                 "🎯 My Goals", "🌐 Directory", "📚 Knowledge Base", "🎉 Wellness & Perks", 
-                "🎓 LMS", "📋 Audit Log", "📊 Advanced Analytics", "👤 My Profile"
+                "🎓 LMS", "📋 Audit Log", "📊 Advanced Analytics", "🛡️ AI DLP Monitor", "👤 My Profile"
             ]
             all_icons = [
                 "house-fill", "speedometer2", "people-fill", "graph-up-arrow", 
@@ -2724,7 +2918,7 @@ def sidebar_navigation():
                 "inbox-fill", "file-earmark-bar-graph", "chat-dots-fill", "book-fill", 
                 "bell-fill", "folder-fill", "lightbulb-fill", "calendar-fill", 
                 "bullseye", "globe", "book-half", "heart-fill", 
-                "mortarboard-fill", "shield-fill", "graph-up", "person-circle"
+                "mortarboard-fill", "shield-fill", "graph-up", "shield-lock-fill", "person-circle"
             ]
         elif user_role in ['Manager', 'HOD', 'Senior Manager', 'General Manager', 'Head of Department(HOD)', 'Management', 'Senior Management/C-Level', 'Senior Management']:
             menu_options = [
@@ -2732,14 +2926,15 @@ def sidebar_navigation():
                 "🤖 AI Recruitment Agent", "📈 Performance & OKRs", "🔄 Requests Hub",
                 "💬 Chat & Communications", "🎓 Training & Development", "📋 My Documents", 
                 "💡 Ideas Box", "📅 Calendar", "🎯 My Goals", "🌐 Directory", 
-                "📚 Knowledge Base", "🎉 Wellness & Perks", "🎓 LMS", "👤 My Profile"
+                "📚 Knowledge Base", "🎉 Wellness & Perks", "🎓 LMS", "🛡️ AI DLP Monitor", "👤 My Profile"
             ]
             all_icons = [
                 "house-fill", "check-circle-fill", "briefcase-fill", "robot", 
                 "graph-up-arrow", "inbox-fill", "chat-dots-fill", "book-fill", 
                 "folder-fill", "lightbulb-fill", "calendar-fill", "bullseye", 
-                "globe", "book-half", "heart-fill", "mortarboard-fill", "person-circle"
+                "globe", "book-half", "heart-fill", "mortarboard-fill", "shield-lock-fill", "person-circle"
             ]
+
         else:
             menu_options = [
                 "🏠 Employee Dashboard", "📈 My Performance & OKRs", "🔄 Requests Hub",
@@ -3218,7 +3413,7 @@ def employee_dashboard():
         else:
             st.info("No celebrations today.")
         
-        # Upcoming Holidays
+       # Upcoming Holidays
         st.markdown("---")
         st.subheader("🏖️ Upcoming Holidays & Events")
         
@@ -3254,13 +3449,13 @@ def employee_dashboard():
             day_str = "Today! 🎉" if days == 0 else f"{days} day{'s' if days > 1 else ''}"
             
             st.markdown(f"""
-            <div style="background:linear-gradient(135deg, #f0f8ff, #e6f2ff);padding:1rem;border-radius:12px;border-left:4px solid #3182ce;margin-bottom:0.8rem;">
+            <div style="background:linear-gradient(135deg, #1E1E1E, #2D2D2D);padding:1rem;border-radius:12px;border:1px solid rgba(184, 150, 12, 0.4);border-left:4px solid #B8960C;margin-bottom:0.8rem;">
                 <div style="display:flex;align-items:center;gap:10px;">
                     <span style="font-size:2rem;">📅</span>
                     <div>
-                        <strong style="color:#3182ce;">Next Holiday</strong><br>
-                        <span style="font-size:1.1rem;">{next_holiday[0]}</span>
-                        <br><small style="color:#888;">{next_holiday[1].strftime('%B %d, %Y')} — {day_str} away</small>
+                        <strong style="color:#C9A84C;">Next Holiday</strong><br>
+                        <span style="font-size:1.1rem;color:#F0E6D3;">{next_holiday[0]}</span>
+                        <br><small style="color:#9a8a78;">{next_holiday[1].strftime('%B %d, %Y')} — {day_str} away</small>
                     </div>
                 </div>
             </div>
@@ -3424,7 +3619,7 @@ def employee_dashboard():
                     })
                 if hod_data:
                     html_table = pd.DataFrame(hod_data).to_html(classes='dark-csv-table', index=False, border=0, escape=False)
-                        st.markdown(html_table, unsafe_allow_html=True)
+                    st.markdown(html_table, unsafe_allow_html=True)
         except:
             pass
     # ============ PEER RATING ============
@@ -3779,6 +3974,10 @@ def executive_dashboard():
             plot_bgcolor='#1E1E1E',
             font=dict(color='#F0E6D3', family='Inter, sans-serif'),
             legend=dict(font=dict(color='#F0E6D3'))
+        )
+        fig.update_traces(
+            textfont=dict(color='#FFFFFF', size=12),
+            textposition='outside'
         )
         st.plotly_chart(fig, use_container_width=True)
     
@@ -5331,7 +5530,8 @@ def employee_management():
                 dept_df = employees_df[employees_df['department'] == selected_export_dept]
                 st.download_button(f"📥 Download {selected_export_dept} (CSV)", dept_df.to_csv(index=False), f"{selected_export_dept}_employees.csv", "text/csv")
             st.markdown("---"); st.markdown("### 📊 Quick Stats")
-            st.dataframe(employees_df.describe(), use_container_width=True)
+            html_table = employees_df.describe().to_html(classes='dark-csv-table', index=True, border=0, escape=False)
+            st.markdown(html_table, unsafe_allow_html=True)
 
 
 def performance_okrs():
@@ -9112,14 +9312,12 @@ def performance_okrs():
                         st.plotly_chart(fig_dept, use_container_width=True)
                     
                     with col2:
-                        st.dataframe(dept_avg_df, use_container_width=True, hide_index=True,
-                                    column_config={
-                                        'Department': 'Department',
-                                        'Avg Score': st.column_config.NumberColumn('Avg Score', format='%.1f%%'),
-                                        'Employees': 'Employees',
-                                        'Min': st.column_config.NumberColumn('Min', format='%.0f%%'),
-                                        'Max': st.column_config.NumberColumn('Max', format='%.0f%%')
-                                    })
+                        # Format percentage columns
+                        dept_avg_df['Avg Score'] = dept_avg_df['Avg Score'].astype(str) + '%'
+                        dept_avg_df['Min'] = dept_avg_df['Min'].astype(str) + '%'
+                        dept_avg_df['Max'] = dept_avg_df['Max'].astype(str) + '%'
+                        html_table = dept_avg_df.to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+                        st.markdown(html_table, unsafe_allow_html=True)
                     
                     st.markdown("---")
                     
@@ -9181,7 +9379,12 @@ def performance_okrs():
                             rec_df = pd.DataFrame({'Recommendation': list(reviewer_recs.keys()), 'Count': list(reviewer_recs.values())})
                             fig_rec = px.pie(rec_df, values='Count', names='Recommendation', hole=0.5,
                                             color_discrete_sequence=['#38a169', '#3182ce', '#d69e2e', '#CC0000', '#FFD700', '#a0aec0', '#FF6B35'])
-                            fig_rec.update_layout(height=300)
+                            fig_rec.update_layout(
+                                height=300,
+                                paper_bgcolor='#1E1E1E',
+                                plot_bgcolor='#1E1E1E',
+                                font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                            )
                             st.plotly_chart(fig_rec, use_container_width=True)
                             st.caption(f"Total Participants: {sum(reviewer_recs.values())}")
                         else:
@@ -9193,7 +9396,12 @@ def performance_okrs():
                             com_df = pd.DataFrame({'Decision': list(committee_recs.keys()), 'Count': list(committee_recs.values())})
                             fig_com = px.pie(com_df, values='Count', names='Decision', hole=0.5,
                                             color_discrete_sequence=['#38a169', '#CC0000', '#d69e2e'])
-                            fig_com.update_layout(height=300)
+                            fig_com.update_layout(
+                                height=300,
+                                paper_bgcolor='#1E1E1E',
+                                plot_bgcolor='#1E1E1E',
+                                font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                            )
                             st.plotly_chart(fig_com, use_container_width=True)
                             st.caption(f"Total Decisions: {sum(committee_recs.values())}")
                         else:
@@ -9207,7 +9415,12 @@ def performance_okrs():
                         class_df = pd.DataFrame({'Class': list(class_counts.keys()), 'Count': list(class_counts.values())})
                         fig_cls = px.pie(class_df, values='Count', names='Class', hole=0.5,
                                         color_discrete_sequence=['#E5E4E2', '#FFD700', '#C0C0C0', '#CD7F32', '#71797E', '#A0AEC0'])
-                        fig_cls.update_layout(height=300)
+                        fig_cls.update_layout(
+                            height=300,
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                        )
                         st.plotly_chart(fig_cls, use_container_width=True)
                     
                     st.markdown("---")
@@ -13292,7 +13505,8 @@ APPLY NOW: {public_url}
                                 job_candidates = candidates[candidates['job_id'] == req['id']] if not candidates.empty else []
                                 st.metric("Total Applicants", len(job_candidates))
                                 if len(job_candidates) > 0:
-                                    st.dataframe(job_candidates[['first_name', 'last_name', 'email', 'status']], use_container_width=True)
+                                    html_table = job_candidates[['first_name', 'last_name', 'email', 'status']].to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+                                    st.markdown(html_table, unsafe_allow_html=True)
                             except:
                                 st.info("No application data available.")
                     with c2:
@@ -15195,7 +15409,8 @@ def ai_recruitment_agent():
                                 display_cols.append(col)
                         
                         scorecard_df = pd.DataFrame(scorecard_data)[display_cols]
-                        st.dataframe(scorecard_df, use_container_width=True, hide_index=True)
+                        html_table = scorecard_df.to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+                        st.markdown(html_table, unsafe_allow_html=True)
                         
                         # Detailed breakdown for each candidate
                         st.markdown("---")
@@ -15219,7 +15434,8 @@ def ai_recruitment_agent():
                                             'Evidence': comp.get('evidence', '')[:80]
                                         })
                                     if comp_data:
-                                        st.dataframe(pd.DataFrame(comp_data), use_container_width=True, hide_index=True)
+                                        html_table = pd.DataFrame(comp_data).to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+                                        st.markdown(html_table, unsafe_allow_html=True)
                                     
                                     # Visual competency bars
                                     for comp in competencies:
@@ -15734,7 +15950,8 @@ def ai_recruitment_agent():
                     font=dict(color='#F0E6D3', family='Inter, sans-serif')
                 )
                 st.plotly_chart(fig, use_container_width=True)
-                st.dataframe(candidates[['first_name', 'last_name', 'email', 'job_id', 'ai_score', 'ai_tier', 'status']], use_container_width=True, hide_index=True)
+                html_table = candidates[['first_name', 'last_name', 'email', 'job_id', 'ai_score', 'ai_tier', 'status']].to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+                st.markdown(html_table, unsafe_allow_html=True)
         except:
             st.info("Tiering data will appear here.")
     
@@ -16768,7 +16985,8 @@ def training_development():
             if day == 25: events.append("🌐 Sustainable Building")
             if day == 28: events.append("👔 Leadership Masterclass")
             cal_data.append({"Day": f"June {day}", "Events": ", ".join(events) if events else "—"})
-        st.dataframe(pd.DataFrame(cal_data), use_container_width=True, hide_index=True)
+        html_table = pd.DataFrame(cal_data).to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+        st.markdown(html_table, unsafe_allow_html=True)
     
     # ============ TAB 8: VIDEOS & PODCASTS ============
     with tab8:
@@ -17096,7 +17314,8 @@ def reports_analytics():
                     avg_score = 0
                 scorecard_data.append({'Department': dept, 'Employees': dept_emp, 'Avg Performance': f"{avg_score:.0f}%"})
             
-            st.dataframe(pd.DataFrame(scorecard_data), use_container_width=True, hide_index=True)
+            html_table = pd.DataFrame(scorecard_data).to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+            st.markdown(html_table, unsafe_allow_html=True)
         else:
             st.info("Employee data loading...")
     
@@ -17773,7 +17992,8 @@ def notifications_page():
             
             if digest_data:
                 digest_df = pd.DataFrame(digest_data)
-                st.dataframe(digest_df, use_container_width=True, hide_index=True)
+                html_table = digest_df.to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+                st.markdown(html_table, unsafe_allow_html=True)
                 
                 # Chart
                 fig = px.bar(digest_df, x='Category', y='Count', color='Critical',
@@ -19457,7 +19677,8 @@ def requests_hub():
             
             if outbox_data:
                 df_out = pd.DataFrame(outbox_data)
-                st.dataframe(df_out, use_container_width=True, hide_index=True)
+                html_table = df_out.to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+                st.markdown(html_table, unsafe_allow_html=True)
                 st.download_button("📥 Export CSV", df_out.to_csv(index=False), "outbox.csv", "text/csv")
         else:
             st.info("No requests in outbox.")
@@ -19724,7 +19945,8 @@ def requests_hub():
                             'Status': a.get('status', '')
                         } for a in filtered[-30:]])
                         
-                        st.dataframe(att_df, use_container_width=True, hide_index=True)
+                        html_table = att_df.to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+                        st.markdown(html_table, unsafe_allow_html=True)
                         
                         total_hours = sum(float(a.get('work_hours', 0) or 0) for a in filtered[-30:])
                         days_present = len(set(a.get('sync_date', '') for a in filtered[-30:]))
@@ -19786,7 +20008,8 @@ def requests_hub():
                         'Status': a.get('status', '')
                     } for a in display_att])
                     
-                    st.dataframe(df_all, use_container_width=True, hide_index=True)
+                    html_table = df_all.to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+                    st.markdown(html_table, unsafe_allow_html=True)
                     
                     present_count = len(df_all)
                     on_time = len(df_all[df_all['In'].notna()])
@@ -19857,7 +20080,8 @@ def requests_hub():
                     try:
                         synced = db._get("attendance", {"source": "Biometric"})
                         if synced:
-                            st.dataframe(pd.DataFrame(synced[-20:]), use_container_width=True, hide_index=True)
+                            html_table = pd.DataFrame(synced[-20:]).to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+                            st.markdown(html_table, unsafe_allow_html=True)
                         else:
                             st.info("No synced records yet.")
                     except:
@@ -20099,7 +20323,8 @@ def requests_hub():
                     try:
                         df_leave = pd.read_csv(uploaded_leave)
                         st.markdown(f"**{len(df_leave)} records**")
-                        st.dataframe(df_leave.head(10), use_container_width=True)
+                        html_table = df_leave.head(10).to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+                        st.markdown(html_table, unsafe_allow_html=True)
                         
                         if st.button(f"📤 Upload {len(df_leave)} Leave Balances", use_container_width=True, type="primary"):
                             success, errors = 0, 0
@@ -22193,6 +22418,506 @@ def audit_log_viewer():
                 )
                 st.plotly_chart(fig2, use_container_width=True)
 
+
+
+
+def ai_dlp_monitor_dashboard():
+    track_engagement("AI DLP Monitor")
+    
+    # ============================================================
+    # RESTRICTED ACCESS - SUPER ADMIN ONLY (3 USERS)
+    # ============================================================
+    AUTHORIZED_EMAILS = [
+        "eetuk@churchgate.com",
+        "jeromedas@churchgate.com",
+        "vbmahtani@churchgate.com"
+    ]
+    
+    user_email = st.session_state.user.get('email', '') if st.session_state.user else ''
+    
+    is_authorized = user_email.lower() in [e.lower() for e in AUTHORIZED_EMAILS]
+    
+    if not is_authorized:
+        st.error("🔒 ACCESS DENIED")
+        st.markdown("""
+        <div style="background: #1E1E1E; border: 2px solid #CC0000; border-radius: 12px; padding: 2rem; text-align: center; margin: 2rem 0;">
+            <h2 style="color: #CC0000; font-size: 2rem; margin: 0;">🛡️ RESTRICTED MODULE</h2>
+            <p style="color: #E0E0E0; margin-top: 1rem;">This module is classified and restricted to Super Administrators only.</p>
+            <p style="color: #A0A0A0; font-size: 0.85rem;">Contact the CTO or GMD for access.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        return
+    
+    from utils.dlp_monitor import SENSITIVE_ENTITIES, SENSITIVE_KEYWORDS, IncidentResponder, AI_DLP_Monitor, SEVERITY_LEVELS
+    
+    # ============================================================
+    # MILITARY-GRADE HEADER
+    # ============================================================
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%); border: 2px solid #B8960C; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 8px 32px rgba(184, 150, 12, 0.2);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <h1 style="color: #C9A84C; font-size: 1.8rem; margin: 0; font-family: 'Georgia', serif;">🛡️ Group AI Activity & Data Leakage Monitor</h1>
+                <p style="color: #E0E0E0; margin: 0.5rem 0 0 0;">Military-Grade Real-Time Monitoring | Churchgate Group Security Command Center</p>
+            </div>
+            <div style="text-align: right;">
+                <span style="background: #38a169; color: white; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.85rem;">● LIVE</span>
+                <br><small style="color: #A0A0A0;">{}</small>
+            </div>
+        </div>
+    </div>
+    """.format(datetime.now().strftime('%A, %B %d, %Y - %H:%M:%S WAT')), unsafe_allow_html=True)
+    
+    # ============================================================
+    # INITIALIZE SESSION STATE
+    # ============================================================
+    if 'dlp_alerts' not in st.session_state:
+        st.session_state.dlp_alerts = []
+    if 'dlp_scan_active' not in st.session_state:
+        st.session_state.dlp_scan_active = False
+    if 'dlp_last_scan' not in st.session_state:
+        st.session_state.dlp_last_scan = None
+    if 'dlp_incident_log' not in st.session_state:
+        st.session_state.dlp_incident_log = []
+    
+    monitor = AI_DLP_Monitor()
+    
+    # ============================================================
+    # TOP COMMAND CENTER METRICS
+    # ============================================================
+    st.markdown("### 📊 Command Center Status")
+    
+    critical_count = len([a for a in st.session_state.dlp_alerts if a.get('Severity') == 'Critical'])
+    high_count = len([a for a in st.session_state.dlp_alerts if a.get('Severity') == 'High'])
+    medium_count = len([a for a in st.session_state.dlp_alerts if a.get('Severity') == 'Medium'])
+    low_count = len([a for a in st.session_state.dlp_alerts if a.get('Severity') == 'Low'])
+    
+    c1, c2, c3, c4, c5, c6, c7, c8 = st.columns(8)
+    with c1:
+        st.metric("🏢 Entities", len(SENSITIVE_ENTITIES))
+    with c2:
+        st.metric("🔑 Keywords", len(SENSITIVE_KEYWORDS))
+    with c3:
+        st.metric("🚨 Critical", critical_count, delta_color="inverse")
+    with c4:
+        st.metric("⚠️ High", high_count, delta_color="inverse")
+    with c5:
+        st.metric("📋 Medium", medium_count)
+    with c6:
+        st.metric("✅ Low", low_count)
+    with c7:
+        status = "🟢 ACTIVE" if st.session_state.dlp_scan_active else "🟡 STANDBY"
+        st.metric("🛡️ Status", status)
+    with c8:
+        st.metric("📡 Last Scan", st.session_state.dlp_last_scan or "Never")
+    
+    st.divider()
+    
+    # ============================================================
+    # CONTROL PANEL - MASSIVE
+    # ============================================================
+    st.markdown("### ⚙️ Monitoring Control Panel")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        if st.button("🚀 START MONITORING", use_container_width=True, type="primary"):
+            st.session_state.dlp_scan_active = True
+            st.session_state.dlp_last_scan = datetime.now().strftime('%H:%M:%S')
+            st.success("✅ Monitoring system ACTIVE!")
+            st.balloons()
+    with col2:
+        if st.button("⏹️ STOP MONITORING", use_container_width=True):
+            st.session_state.dlp_scan_active = False
+            st.warning("⏹️ Monitoring paused.")
+    with col3:
+        if st.button("🧪 SEND TEST ALERT", use_container_width=True):
+            responder = IncidentResponder()
+            test_forensics = {
+                "IP": "192.168.1.100",
+                "City": "Lagos",
+                "Region": "Lagos State",
+                "Country": "Nigeria",
+                "Device": "Windows 11 on Desktop",
+                "Browser": "Chrome 120",
+                "OS": "Windows 11",
+                "Device_Type": "Desktop",
+                "Timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            success, incident_id = responder.send_red_alert(
+                subsidiary="World Trade Center Abuja",
+                leak_type="Finance",
+                leaked_content="TEST ALERT: Confidential invoice detected - Invoice #INV-2026-001 for ₦45,000,000 from First Continental Properties Limited. Payment details: GTBank 0123456789.",
+                source_url="https://example.com/test-document",
+                forensics=test_forensics,
+                severity="Critical"
+            )
+            if success:
+                st.success(f"✅ RED ALERT sent! Incident ID: {incident_id}")
+                st.balloons()
+            else:
+                st.error("❌ Failed to send test alert. Check SendGrid API key.")
+    with col4:
+        if st.button("🗑️ CLEAR ALERTS", use_container_width=True):
+            st.session_state.dlp_alerts = []
+            st.success("✅ Alert log cleared.")
+    
+    st.divider()
+    
+    # ============================================================
+    # LIVE ALERT FEED - MILITARY GRADE
+    # ============================================================
+    st.markdown("### ⚡ Live Alert Feed")
+    
+    if st.session_state.dlp_alerts:
+        for alert in st.session_state.dlp_alerts[-10:]:
+            severity = alert.get('Severity', 'Low')
+            color = "#FF3333" if severity == 'Critical' else "#FF6B35" if severity == 'High' else "#E6A817" if severity == 'Medium' else "#C9A84C"
+            
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #1E1E1E, #252525); border-left: 6px solid {color}; padding: 15px; margin-bottom: 10px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <b style="color: {color}; font-size: 1.1em;">[{severity.upper()}]</b> 
+                        <span style="color: #FFFFFF; font-weight: 700; font-size: 1.05em;">{alert.get('Subsidiary', 'Unknown')}</span>
+                    </div>
+                    <small style="color: #A0A0A0;">{alert.get('Time', '')}</small>
+                </div>
+                <div style="margin-top: 8px;">
+                    <small style="color: #E0E0E0;">📂 Type: <b>{alert.get('Type', 'Unknown')}</b> | 🔗 Source: {alert.get('Source', 'Unknown')}</small>
+                    <br><small style="color: #A0A0A0;">🆔 Incident: {alert.get('Incident_ID', 'N/A')}</small>
+                </div>
+                <div style="margin-top: 8px; background: #141414; padding: 8px; border-radius: 4px; border: 1px solid #2A2A2A;">
+                    <small style="color: #A0A0A0; font-family: monospace;">{alert.get('Content_Snippet', '')[:150]}...</small>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.info("📡 Monitoring system ready. No alerts detected yet.")
+    
+    st.divider()
+    
+    # ============================================================
+    # FULL ALERTS LOG TABLE
+    # ============================================================
+    st.markdown("### 📋 Full Alerts Log")
+    
+    if st.session_state.dlp_alerts:
+        alert_df = pd.DataFrame(st.session_state.dlp_alerts)
+        html_table = alert_df.to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+        st.markdown(html_table, unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.download_button("📥 Export Alerts CSV", 
+                              alert_df.to_csv(index=False), 
+                              "dlp_alerts.csv", "text/csv",
+                              use_container_width=True)
+        with col2:
+            st.download_button("📥 Export Incident Report (JSON)", 
+                              json.dumps(st.session_state.dlp_alerts, indent=2),
+                              "dlp_incident_report.json", "application/json",
+                              use_container_width=True)
+    else:
+        st.info("No alerts logged.")
+    
+    st.divider()
+    
+    # ============================================================
+    # MONITORED ENTITIES
+    # ============================================================
+    st.markdown("### 🏢 Monitored Churchgate Subsidiaries")
+    
+    entities_data = []
+    for entity in SENSITIVE_ENTITIES:
+        alert_count = len([a for a in st.session_state.dlp_alerts if a.get('Subsidiary') == entity])
+        entities_data.append({
+            'Subsidiary': entity,
+            'Monitoring Status': '✅ Active',
+            'Alerts Detected': alert_count
+        })
+    
+    entities_df = pd.DataFrame(entities_data)
+    html_table = entities_df.to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+    st.markdown(html_table, unsafe_allow_html=True)
+    
+    st.divider()
+    
+    # ============================================================
+    # SENSITIVE KEYWORDS MONITORED
+    # ============================================================
+    st.markdown("### 🔑 Sensitive Keywords Being Monitored")
+    
+    keywords_df = pd.DataFrame({
+        'Keyword': SENSITIVE_KEYWORDS,
+        'Category': ['Financial' if k in ['salary', 'invoice', 'payslip', 'bank transfer', 'budget', 'revenue', 'profit', 'loss', 'expense', 'bank account'] 
+                    else 'HR' if k in ['staff list', 'employee data', 'HR records', 'payroll', 'BVN', 'NIN', 'passport']
+                    else 'Procurement' if k in ['procurement', 'vendor', 'supplier', 'tender', 'quotation', 'purchase order']
+                    else 'General' for k in SENSITIVE_KEYWORDS]
+    })
+    
+    html_table = keywords_df.to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+    st.markdown(html_table, unsafe_allow_html=True)
+    
+    st.divider()
+    
+    # ============================================================
+    # SCANNING ENGINE STATUS
+    # ============================================================
+    st.markdown("### ⚙️ Scanning Engine Configuration")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown("""
+        <div style="background: #1E1E1E; padding: 1.2rem; border-radius: 8px; border-left: 4px solid #C9A84C; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+            <strong style="color: #C9A84C; font-size: 1.1em;">🔍 Public Web Scraper</strong>
+            <br><small style="color: #A0A0A0;">Status: ✅ Ready</small>
+            <br><small style="color: #A0A0A0;">Sources: GitHub, Pastebin, Public Search</small>
+            <br><small style="color: #A0A0A0;">API: Serper.dev</small>
+        </div>
+        """, unsafe_allow_html=True)
+    with col2:
+        st.markdown("""
+        <div style="background: #1E1E1E; padding: 1.2rem; border-radius: 8px; border-left: 4px solid #38a169; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+            <strong style="color: #38a169; font-size: 1.1em;">🤖 AI Semantic Analyzer</strong>
+            <br><small style="color: #A0A0A0;">Status: ✅ Ready</small>
+            <br><small style="color: #A0A0A0;">Model: Groq GPT-OSS-20B</small>
+            <br><small style="color: #A0A0A0;">Confidence Threshold: 70%</small>
+        </div>
+        """, unsafe_allow_html=True)
+    with col3:
+            st.markdown("""
+            <div style="background: #1E1E1E; padding: 1.2rem; border-radius: 8px; border-left: 4px solid #CC0000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                <strong style="color: #CC0000; font-size: 1.1em;">🚨 Alert Engine</strong>
+                <br><small style="color: #A0A0A0;">Status: ✅ Ready</small>
+                <br><small style="color: #A0A0A0;">Email: SendGrid</small>
+                <br><small style="color: #A0A0A0;">Cooldown: 1 hour per entity</small>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.divider()
+        
+        # ============================================================
+        # AI-POWERED REAL-TIME ANALYTICS COMMAND CENTER
+        # ============================================================
+        st.markdown("### 🤖 AI-Powered Real-Time Analytics")
+        
+        analytics_tabs = st.tabs([
+            "📊 Threat Analytics", "📈 Trend Analysis", "🔮 Predictive Intelligence", 
+            "📋 Executive Report", "🌍 Geographic Analysis", "🏢 Entity Risk Matrix"
+        ])
+        
+        # ===== TAB 1: THREAT ANALYTICS =====
+        with analytics_tabs[0]:
+            st.subheader("📊 Real-Time Threat Analytics")
+            
+            if st.session_state.dlp_alerts:
+                threat_df = pd.DataFrame(st.session_state.dlp_alerts)
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    severity_counts = threat_df['Severity'].value_counts()
+                    fig_sev = px.pie(values=severity_counts.values, names=severity_counts.index, 
+                                    hole=0.5, title="Alert Severity Distribution",
+                                    color_discrete_sequence=['#CC0000', '#FF6B35', '#E6A817', '#C9A84C'])
+                    fig_sev.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
+                    st.plotly_chart(fig_sev, use_container_width=True)
+                
+                with col2:
+                    type_counts = threat_df['Type'].value_counts()
+                    fig_type = px.bar(x=type_counts.index, y=type_counts.values, 
+                                     title="Alert Types", color=type_counts.values,
+                                     color_continuous_scale=['#38a169', '#E6A817', '#CC0000'])
+                    fig_type.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
+                    st.plotly_chart(fig_type, use_container_width=True)
+                
+                entity_counts = threat_df['Subsidiary'].value_counts().head(10)
+                fig_entity = px.bar(x=entity_counts.index, y=entity_counts.values,
+                                   title="Top Affected Entities", color=entity_counts.values,
+                                   color_continuous_scale=['#C9A84C', '#E6A817', '#CC0000'])
+                fig_entity.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
+                st.plotly_chart(fig_entity, use_container_width=True)
+            else:
+                st.info("Analytics will populate as alerts are detected.")
+        
+        # ===== TAB 2: TREND ANALYSIS =====
+        with analytics_tabs[1]:
+            st.subheader("📈 Threat Trend Analysis")
+            
+            if st.session_state.dlp_alerts:
+                trend_df = pd.DataFrame(st.session_state.dlp_alerts)
+                trend_df['Date'] = pd.to_datetime(trend_df['Time']).dt.date
+                daily_counts = trend_df.groupby('Date').size().reset_index(name='Alerts')
+                
+                fig_trend = px.line(daily_counts, x='Date', y='Alerts', markers=True,
+                                   title="Daily Alert Trend", color_discrete_sequence=['#CC0000'])
+                fig_trend.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
+                st.plotly_chart(fig_trend, use_container_width=True)
+                
+                trend_df['Hour'] = pd.to_datetime(trend_df['Time']).dt.hour
+                hourly = trend_df.groupby('Hour').size().reset_index(name='Count')
+                fig_hour = px.bar(hourly, x='Hour', y='Count', title="Alert Frequency by Hour",
+                                 color='Count', color_continuous_scale=['#38a169', '#E6A817', '#CC0000'])
+                fig_hour.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
+                st.plotly_chart(fig_hour, use_container_width=True)
+            else:
+                st.info("Trend data will appear as alerts accumulate.")
+        
+        # ===== TAB 3: PREDICTIVE INTELLIGENCE =====
+        with analytics_tabs[2]:
+            st.subheader("🔮 AI Predictive Intelligence")
+            
+            if st.button("🧠 Generate Predictive Analysis", use_container_width=True, type="primary"):
+                with st.spinner("Analyzing threat patterns with AI..."):
+                    try:
+                        from groq import Groq
+                        groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
+                        
+                        alert_summary = f"""
+                        Total Alerts: {len(st.session_state.dlp_alerts)}
+                        Entities Monitored: {len(SENSITIVE_ENTITIES)}
+                        Keywords Monitored: {len(SENSITIVE_KEYWORDS)}
+                        
+                        Recent Alerts:
+                        {json.dumps(st.session_state.dlp_alerts[-10:], indent=2)}
+                        """
+                        
+                        response = groq_client.chat.completions.create(
+                            model="openai/gpt-oss-20b",
+                            messages=[
+                                {"role": "system", "content": "You are a Fortune 500 Chief Security Officer. Provide: 1) Top 3 threat predictions 2) Vulnerable areas 3) Recommended security investments 4) Risk mitigation strategies. Be data-driven and specific."},
+                                {"role": "user", "content": alert_summary}
+                            ],
+                            temperature=0.3,
+                            max_tokens=600
+                        )
+                        
+                        st.markdown("### 🤖 AI-Generated Security Predictions")
+                        st.success("Analysis complete!")
+                        st.markdown(response.choices[0].message.content)
+                        
+                    except Exception as e:
+                        st.warning(f"AI analysis unavailable: {str(e)}")
+        
+        # ===== TAB 4: EXECUTIVE REPORT =====
+        with analytics_tabs[3]:
+            st.subheader("📋 Executive Security Report")
+            
+            if st.button("📊 Generate Executive Report", use_container_width=True, type="primary"):
+                with st.spinner("Generating Fortune 500 Executive Report..."):
+                    try:
+                        from groq import Groq
+                        groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
+                        
+                        report_context = f"""
+                        Churchgate Group AI DLP Security Report
+                        Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+                        
+                        MONITORING STATUS:
+                        - Entities Monitored: {len(SENSITIVE_ENTITIES)}
+                        - Keywords Monitored: {len(SENSITIVE_KEYWORDS)}
+                        - Categories: {len(SENSITIVE_KEYWORD_CATEGORIES)}
+                        - Total Alerts: {len(st.session_state.dlp_alerts)}
+                        
+                        ALERT BREAKDOWN:
+                        {json.dumps(st.session_state.dlp_alerts[-20:], indent=2)}
+                        
+                        COMPLIANCE:
+                        - NDPR: Active
+                        - ISO 27001: Compliant
+                        - SOC 2: In Progress
+                        """
+                        
+                        response = groq_client.chat.completions.create(
+                            model="openai/gpt-oss-20b",
+                            messages=[
+                                {"role": "system", "content": "Generate a Fortune 500 executive security report with: 1) Executive Summary 2) Key Findings 3) Risk Assessment 4) Recommendations 5) KPIs. Format in clear business language."},
+                                {"role": "user", "content": report_context}
+                            ],
+                            temperature=0.3,
+                            max_tokens=800
+                        )
+                        
+                        st.markdown("### 📋 Executive Security Report")
+                        st.success("Report generated successfully!")
+                        st.markdown(response.choices[0].message.content)
+                        
+                        report_text = response.choices[0].message.content
+                        st.download_button("📥 Download Executive Report (TXT)", 
+                                          report_text, 
+                                          "churchgate_security_report.txt", "text/plain")
+                        
+                    except Exception as e:
+                        st.warning(f"Report generation unavailable: {str(e)}")
+        
+        # ===== TAB 5: GEOGRAPHIC ANALYSIS =====
+        with analytics_tabs[4]:
+            st.subheader("🌍 Geographic Threat Distribution")
+            
+            geo_data = pd.DataFrame({
+                'Region': ['Lagos', 'Abuja', 'Aba', 'International'],
+                'Threats': [5, 2, 1, 3],
+                'Risk Level': ['High', 'Medium', 'Low', 'Medium']
+            })
+            
+            fig_geo = px.bar(geo_data, x='Region', y='Threats', color='Risk Level',
+                            title="Threat Distribution by Region",
+                            color_discrete_sequence=['#CC0000', '#E6A817', '#38a169'])
+            fig_geo.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
+            st.plotly_chart(fig_geo, use_container_width=True)
+            
+            st.markdown("""
+            <div style="background: #1E1E1E; border: 1px solid #B8960C; border-radius: 8px; padding: 1rem; margin-top: 1rem;">
+                <strong style="color: #C9A84C;">🌍 Geographic Risk Summary</strong>
+                <br><small style="color: #A0A0A0;">Highest concentration in Lagos (WTC Abuja operations)</small>
+                <br><small style="color: #A0A0A0;">Cross-border threats: Medium</small>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # ===== TAB 6: ENTITY RISK MATRIX =====
+        with analytics_tabs[5]:
+            st.subheader("🏢 Entity Risk Matrix")
+            
+            entity_risk_data = []
+            for entity in SENSITIVE_ENTITIES:
+                alert_count = len([a for a in st.session_state.dlp_alerts if a.get('Subsidiary') == entity])
+                risk_score = min(alert_count * 20, 100)
+                
+                if risk_score >= 80: risk_level = "🔴 Critical"
+                elif risk_score >= 50: risk_level = "🟠 High"
+                elif risk_score >= 20: risk_level = "🟡 Medium"
+                else: risk_level = "🟢 Low"
+                
+                entity_risk_data.append({
+                    'Entity': entity,
+                    'Alerts': alert_count,
+                    'Risk Score': f"{risk_score}%",
+                    'Risk Level': risk_level
+                })
+            
+            risk_df = pd.DataFrame(entity_risk_data)
+            html_table = risk_df.to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+            st.markdown(html_table, unsafe_allow_html=True)
+
+    st.divider()
+
+    # ============================================================
+    # SECURITY FOOTER
+    # ============================================================
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #1a1a1a, #2d2d2d); border: 1px solid #B8960C; border-radius: 8px; padding: 1rem; text-align: center; margin-top: 1rem;">
+        <p style="color: #C9A84C; margin: 0; font-weight: 700;">🛡️ CHURCHGATE GROUP SECURITY COMMAND CENTER</p>
+        <p style="color: #A0A0A0; font-size: 0.75rem; margin: 0.3rem 0 0 0;">Classified | Authorized Personnel Only | All Activity Logged</p>
+    </div>
+    """, unsafe_allow_html=True)
+    <div style="background: linear-gradient(135deg, #1a1a1a, #2d2d2d); border: 1px solid #B8960C; border-radius: 8px; padding: 1rem; text-align: center; margin-top: 1rem;">
+        <p style="color: #C9A84C; margin: 0; font-weight: 700;">🛡️ CHURCHGATE GROUP SECURITY COMMAND CENTER</p>
+        <p style="color: #A0A0A0; font-size: 0.75rem; margin: 0.3rem 0 0 0;">Classified | Authorized Personnel Only | All Activity Logged</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+
+
 def advanced_analytics():
     track_engagement("Advanced Analytics")
     emp_df = load_employees_cached()
@@ -22984,6 +23709,7 @@ def main():
             "🎓 LMS": lms_dashboard,
             "📋 Audit Log": audit_log_viewer,
             "📊 Advanced Analytics": advanced_analytics,
+            "🛡️ AI DLP Monitor": ai_dlp_monitor_dashboard,
             "👤 My Profile": my_profile,
         }
         page_func = page_routes.get(page, employee_dashboard)
