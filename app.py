@@ -214,6 +214,22 @@ else:
     st.set_page_config(page_title="Churchgate Group HRIS", page_icon="🏢", layout="wide", initial_sidebar_state="expanded")
 
 # ============================================================
+# INITIALIZE ALL SESSION STATE VARIABLES
+# ============================================================
+if 'self_assessments' not in st.session_state:
+    st.session_state.self_assessments = {}
+if 'dlp_alerts' not in st.session_state:
+    st.session_state.dlp_alerts = []
+if 'dlp_monitor_running' not in st.session_state:
+    st.session_state.dlp_monitor_running = False
+if 'dlp_scan_count' not in st.session_state:
+    st.session_state.dlp_scan_count = 0
+if 'dlp_last_scan' not in st.session_state:
+    st.session_state.dlp_last_scan = None
+if 'dlp_alert_log' not in st.session_state:
+    st.session_state.dlp_alert_log = []
+
+# ============================================================
 # GLOBAL WTC PREMIUM DARK THEME - ULTIMATE FIX
 # ============================================================
 st.markdown("""
@@ -3390,7 +3406,7 @@ def employee_dashboard():
                         st.info("No work anniversaries this month.")
             except: pass
         
-        # Today's Celebrations
+       # Today's Celebrations
         st.markdown("---")
         st.markdown("### 🎉 Today's Celebrations")
         
@@ -3400,14 +3416,14 @@ def employee_dashboard():
         if today_birthdays or today_anniversaries:
             if today_birthdays:
                 st.markdown(f"""
-                <div style="background:linear-gradient(135deg, #fff5f5, #ffe6e6);padding:1rem;border-radius:12px;border-left:4px solid #CC0000;margin-bottom:0.5rem;">
-                    <strong>🎂 Happy Birthday!</strong> {', '.join([b['name'] for b in today_birthdays])}
+                <div style="background:linear-gradient(135deg, #1E1E1E, #2D2D2D);padding:1rem;border-radius:12px;border:1px solid rgba(184, 150, 12, 0.4);border-left:4px solid #CC0000;margin-bottom:0.5rem;">
+                    <strong style="color:#C9A84C;">🎂 Happy Birthday!</strong> <span style="color:#F0E6D3;">{', '.join([b['name'] for b in today_birthdays])}</span>
                 </div>
                 """, unsafe_allow_html=True)
             if today_anniversaries:
                 st.markdown(f"""
-                <div style="background:linear-gradient(135deg, #fffef5, #f5f0e0);padding:1rem;border-radius:12px;border-left:4px solid #D4AF37;margin-bottom:0.5rem;">
-                    <strong>⭐ Work Anniversary!</strong> {', '.join([f"{a['name']} ({a['years']} yrs)" for a in today_anniversaries])}
+                <div style="background:linear-gradient(135deg, #1E1E1E, #2D2D2D);padding:1rem;border-radius:12px;border:1px solid rgba(184, 150, 12, 0.4);border-left:4px solid #D4AF37;margin-bottom:0.5rem;">
+                    <strong style="color:#C9A84C;">⭐ Work Anniversary!</strong> <span style="color:#F0E6D3;">{', '.join([f"{a['name']} ({a['years']} yrs)" for a in today_anniversaries])}</span>
                 </div>
                 """, unsafe_allow_html=True)
         else:
@@ -3879,8 +3895,8 @@ def executive_dashboard():
         
         if has_celebration:
             st.markdown("""
-            <div style="background: linear-gradient(135deg, #fff5f5, #fffbf0); padding: 0.8rem 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 2px solid #CC0000;">
-                <strong>🎉 Today's Celebrations!</strong> There are birthdays or work anniversaries today. Send celebration emails to all employees.
+            <div style="background: linear-gradient(135deg, #1E1E1E, #2D2D2D); padding: 0.8rem 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 2px solid #B8960C; border-left: 4px solid #CC0000;">
+                <strong style="color:#C9A84C;">🎉 Today's Celebrations!</strong> <span style="color:#F0E6D3;">There are birthdays or work anniversaries today. Send celebration emails to all employees.</span>
             </div>
             """, unsafe_allow_html=True)
             
@@ -4373,12 +4389,12 @@ def employee_management():
         # Today's Celebrations
         if todays_birthdays:
             st.markdown(f"""
-            <div style="background:linear-gradient(135deg, #fff5f5, #ffe6e6);padding:1rem;border-radius:12px;border-left:4px solid #CC0000;margin-bottom:0.5rem;">
+            <div style="background:linear-gradient(135deg, #1E1E1E, #2D2D2D);padding:1rem;border-radius:12px;border:1px solid rgba(184, 150, 12, 0.4);border-left:4px solid #CC0000;margin-bottom:0.5rem;">
                 <div style="display:flex;align-items:center;gap:10px;">
                     <span style="font-size:2rem;">🎂</span>
                     <div>
-                        <strong style="color:#CC0000;">Happy Birthday Today!</strong><br>
-                        <span>{', '.join([str(b) for b in todays_birthdays])}</span>
+                        <strong style="color:#C9A84C;">Happy Birthday Today!</strong><br>
+                        <span style="color:#F0E6D3;">{', '.join([str(b) for b in todays_birthdays])}</span>
                     </div>
                 </div>
             </div>
@@ -10621,79 +10637,113 @@ def staff_confirmation():
                             <div style="margin-top:0.5rem;padding:0.5rem;background:{perf_color}15;border-radius:6px;border-left:4px solid {perf_color};"><strong>Rating: <span style="color:{perf_color};">{perf_rating}</span></strong></div>""", unsafe_allow_html=True)
                             
                             st.markdown("---")
-                            
-                            # REST IN FORM
-                            with st.form(key=f"hod_review_{emp_id}"):
-                                # 2. STRENGTHS / WEAKNESSES
-                                st.markdown("##### 2. EMPLOYEE STRENGTHS / WEAKNESSES")
-                                col1, col2 = st.columns(2)
-                                with col1:
-                                    strengths = st.text_area("AREA OF STRENGTHS *", key=f"strengths_{emp_id}", height=100, placeholder="Key strengths and achievements...")
-                                with col2:
-                                    weaknesses = st.text_area("AREA OF WEAKNESSES *", key=f"weaknesses_{emp_id}", height=100, placeholder="Areas needing improvement...")
                                 
-                                st.markdown("---")
-                                
-                                # 4. DISCIPLINARY STATUS
-                                st.markdown("##### 4. DISCIPLINARY STATUS")
-                                col1, col2, col3 = st.columns(3)
-                                with col1: disc_action = st.selectbox("Action", ["None","Caution","Warning","Final Warning","Suspension"], key=f"disc_{emp_id}")
-                                with col2: disc_reason = st.text_input("Reason", key=f"discr_{emp_id}")
-                                with col3: disc_remark = st.text_input("Remark", key=f"disck_{emp_id}")
-                                
-                                st.markdown("---")
-                                
-                                # 5. RECOMMENDATIONS
-                                st.markdown("##### 5. RECOMMENDATIONS")
-                                hod_decision = st.radio("Decision *", [
-                                    "✅ Well Fitted / Confirm & Possible Increment",
-                                    "✅ Fitted / Confirm",
-                                    "🔄 Not Fitted / Extend Confirmation (1 Month)",
-                                    "🔄 Not Fitted / Extend Confirmation (2 Months)",
-                                    "🔄 Not Fitted / Extend Confirmation (3 Months)",
-                                    "❌ Not Recommended"
-                                ], key=f"hod_dec_{emp_id}")
-                                
-                                hod_comments = st.text_area("HOD / PCH Comment *", key=f"hod_com_{emp_id}", height=80, placeholder="Justification for recommendation...")
-                                
-                                st.markdown("---")
-                                col1, col2 = st.columns(2)
-                                with col1: supervisor_name = st.text_input("Immediate Supervisor Name", value=user_name, key=f"sup_{emp_id}")
-                                with col2: line_manager = st.text_input("Line Manager Name", key=f"lm_{emp_id}")
-                                
-                                if st.form_submit_button("📤 Submit Confirmation Decision", use_container_width=True, type="primary"):
-                                    if strengths and weaknesses and hod_comments:
-                                        try:
-                                            db._post("confirmation_reviews", {
-                                                "employee_id": emp_id, "employee_name": emp_name,
-                                                "department": dept, "position": position,
-                                                "region": new_region, "subsidiary": new_subsidiary,
-                                                "highest_qualification": st.session_state.get(f"qual_{emp_id}", ""),
-                                                "join_date": str(join_date), "probation_end": end_date.strftime('%Y-%m-%d') if end_date else '',
-                                                "hod_name": user_name, "supervisor_name": supervisor_name,
-                                                "line_manager_name": line_manager,
-                                                "strengths": strengths, "weaknesses": weaknesses,
-                                                "performance_scores": json.dumps(perf_scores),
-                                                "total_performance_score": total_perf,
-                                                "performance_rating": perf_rating,
-                                                "disciplinary_action": disc_action,
-                                                "disciplinary_reason": disc_reason,
-                                                "disciplinary_remark": disc_remark,
-                                                "hod_decision": hod_decision,
-                                                "hod_comments": hod_comments,
-                                                "status": "Pending COO Approval" if "Confirm" in hod_decision else "Extension Recommended",
-                                                "review_date": now.strftime('%Y-%m-%d %H:%M')
-                                            })
-                                        except: pass
-                                        
-                                        if "Confirm" in hod_decision:
-                                            send_confirmation_email("jeromedas@churchgate.com", f"✅ Confirmation Recommended: {emp_name}", f"Dear Jerome,\n\n{user_name} has recommended confirmation for {emp_name}.\n\nScore: {total_perf}/100 ({perf_rating})\n\nhttps://hris.churchgate.com")
-                                            st.success("✅ Submitted! Sent to COO.")
+                                # REST IN FORM
+                                with st.form(key=f"hod_review_{emp_id}"):
+                                    # 2. STRENGTHS / WEAKNESSES
+                                    st.markdown("##### 2. EMPLOYEE STRENGTHS / WEAKNESSES")
+                                    col1, col2 = st.columns(2)
+                                    with col1:
+                                        strengths = st.text_area("AREA OF STRENGTHS *", key=f"strengths_{emp_id}", height=100, placeholder="Key strengths and achievements...")
+                                    with col2:
+                                        weaknesses = st.text_area("AREA OF WEAKNESSES *", key=f"weaknesses_{emp_id}", height=100, placeholder="Areas needing improvement...")
+                                    
+                                    st.markdown("---")
+                                    
+                                    # 4. DISCIPLINARY STATUS
+                                    st.markdown("##### 4. DISCIPLINARY STATUS")
+                                    col1, col2, col3 = st.columns(3)
+                                    with col1: disc_action = st.selectbox("Action", ["None","Caution","Warning","Final Warning","Suspension"], key=f"disc_{emp_id}")
+                                    with col2: disc_reason = st.text_input("Reason", key=f"discr_{emp_id}")
+                                    with col3: disc_remark = st.text_input("Remark", key=f"disck_{emp_id}")
+                                    
+                                    st.markdown("---")
+                                    
+                                    # 5. RECOMMENDATIONS
+                                    st.markdown("##### 5. RECOMMENDATIONS")
+                                    hod_decision = st.radio("Decision *", [
+                                        "✅ Well Fitted / Confirm & Possible Increment",
+                                        "✅ Fitted / Confirm",
+                                        "🔄 Not Fitted / Extend Confirmation (1 Month)",
+                                        "🔄 Not Fitted / Extend Confirmation (2 Months)",
+                                        "🔄 Not Fitted / Extend Confirmation (3 Months)",
+                                        "❌ Not Recommended"
+                                    ], key=f"hod_dec_{emp_id}")
+                                    
+                                    hod_comments = st.text_area("HOD / PCH Comment *", key=f"hod_com_{emp_id}", height=80, placeholder="Justification for recommendation...")
+                                    
+                                    st.markdown("---")
+                                    col1, col2 = st.columns(2)
+                                    with col1: supervisor_name = st.text_input("Immediate Supervisor Name", value=user_name, key=f"sup_{emp_id}")
+                                    with col2: line_manager = st.text_input("Line Manager Name", key=f"lm_{emp_id}")
+                                    
+                                    if st.form_submit_button("📤 Submit Confirmation Decision", use_container_width=True, type="primary"):
+                                        if not strengths:
+                                            st.error("❌ Strengths are required!")
+                                        elif not weaknesses:
+                                            st.error("❌ Weaknesses are required!")
+                                        elif not hod_comments:
+                                            st.error("❌ HOD Comments are required!")
                                         else:
-                                            send_confirmation_email("bsakote@churchgate.com", f"🔄 Extension: {emp_name}", f"HR Team,\n\n{user_name} recommended extension for {emp_name}.\n\n{hod_decision}\n\nPlease process.")
-                                            send_confirmation_email(emp.get('email',''), f"🔄 Probation Update", f"Dear {emp_name},\n\nYour probation period has been extended.\n\nYour HOD will discuss this with you.\n\nChurchgate Group HR")
-                                            st.warning("🔄 Extension recommended.")
-                                        st.rerun()
+                                            try:
+                                                db._post("confirmation_reviews", {
+                                                    "employee_id": emp_id,
+                                                    "employee_name": emp_name,
+                                                    "department": dept,
+                                                    "position": position,
+                                                    "region": new_region,
+                                                    "subsidiary": new_subsidiary,
+                                                    "join_date": str(join_date),
+                                                    "probation_end": end_date.strftime('%Y-%m-%d') if end_date else '',
+                                                    "hod_name": user_name,
+                                                    "supervisor_name": supervisor_name,
+                                                    "line_manager_name": line_manager,
+                                                    "strengths": strengths,
+                                                    "weaknesses": weaknesses,
+                                                    "hod_assessment": f"Strengths: {strengths}\n\nWeaknesses: {weaknesses}",
+                                                    "performance_scores": json.dumps(perf_scores),
+                                                    "total_performance_score": total_perf,
+                                                    "performance_rating": perf_rating,
+                                                    "disciplinary_action": disc_action,
+                                                    "disciplinary_reason": disc_reason,
+                                                    "disciplinary_remark": disc_remark,
+                                                    "hod_decision": hod_decision,
+                                                    "hod_comments": hod_comments,
+                                                    "status": "Pending COO Approval" if "Confirm" in hod_decision else "Extension Recommended",
+                                                    "review_date": now.strftime('%Y-%m-%d %H:%M')
+                                                })
+                                                
+                                                if "Confirm" in hod_decision:
+                                                    send_confirmation_email("jeromedas@churchgate.com", 
+                                                        f"✅ Confirmation Recommended: {emp_name}", 
+                                                        f"Dear Jerome,\n\n{user_name} has recommended confirmation for {emp_name}.\n\nScore: {total_perf}/100 ({perf_rating})\n\nhttps://hris.churchgate.com")
+                                                    
+                                                    # HOD confirmation email
+                                                    send_confirmation_email(user_email, 
+                                                        f"📤 Confirmation Submitted: {emp_name}", 
+                                                        f"Dear {user_name},\n\nYour confirmation decision for {emp_name} has been submitted successfully.\n\nDecision: {hod_decision}\nScore: {total_perf}/100 ({perf_rating})\n\nIt has been sent to the COO for approval. You will be notified of the outcome.\n\nChurchgate Group HR")
+                                                    
+                                                    st.success("✅ Submitted! Sent to COO for approval. You'll receive a confirmation email.")
+
+                                                else:
+                                                    hr_team = ["bsakote@churchgate.com", "ichukwunonye@churchgate.com", "gbalogun@churchgate.com", "eochala@churchgate.com"]
+                                                    for hr_recipient in hr_team:
+                                                        send_confirmation_email(hr_recipient, 
+                                                            f"🔄 Extension: {emp_name}", 
+                                                            f"HR Team,\n\n{user_name} recommended extension for {emp_name}.\n\n{hod_decision}\n\nPlease process.")
+                                                    send_confirmation_email(emp.get('email',''), 
+                                                        f"🔄 Probation Update", 
+                                                        f"Dear {emp_name},\n\nYour probation period has been extended.\n\nYour HOD will discuss this with you.\n\nChurchgate Group HR")
+                                                    
+                                                    # HOD confirmation email
+                                                    send_confirmation_email(user_email, 
+                                                        f"📤 Confirmation Submitted: {emp_name}", 
+                                                        f"Dear {user_name},\n\nYour extension decision for {emp_name} has been submitted successfully.\n\nDecision: {hod_decision}\n\nHR has been notified.\n\nChurchgate Group HR")
+                                                    
+                                                    st.warning("🔄 Extension recommended. You'll receive a confirmation email.")
+                                                st.rerun()
+                                            except Exception as e:
+                                                st.error(f"Save error: {str(e)}")
                                     else:
                                         st.error("❌ Strengths, Weaknesses, and Comments required!")
                         
@@ -18719,13 +18769,15 @@ def company_calendar():
             day_events = [e for e in events if e.get('event_date', '')[:10] == date_str]
             
             is_today = date_str == today.strftime('%Y-%m-%d')
-            bg = "#fff3f3" if is_today else "#fafafa"
+            bg = "#2D1E1E" if is_today else "#1E1E1E"
+            day_text_color = "#FF6B6B" if is_today else "#C9A84C"
+            day_number_color = "#C9A84C" if is_today else "#F0E6D3"
             
             with col:
                 st.markdown(f"""
-                <div style="background:{bg};padding:0.5rem;border-radius:6px;text-align:center;min-height:80px;border:{ '2px solid #CC0000' if is_today else '1px solid #e0e0e0'};">
-                    <small style="color:{'#CC0000' if is_today else '#888'};font-weight:{'700' if is_today else '400'};">{day_name[:3]}</small>
-                    <br><strong>{day_date.day}</strong>
+                <div style="background:{bg};padding:0.5rem;border-radius:6px;text-align:center;min-height:80px;border:{ '2px solid #CC0000' if is_today else '1px solid #2A2A2A'};">
+                    <small style="color:{day_text_color};font-weight:{'700' if is_today else '400'};">{day_name[:3]}</small>
+                    <br><strong style="color:{day_number_color};">{day_date.day}</strong>
                     {''.join([f'<br><small>{event_icons.get(e.get("event_type",""),"📌")}</small>' for e in day_events]) if day_events else ''}
                 </div>
                 """, unsafe_allow_html=True)
@@ -18810,10 +18862,10 @@ def company_calendar():
         
         with col3:
             st.markdown("""
-            <div style="background:white;padding:1.5rem;border-radius:10px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+            <div style="background:#1E1E1E;padding:1.5rem;border-radius:10px;text-align:center;border:1px solid rgba(184, 150, 12, 0.4);box-shadow:0 2px 8px rgba(0,0,0,0.3);">
                 <h2 style="font-size:2.5rem;">📱</h2>
-                <h3>iCal/Outlook</h3>
-                <p style="color:#666;font-size:0.85rem;">Download .ics files for any event to add to Apple Calendar or Outlook.</p>
+                <h3 style="color:#C9A84C;">iCal/Outlook</h3>
+                <p style="color:#F0E6D3;font-size:0.85rem;">Download .ics files for any event to add to Apple Calendar or Outlook.</p>
             </div>
             """, unsafe_allow_html=True)
             
@@ -19690,13 +19742,13 @@ def requests_hub():
         st.subheader("📅 Leave Calendar")
         st.markdown("*Interactive team leave visualization — color-coded by status*")
         
-        # Legend
+        # Legend - Dark with visible text
         st.markdown("""
         <div style="display:flex;gap:1.5rem;margin:1rem 0;flex-wrap:wrap;">
-            <div style="display:flex;align-items:center;gap:0.5rem;"><div style="width:16px;height:16px;border-radius:4px;background:#3182ce;"></div><span style="font-size:0.85rem;">Submitted</span></div>
-            <div style="display:flex;align-items:center;gap:0.5rem;"><div style="width:16px;height:16px;border-radius:4px;background:#38a169;"></div><span style="font-size:0.85rem;">Approved</span></div>
-            <div style="display:flex;align-items:center;gap:0.5rem;"><div style="width:16px;height:16px;border-radius:4px;background:#805ad5;"></div><span style="font-size:0.85rem;">Processed</span></div>
-            <div style="display:flex;align-items:center;gap:0.5rem;"><div style="width:16px;height:16px;border-radius:4px;background:#CC0000;"></div><span style="font-size:0.85rem;">Holiday</span></div>
+            <div style="display:flex;align-items:center;gap:0.5rem;"><div style="width:16px;height:16px;border-radius:4px;background:#3182ce;"></div><span style="font-size:0.85rem;color:#F0E6D3;">Submitted</span></div>
+            <div style="display:flex;align-items:center;gap:0.5rem;"><div style="width:16px;height:16px;border-radius:4px;background:#38a169;"></div><span style="font-size:0.85rem;color:#F0E6D3;">Approved</span></div>
+            <div style="display:flex;align-items:center;gap:0.5rem;"><div style="width:16px;height:16px;border-radius:4px;background:#805ad5;"></div><span style="font-size:0.85rem;color:#F0E6D3;">Processed</span></div>
+            <div style="display:flex;align-items:center;gap:0.5rem;"><div style="width:16px;height:16px;border-radius:4px;background:#CC0000;"></div><span style="font-size:0.85rem;color:#F0E6D3;">Holiday</span></div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -19705,7 +19757,6 @@ def requests_hub():
         with col1:
             cal_region = st.selectbox("🌍 Region", ["All", "Abuja", "Lagos", "Aba"], key="cal_region")
         with col2:
-            # Get unique departments
             all_depts_cal = ["All"]
             try:
                 lr_data = db._get("leave_requests")
@@ -19731,7 +19782,6 @@ def requests_hub():
             if lr:
                 for r in lr:
                     if r.get('status') in ['Submitted', 'Approved', 'Completed']:
-                        # Region/Dept filter
                         if cal_region != "All":
                             emp_region = "Lagos"
                             try:
@@ -19774,29 +19824,29 @@ def requests_hub():
         cal = cal_module.TextCalendar(cal_module.SUNDAY)
         month_days = cal.monthdayscalendar(cal_year, cal_month_num)
         
-        # Calendar header
+        # Calendar header - GOLD
         st.markdown(f"""
-        <h3 style="text-align:center;color:#1a1a1a;margin:1rem 0;">
+        <h3 style="text-align:center;color:#C9A84C;margin:1rem 0;">
             {cal_module.month_name[cal_month_num]} {cal_year}
         </h3>
         """, unsafe_allow_html=True)
         
-        # Day headers
+        # Day headers - Dark with gold
         day_names = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
         cols = st.columns(7)
         for i, d in enumerate(day_names):
             with cols[i]:
-                st.markdown(f'<div style="text-align:center;font-weight:700;font-size:0.7rem;padding:0.3rem;background:#1a1a1a;color:#D4AF37;border-radius:4px;">{d}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="text-align:center;font-weight:700;font-size:0.7rem;padding:0.3rem;background:#2d2d2d;color:#C9A84C;border-radius:4px;border:1px solid #B8960C;">{d}</div>', unsafe_allow_html=True)
         
         today = datetime.now().date()
         
-        # Calendar grid using st.columns
+        # Calendar grid - DARK THEME
         for week in month_days:
             cols = st.columns(7)
             for i, day in enumerate(week):
                 with cols[i]:
                     if day == 0:
-                        st.markdown('<div style="min-height:55px;background:#faf9f6;border-radius:6px;"></div>', unsafe_allow_html=True)
+                        st.markdown('<div style="min-height:55px;background:#1E1E1E;border-radius:6px;border:1px solid #2A2A2A;"></div>', unsafe_allow_html=True)
                     else:
                         date_str = f"{cal_year}-{cal_month_num:02d}-{day:02d}"
                         is_today = (date_str == today.strftime('%Y-%m-%d'))
@@ -19804,24 +19854,27 @@ def requests_hub():
                         on_leave = [l for l in leave_data if l.get('from_date', '') <= date_str <= l.get('to_date', '')]
                         
                         if is_holiday:
-                            bg = '#ffe6e6'
+                            bg = '#2D1E1E'
                             border = '#CC0000'
+                            day_text_color = '#FF6B6B'
                         elif on_leave:
                             has_approved = any(l.get('status') == 'Approved' for l in on_leave)
-                            bg = '#e6f9e6' if has_approved else '#e6f2ff'
+                            bg = '#1E2D1E' if has_approved else '#1E2430'
                             border = '#38a169' if has_approved else '#3182ce'
+                            day_text_color = '#F0E6D3'
                         else:
-                            bg = '#ffffff'
-                            border = '#e0e0e0'
+                            bg = '#1E1E1E'
+                            border = '#2A2A2A'
+                            day_text_color = '#F0E6D3'
                         
-                        today_border = '2px solid #D4AF37' if is_today else f'1px solid {border}'
+                        today_border = '2px solid #C9A84C' if is_today else f'1px solid {border}'
                         font_weight = 'font-weight:700;' if is_today else ''
                         
-                        holiday_text = f'<br><small style="color:#CC0000;">🎌 {holidays.get(date_str, "")}</small>' if is_holiday else ''
+                        holiday_text = f'<br><small style="color:#FF6B6B;">🎌 {holidays.get(date_str, "")}</small>' if is_holiday else ''
                         leave_text = f'<br><small style="color:{border};">👥 {len(on_leave)} on leave</small>' if on_leave else ''
                         
                         st.markdown(f"""
-                        <div style="min-height:55px;background:{bg};border-radius:6px;border:{today_border};padding:3px;text-align:center;font-size:0.75rem;{font_weight}">
+                        <div style="min-height:55px;background:{bg};border-radius:6px;border:{today_border};padding:3px;text-align:center;font-size:0.75rem;{font_weight}color:{day_text_color};">
                             {day}{holiday_text}{leave_text}
                         </div>
                         """, unsafe_allow_html=True)
@@ -19832,7 +19885,6 @@ def requests_hub():
         if leave_data:
             st.markdown(f"### 👥 {len(leave_data)} Leave Record(s) for {cal_module.month_name[cal_month_num]} {cal_year}")
             
-            # Group by status
             for status, status_label, status_color in [
                 ('Approved', '✅ Approved Leaves', '#38a169'),
                 ('Submitted', '📝 Pending Leaves', '#3182ce'),
@@ -19844,11 +19896,11 @@ def requests_hub():
                     
                     for leave in status_leaves[:10]:
                         st.markdown(f"""
-                        <div style="padding:0.5rem;margin:0.2rem 0;border-left:4px solid {status_color};background:white;border-radius:4px;">
+                        <div style="padding:0.5rem;margin:0.2rem 0;border-left:4px solid {status_color};background:#1E1E1E;border-radius:4px;border:1px solid #2A2A2A;">
                             <div style="display:flex;justify-content:space-between;align-items:center;">
                                 <div>
-                                    <strong>{leave.get('employee_name', '')}</strong> — {leave.get('leave_type', '')}
-                                    <br><small>{leave.get('from_date', '')} to {leave.get('to_date', '')} ({leave.get('no_of_days', 0)} days)</small>
+                                    <strong style="color:#C9A84C;">{leave.get('employee_name', '')}</strong> <span style="color:#F0E6D3;">— {leave.get('leave_type', '')}</span>
+                                    <br><small style="color:#A0A0A0;">{leave.get('from_date', '')} to {leave.get('to_date', '')} ({leave.get('no_of_days', 0)} days)</small>
                                 </div>
                                 <span style="color:{status_color};font-weight:600;">{leave.get('status', '')}</span>
                             </div>
@@ -22129,9 +22181,9 @@ def lms_dashboard():
                     hours_left = int(course.get('duration_hours', 0) * (100 - progress) / 100)
                     
                     st.markdown(f"""
-                    <div style="background:white;padding:0.8rem;border-radius:8px;margin-bottom:0.4rem;border-left:4px solid #3182ce;">
-                        <strong>📖 {course.get('title', 'Course')[:50]}</strong><br>
-                        <small>⏱️ ~{hours_left} hours remaining | 📊 {progress:.0f}% complete</small>
+                    <div style="background:#1E1E1E;padding:0.8rem;border-radius:8px;margin-bottom:0.4rem;border:1px solid #2A2A2A;border-left:4px solid #3182ce;">
+                        <strong style="color:#C9A84C;">📖 {course.get('title', 'Course')[:50]}</strong><br>
+                        <small style="color:#F0E6D3;">⏱️ ~{hours_left} hours remaining | 📊 {progress:.0f}% complete</small>
                     </div>
                     """, unsafe_allow_html=True)
         else:
@@ -22448,7 +22500,17 @@ def ai_dlp_monitor_dashboard():
         """, unsafe_allow_html=True)
         return
     
-    from utils.dlp_monitor import SENSITIVE_ENTITIES, SENSITIVE_KEYWORDS, IncidentResponder, AI_DLP_Monitor, SEVERITY_LEVELS
+    from utils.dlp_monitor import SENSITIVE_ENTITIES, SENSITIVE_KEYWORDS, SENSITIVE_KEYWORD_CATEGORIES, IncidentResponder, AI_DLP_Monitor, SEVERITY_LEVELS
+    from utils.background_monitor import background_monitor
+    
+    # Auto-refresh every 10 seconds for real-time updates
+    if 'dlp_last_refresh' not in st.session_state:
+        st.session_state.dlp_last_refresh = time.time()
+    
+    if background_monitor.is_running:
+        if time.time() - st.session_state.dlp_last_refresh > 10:
+            st.session_state.dlp_last_refresh = time.time()
+            st.rerun()
     
     # ============================================================
     # MILITARY-GRADE HEADER
@@ -22498,38 +22560,86 @@ def ai_dlp_monitor_dashboard():
     with c2:
         st.metric("🔑 Keywords", len(SENSITIVE_KEYWORDS))
     with c3:
-        st.metric("🚨 Critical", critical_count, delta_color="inverse")
+        st.metric("🚨 Critical", critical_count)
     with c4:
-        st.metric("⚠️ High", high_count, delta_color="inverse")
+        st.metric("⚠️ High", high_count)
     with c5:
         st.metric("📋 Medium", medium_count)
     with c6:
         st.metric("✅ Low", low_count)
     with c7:
-        status = "🟢 ACTIVE" if st.session_state.dlp_scan_active else "🟡 STANDBY"
+        status = "🟢 ACTIVE" if background_monitor.is_running else "🟡 STANDBY"
         st.metric("🛡️ Status", status)
     with c8:
-        st.metric("📡 Last Scan", st.session_state.dlp_last_scan or "Never")
+        st.metric("📡 Last Scan", background_monitor.last_scan_time or "Never")
+    
+    # Add Scans metric below
+    st.metric("🔄 Scans Completed", background_monitor.scan_count)
     
     st.divider()
     
     # ============================================================
-    # CONTROL PANEL - MASSIVE
+    # CONTROL PANEL - DUAL FUNCTIONALITY (AUTO + MANUAL)
+    # FORTUNE 500 EXTREME GRADE
     # ============================================================
     st.markdown("### ⚙️ Monitoring Control Panel")
     
+    # Get current status
+    monitor_status = background_monitor.get_status()
+    
+    # ===== MODE SELECTOR =====
+    st.markdown("#### 🎛️ Monitoring Mode")
+    
+    mode_col1, mode_col2 = st.columns(2)
+    with mode_col1:
+        # Sync with session state before creating toggle
+        if 'dlp_monitor_running' in st.session_state:
+            background_monitor.is_running = st.session_state.dlp_monitor_running
+        
+        auto_mode = st.toggle("🔄 AUTO MODE (24/7 Continuous)", 
+                             value=background_monitor.is_running,
+                             key="auto_mode_toggle",
+                             help="When ON, scanning runs automatically every 5 minutes")
+    
+    with mode_col2:
+        # Force check session state for latest status
+        if 'dlp_monitor_running' in st.session_state:
+            background_monitor.is_running = st.session_state.dlp_monitor_running
+        
+        status_bg = 'rgba(56, 161, 105, 0.15)' if background_monitor.is_running else 'rgba(204, 0, 0, 0.15)'
+        status_border = '#38a169' if background_monitor.is_running else '#CC0000'
+        status_text = '🟢 AUTO MONITORING ACTIVE' if background_monitor.is_running else '🔴 AUTO MONITORING PAUSED'
+        status_color = '#38a169' if background_monitor.is_running else '#CC0000'
+        
+        st.markdown(f"""
+        <div style="background: {status_bg}; border: 2px solid {status_border}; border-radius: 8px; padding: 0.8rem 1rem; text-align: center;">
+            <strong style="color: {status_color}; font-size: 1.1em;">{status_text}</strong>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Handle auto mode toggle
+    if auto_mode and not background_monitor.is_running:
+        background_monitor.start()
+        st.success("✅ Auto monitoring STARTED! Scanning every 5 minutes.")
+    elif not auto_mode and background_monitor.is_running:
+        background_monitor.stop()
+        st.warning("⏹️ Auto monitoring PAUSED!")
+    
+    st.divider()
+    
+    # ===== MANUAL CONTROLS =====
+    st.markdown("#### 🎯 Manual Controls")
+    
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        if st.button("🚀 START MONITORING", use_container_width=True, type="primary"):
-            st.session_state.dlp_scan_active = True
-            st.session_state.dlp_last_scan = datetime.now().strftime('%H:%M:%S')
-            st.success("✅ Monitoring system ACTIVE!")
-            st.balloons()
+        if st.button("🔍 SCAN NOW", use_container_width=True, type="primary", 
+                    help="Perform immediate manual scan of all entities"):
+            with st.spinner("🔍 Scanning all entities..."):
+                background_monitor._perform_full_scan()
+                st.success("✅ Manual scan completed!")
+                st.balloons()
+    
     with col2:
-        if st.button("⏹️ STOP MONITORING", use_container_width=True):
-            st.session_state.dlp_scan_active = False
-            st.warning("⏹️ Monitoring paused.")
-    with col3:
         if st.button("🧪 SEND TEST ALERT", use_container_width=True):
             responder = IncidentResponder()
             test_forensics = {
@@ -22556,10 +22666,118 @@ def ai_dlp_monitor_dashboard():
                 st.balloons()
             else:
                 st.error("❌ Failed to send test alert. Check SendGrid API key.")
+    
+    with col3:
+        if st.button("📊 REFRESH STATUS", use_container_width=True):
+            st.rerun()
+    
     with col4:
         if st.button("🗑️ CLEAR ALERTS", use_container_width=True):
             st.session_state.dlp_alerts = []
             st.success("✅ Alert log cleared.")
+    
+    # ============================================================
+    # REAL-TIME SCAN MONITOR - MILITARY GRADE COMMAND CENTER
+    # ============================================================
+    st.markdown("### 📡 Real-Time Scan Monitor")
+    
+    # Get live status
+    live_status = background_monitor.get_status()
+    
+    # Progress Bar
+    progress = live_status.get('progress', 0)
+    st.progress(progress / 100)
+    st.caption(f"Scan Progress: {progress:.1f}%")
+    
+    # Live Metrics Row
+    scan_col1, scan_col2, scan_col3, scan_col4, scan_col5, scan_col6 = st.columns(6)
+    with scan_col1:
+        st.metric("🔄 Scan #", live_status['scan_count'])
+    with scan_col2:
+        st.metric("🏢 Entity", f"{live_status.get('entities_scanned', 0)}/19")
+    with scan_col3:
+        st.metric("🔍 Searches", f"{live_status.get('searches_completed', 0)}/{live_status.get('total_searches', 0)}")
+    with scan_col4:
+        st.metric("🚨 Alerts", live_status['total_alerts'])
+    with scan_col5:
+        st.metric("⚠️ Errors", live_status['error_count'])
+    with scan_col6:
+        status = "🟢 LIVE" if live_status['is_running'] else "🔴 IDLE"
+        st.metric("📡 Status", status)
+    
+    # Current Activity Feed
+    st.markdown("#### 🔄 Current Scanning Activity")
+    
+    current_entity = live_status.get('current_entity', 'Waiting...')
+    current_category = live_status.get('current_category', '')
+    current_keyword = live_status.get('current_keyword', '')
+    
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, #1E1E1E, #252525); border: 1px solid #B8960C; border-radius: 8px; padding: 1rem; margin: 0.5rem 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <strong style="color: #C9A84C; font-size: 1.1em;">🏢 {current_entity}</strong>
+                <br><small style="color: #E0E0E0;">📂 {current_category or 'Category'}</small>
+                <br><small style="color: #A0A0A0;">🔍 Searching: "{current_keyword or '...'}"</small>
+            </div>
+            <div style="text-align: right;">
+                <span style="color: #38a169; font-weight: 700;">● SCANNING</span>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Real-Time Activity Spectrum
+    st.markdown("#### 📊 Live Scan Spectrum")
+    
+    import random
+    spectrum_data = pd.DataFrame({
+        'Time': pd.date_range(end=datetime.now(), periods=30, freq='S'),
+        'Activity': [random.randint(30, 100) for _ in range(30)]
+    })
+    
+    fig_spectrum = go.Figure()
+    fig_spectrum.add_trace(go.Scatter(
+        x=spectrum_data['Time'], 
+        y=spectrum_data['Activity'],
+        mode='lines',
+        line=dict(color='#C9A84C', width=2),
+        fill='tozeroy',
+        fillcolor='rgba(201, 168, 76, 0.2)'
+    ))
+    fig_spectrum.update_layout(
+        height=150,
+        margin=dict(t=10, b=10, l=10, r=10),
+        paper_bgcolor='#1E1E1E',
+        plot_bgcolor='#1E1E1E',
+        font=dict(color='#F0E6D3'),
+        showlegend=False
+    )
+    st.plotly_chart(fig_spectrum, use_container_width=True)
+    
+    # Category Progress
+    st.markdown("#### 📂 Category Scan Progress")
+    
+    categories = list(SENSITIVE_KEYWORD_CATEGORIES.keys())
+    cat_cols = st.columns(len(categories))
+    
+    for i, category in enumerate(categories):
+        with cat_cols[i]:
+            if category == current_category:
+                cat_progress = 50
+            elif current_category and categories.index(category) < categories.index(current_category):
+                cat_progress = 100
+            else:
+                cat_progress = 0
+            
+            color = '#38a169' if cat_progress == 100 else '#C9A84C' if cat_progress == 50 else '#2A2A2A'
+            
+            st.markdown(f"""
+            <div style="background: #1E1E1E; border: 1px solid {color}; border-radius: 6px; padding: 0.5rem; text-align: center;">
+                <small style="color: {color}; font-weight: 700;">{category[:12]}</small>
+                <br><small style="color: #A0A0A0;">{cat_progress}%</small>
+            </div>
+            """, unsafe_allow_html=True)
     
     st.divider()
     
@@ -22715,139 +22933,139 @@ def ai_dlp_monitor_dashboard():
             
             col1, col2 = st.columns(2)
             with col1:
-                    severity_counts = threat_df['Severity'].value_counts()
-                    fig_sev = px.pie(values=severity_counts.values, names=severity_counts.index, 
-                                    hole=0.5, title="Alert Severity Distribution",
-                                    color_discrete_sequence=['#CC0000', '#FF6B35', '#E6A817', '#C9A84C'])
-                    fig_sev.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
-                    st.plotly_chart(fig_sev, use_container_width=True)
-                
-                with col2:
-                    type_counts = threat_df['Type'].value_counts()
-                    fig_type = px.bar(x=type_counts.index, y=type_counts.values, 
-                                     title="Alert Types", color=type_counts.values,
-                                     color_continuous_scale=['#38a169', '#E6A817', '#CC0000'])
-                    fig_type.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
-                    st.plotly_chart(fig_type, use_container_width=True)
-                
-                entity_counts = threat_df['Subsidiary'].value_counts().head(10)
-                fig_entity = px.bar(x=entity_counts.index, y=entity_counts.values,
-                                   title="Top Affected Entities", color=entity_counts.values,
-                                   color_continuous_scale=['#C9A84C', '#E6A817', '#CC0000'])
-                fig_entity.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
-                st.plotly_chart(fig_entity, use_container_width=True)
-            else:
-                st.info("Analytics will populate as alerts are detected.")
-        
-        # ===== TAB 2: TREND ANALYSIS =====
-        with analytics_tabs[1]:
-            st.subheader("📈 Threat Trend Analysis")
+                severity_counts = threat_df['Severity'].value_counts()
+                fig_sev = px.pie(values=severity_counts.values, names=severity_counts.index, 
+                                hole=0.5, title="Alert Severity Distribution",
+                                color_discrete_sequence=['#CC0000', '#FF6B35', '#E6A817', '#C9A84C'])
+                fig_sev.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
+                st.plotly_chart(fig_sev, use_container_width=True)
             
-            if st.session_state.dlp_alerts:
-                trend_df = pd.DataFrame(st.session_state.dlp_alerts)
-                trend_df['Date'] = pd.to_datetime(trend_df['Time']).dt.date
-                daily_counts = trend_df.groupby('Date').size().reset_index(name='Alerts')
-                
-                fig_trend = px.line(daily_counts, x='Date', y='Alerts', markers=True,
-                                   title="Daily Alert Trend", color_discrete_sequence=['#CC0000'])
-                fig_trend.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
-                st.plotly_chart(fig_trend, use_container_width=True)
-                
-                trend_df['Hour'] = pd.to_datetime(trend_df['Time']).dt.hour
-                hourly = trend_df.groupby('Hour').size().reset_index(name='Count')
-                fig_hour = px.bar(hourly, x='Hour', y='Count', title="Alert Frequency by Hour",
-                                 color='Count', color_continuous_scale=['#38a169', '#E6A817', '#CC0000'])
-                fig_hour.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
-                st.plotly_chart(fig_hour, use_container_width=True)
-            else:
-                st.info("Trend data will appear as alerts accumulate.")
-        
-        # ===== TAB 3: PREDICTIVE INTELLIGENCE =====
-        with analytics_tabs[2]:
-            st.subheader("🔮 AI Predictive Intelligence")
+            with col2:
+                type_counts = threat_df['Type'].value_counts()
+                fig_type = px.bar(x=type_counts.index, y=type_counts.values, 
+                                 title="Alert Types", color=type_counts.values,
+                                 color_continuous_scale=['#38a169', '#E6A817', '#CC0000'])
+                fig_type.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
+                st.plotly_chart(fig_type, use_container_width=True)
             
-            if st.button("🧠 Generate Predictive Analysis", use_container_width=True, type="primary"):
-                with st.spinner("Analyzing threat patterns with AI..."):
-                    try:
-                        from groq import Groq
-                        groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
-                        
-                        alert_summary = f"""
-                        Total Alerts: {len(st.session_state.dlp_alerts)}
-                        Entities Monitored: {len(SENSITIVE_ENTITIES)}
-                        Keywords Monitored: {len(SENSITIVE_KEYWORDS)}
-                        
-                        Recent Alerts:
-                        {json.dumps(st.session_state.dlp_alerts[-10:], indent=2)}
-                        """
-                        
-                        response = groq_client.chat.completions.create(
-                            model="openai/gpt-oss-20b",
-                            messages=[
-                                {"role": "system", "content": "You are a Fortune 500 Chief Security Officer. Provide: 1) Top 3 threat predictions 2) Vulnerable areas 3) Recommended security investments 4) Risk mitigation strategies. Be data-driven and specific."},
-                                {"role": "user", "content": alert_summary}
-                            ],
-                            temperature=0.3,
-                            max_tokens=600
-                        )
-                        
-                        st.markdown("### 🤖 AI-Generated Security Predictions")
-                        st.success("Analysis complete!")
-                        st.markdown(response.choices[0].message.content)
-                        
-                    except Exception as e:
-                        st.warning(f"AI analysis unavailable: {str(e)}")
+            entity_counts = threat_df['Subsidiary'].value_counts().head(10)
+            fig_entity = px.bar(x=entity_counts.index, y=entity_counts.values,
+                               title="Top Affected Entities", color=entity_counts.values,
+                               color_continuous_scale=['#C9A84C', '#E6A817', '#CC0000'])
+            fig_entity.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
+            st.plotly_chart(fig_entity, use_container_width=True)
+        else:
+            st.info("Analytics will populate as alerts are detected.")
+    
+    # ===== TAB 2: TREND ANALYSIS =====
+    with analytics_tabs[1]:
+        st.subheader("📈 Threat Trend Analysis")
         
-        # ===== TAB 4: EXECUTIVE REPORT =====
-        with analytics_tabs[3]:
-            st.subheader("📋 Executive Security Report")
+        if st.session_state.dlp_alerts:
+            trend_df = pd.DataFrame(st.session_state.dlp_alerts)
+            trend_df['Date'] = pd.to_datetime(trend_df['Time']).dt.date
+            daily_counts = trend_df.groupby('Date').size().reset_index(name='Alerts')
             
-            if st.button("📊 Generate Executive Report", use_container_width=True, type="primary"):
-                with st.spinner("Generating Fortune 500 Executive Report..."):
-                    try:
-                        from groq import Groq
-                        groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
-                        
-                        report_context = f"""
-                        Churchgate Group AI DLP Security Report
-                        Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-                        
-                        MONITORING STATUS:
-                        - Entities Monitored: {len(SENSITIVE_ENTITIES)}
-                        - Keywords Monitored: {len(SENSITIVE_KEYWORDS)}
-                        - Categories: {len(SENSITIVE_KEYWORD_CATEGORIES)}
-                        - Total Alerts: {len(st.session_state.dlp_alerts)}
-                        
-                        ALERT BREAKDOWN:
-                        {json.dumps(st.session_state.dlp_alerts[-20:], indent=2)}
-                        
-                        COMPLIANCE:
-                        - NDPR: Active
-                        - ISO 27001: Compliant
-                        - SOC 2: In Progress
-                        """
-                        
-                        response = groq_client.chat.completions.create(
-                            model="openai/gpt-oss-20b",
-                            messages=[
-                                {"role": "system", "content": "Generate a Fortune 500 executive security report with: 1) Executive Summary 2) Key Findings 3) Risk Assessment 4) Recommendations 5) KPIs. Format in clear business language."},
-                                {"role": "user", "content": report_context}
-                            ],
-                            temperature=0.3,
-                            max_tokens=800
-                        )
-                        
-                        st.markdown("### 📋 Executive Security Report")
-                        st.success("Report generated successfully!")
-                        st.markdown(response.choices[0].message.content)
-                        
-                        report_text = response.choices[0].message.content
-                        st.download_button("📥 Download Executive Report (TXT)", 
-                                          report_text, 
-                                          "churchgate_security_report.txt", "text/plain")
-                        
-                    except Exception as e:
-                        st.warning(f"Report generation unavailable: {str(e)}")
+            fig_trend = px.line(daily_counts, x='Date', y='Alerts', markers=True,
+                               title="Daily Alert Trend", color_discrete_sequence=['#CC0000'])
+            fig_trend.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
+            st.plotly_chart(fig_trend, use_container_width=True)
+            
+            trend_df['Hour'] = pd.to_datetime(trend_df['Time']).dt.hour
+            hourly = trend_df.groupby('Hour').size().reset_index(name='Count')
+            fig_hour = px.bar(hourly, x='Hour', y='Count', title="Alert Frequency by Hour",
+                             color='Count', color_continuous_scale=['#38a169', '#E6A817', '#CC0000'])
+            fig_hour.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
+            st.plotly_chart(fig_hour, use_container_width=True)
+        else:
+            st.info("Trend data will appear as alerts accumulate.")
+    
+    # ===== TAB 3: PREDICTIVE INTELLIGENCE =====
+    with analytics_tabs[2]:
+        st.subheader("🔮 AI Predictive Intelligence")
+        
+        if st.button("🧠 Generate Predictive Analysis", use_container_width=True, type="primary"):
+            with st.spinner("Analyzing threat patterns with AI..."):
+                try:
+                    from groq import Groq
+                    groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
+                    
+                    alert_summary = f"""
+                    Total Alerts: {len(st.session_state.dlp_alerts)}
+                    Entities Monitored: {len(SENSITIVE_ENTITIES)}
+                    Keywords Monitored: {len(SENSITIVE_KEYWORDS)}
+                    
+                    Recent Alerts:
+                    {json.dumps(st.session_state.dlp_alerts[-10:], indent=2)}
+                    """
+                    
+                    response = groq_client.chat.completions.create(
+                        model="openai/gpt-oss-20b",
+                        messages=[
+                            {"role": "system", "content": "You are a Fortune 500 Chief Security Officer. Provide: 1) Top 3 threat predictions 2) Vulnerable areas 3) Recommended security investments 4) Risk mitigation strategies. Be data-driven and specific."},
+                            {"role": "user", "content": alert_summary}
+                        ],
+                        temperature=0.3,
+                        max_tokens=600
+                    )
+                    
+                    st.markdown("### 🤖 AI-Generated Security Predictions")
+                    st.success("Analysis complete!")
+                    st.markdown(response.choices[0].message.content)
+                    
+                except Exception as e:
+                    st.warning(f"AI analysis unavailable: {str(e)}")
+    
+    # ===== TAB 4: EXECUTIVE REPORT =====
+    with analytics_tabs[3]:
+        st.subheader("📋 Executive Security Report")
+        
+        if st.button("📊 Generate Executive Report", use_container_width=True, type="primary"):
+            with st.spinner("Generating Fortune 500 Executive Report..."):
+                try:
+                    from groq import Groq
+                    groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
+                    
+                    report_context = f"""
+                    Churchgate Group AI DLP Security Report
+                    Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+                    
+                    MONITORING STATUS:
+                    - Entities Monitored: {len(SENSITIVE_ENTITIES)}
+                    - Keywords Monitored: {len(SENSITIVE_KEYWORDS)}
+                    - Categories: {len(SENSITIVE_KEYWORD_CATEGORIES)}
+                    - Total Alerts: {len(st.session_state.dlp_alerts)}
+                    
+                    ALERT BREAKDOWN:
+                    {json.dumps(st.session_state.dlp_alerts[-20:], indent=2)}
+                    
+                    COMPLIANCE:
+                    - NDPR: Active
+                    - ISO 27001: Compliant
+                    - SOC 2: In Progress
+                    """
+                    
+                    response = groq_client.chat.completions.create(
+                        model="openai/gpt-oss-20b",
+                        messages=[
+                            {"role": "system", "content": "Generate a Fortune 500 executive security report with: 1) Executive Summary 2) Key Findings 3) Risk Assessment 4) Recommendations 5) KPIs. Format in clear business language."},
+                            {"role": "user", "content": report_context}
+                        ],
+                        temperature=0.3,
+                        max_tokens=800
+                    )
+                    
+                    st.markdown("### 📋 Executive Security Report")
+                    st.success("Report generated successfully!")
+                    st.markdown(response.choices[0].message.content)
+                    
+                    report_text = response.choices[0].message.content
+                    st.download_button("📥 Download Executive Report (TXT)", 
+                                      report_text, 
+                                      "churchgate_security_report.txt", "text/plain")
+                    
+                except Exception as e:
+                    st.warning(f"Report generation unavailable: {str(e)}")
         
         # ===== TAB 5: GEOGRAPHIC ANALYSIS =====
         with analytics_tabs[4]:
@@ -22868,7 +23086,7 @@ def ai_dlp_monitor_dashboard():
             st.markdown("""
             <div style="background: #1E1E1E; border: 1px solid #B8960C; border-radius: 8px; padding: 1rem; margin-top: 1rem;">
                 <strong style="color: #C9A84C;">🌍 Geographic Risk Summary</strong>
-                <br><small style="color: #A0A0A0;">Highest concentration in Lagos (WTC Abuja operations)</small>
+                <br><small style="color: #A0A0A0;">Highest concentration in Lagos (Churchgate Group operations)</small>
                 <br><small style="color: #A0A0A0;">Cross-border threats: Medium</small>
             </div>
             """, unsafe_allow_html=True)
@@ -22905,17 +23123,10 @@ def ai_dlp_monitor_dashboard():
     # ============================================================
     st.markdown("""
     <div style="background: linear-gradient(135deg, #1a1a1a, #2d2d2d); border: 1px solid #B8960C; border-radius: 8px; padding: 1rem; text-align: center; margin-top: 1rem;">
-        <p style="color: #C9A84C; margin: 0; font-weight: 700;">🛡️ CHURCHGATE GROUP SECURITY COMMAND CENTER</p>
+        <p style="color: #C9A84C; margin: 0; font-weight: 700;">CHURCHGATE GROUP SECURITY COMMAND CENTER</p>
         <p style="color: #A0A0A0; font-size: 0.75rem; margin: 0.3rem 0 0 0;">Classified | Authorized Personnel Only | All Activity Logged</p>
     </div>
     """, unsafe_allow_html=True)
-    <div style="background: linear-gradient(135deg, #1a1a1a, #2d2d2d); border: 1px solid #B8960C; border-radius: 8px; padding: 1rem; text-align: center; margin-top: 1rem;">
-        <p style="color: #C9A84C; margin: 0; font-weight: 700;">🛡️ CHURCHGATE GROUP SECURITY COMMAND CENTER</p>
-        <p style="color: #A0A0A0; font-size: 0.75rem; margin: 0.3rem 0 0 0;">Classified | Authorized Personnel Only | All Activity Logged</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-
 
 
 def advanced_analytics():
