@@ -23038,72 +23038,72 @@ def ai_dlp_monitor_dashboard():
                     st.markdown(response.choices[0].message.content)
                     
                     report_text = response.choices[0].message.content
-                        
-                        # Save to session state for PDF generation
-                        st.session_state.executive_report = report_text
-                        
-                        col_dl1, col_dl2 = st.columns(2)
-                        with col_dl1:
-                            st.download_button("📥 Download Report (TXT)", 
-                                              report_text, 
-                                              "churchgate_security_report.txt", "text/plain",
-                                              use_container_width=True)
-                        with col_dl2:
-                            if st.button("📄 Generate PDF Report", use_container_width=True):
-                                try:
-                                    from fpdf import FPDF
-                                    
-                                    pdf = FPDF()
-                                    pdf.add_page()
-                                    pdf.set_font("Arial", "B", 16)
-                                    pdf.cell(0, 10, "Churchgate Group AI DLP Security Report", ln=True, align='C')
-                                    pdf.ln(5)
-                                    pdf.set_font("Arial", "", 10)
-                                    
-                                    # Add report content
-                                    for line in report_text.split('\n'):
-                                        pdf.multi_cell(0, 6, line)
-                                    
-                                    pdf_output = bytes(pdf.output())
-                                    st.download_button("📥 Download PDF", 
-                                                      pdf_output, 
-                                                      "churchgate_security_report.pdf", 
-                                                      "application/pdf",
-                                                      use_container_width=True)
-                                    st.success("✅ PDF ready!")
-                                except Exception as e:
-                                    st.error(f"PDF generation failed: {str(e)}")
+                    
+                    # Save to session state for PDF generation
+                    st.session_state.executive_report = report_text
+                    
+                    col_dl1, col_dl2 = st.columns(2)
+                    with col_dl1:
+                        st.download_button("📥 Download Report (TXT)", 
+                                          report_text, 
+                                          "churchgate_security_report.txt", "text/plain",
+                                          use_container_width=True)
+                    with col_dl2:
+                        if st.button("📄 Generate PDF Report", use_container_width=True):
+                            try:
+                                from fpdf import FPDF
+                                
+                                pdf = FPDF()
+                                pdf.add_page()
+                                pdf.set_font("Arial", "B", 16)
+                                pdf.cell(0, 10, "Churchgate Group AI DLP Security Report", ln=True, align='C')
+                                pdf.ln(5)
+                                pdf.set_font("Arial", "", 10)
+                                
+                                # Add report content
+                                for line in report_text.split('\n'):
+                                    pdf.multi_cell(0, 6, line)
+                                
+                                pdf_output = bytes(pdf.output())
+                                st.download_button("📥 Download PDF", 
+                                                  pdf_output, 
+                                                  "churchgate_security_report.pdf", 
+                                                  "application/pdf",
+                                                  use_container_width=True)
+                                st.success("✅ PDF ready!")
+                            except Exception as e:
+                                st.error(f"PDF generation failed: {str(e)}")
                     
                 except Exception as e:
                     st.warning(f"Report generation unavailable: {str(e)}")
+    
+    # ===== TAB 5: GEOGRAPHIC ANALYSIS =====
+    with analytics_tabs[4]:
+        st.subheader("🌍 Geographic Threat Distribution")
         
-        # ===== TAB 5: GEOGRAPHIC ANALYSIS =====
-        with analytics_tabs[4]:
-            st.subheader("🌍 Geographic Threat Distribution")
-            
-            geo_data = pd.DataFrame({
-                'Region': ['Lagos', 'Abuja', 'Aba', 'International'],
-                'Threats': [5, 2, 1, 3],
-                'Risk Level': ['High', 'Medium', 'Low', 'Medium']
-            })
-            
-            fig_geo = px.bar(geo_data, x='Region', y='Threats', color='Risk Level',
-                            title="Threat Distribution by Region",
-                            color_discrete_sequence=['#CC0000', '#E6A817', '#38a169'])
-            fig_geo.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
-            st.plotly_chart(fig_geo, use_container_width=True)
-            
-            st.markdown("""
-            <div style="background: #1E1E1E; border: 1px solid #B8960C; border-radius: 8px; padding: 1rem; margin-top: 1rem;">
-                <strong style="color: #C9A84C;">🌍 Geographic Risk Summary</strong>
-                <br><small style="color: #A0A0A0;">Highest concentration in Lagos (Churchgate Group operations)</small>
-                <br><small style="color: #A0A0A0;">Cross-border threats: Medium</small>
-            </div>
-            """, unsafe_allow_html=True)
+        geo_data = pd.DataFrame({
+            'Region': ['Lagos', 'Abuja', 'Aba', 'International'],
+            'Threats': [5, 2, 1, 3],
+            'Risk Level': ['High', 'Medium', 'Low', 'Medium']
+        })
         
-        # ===== TAB 6: ENTITY RISK MATRIX =====
-        with analytics_tabs[5]:
-            st.subheader("🏢 Entity Risk Matrix")
+        fig_geo = px.bar(geo_data, x='Region', y='Threats', color='Risk Level',
+                        title="Threat Distribution by Region",
+                        color_discrete_sequence=['#CC0000', '#E6A817', '#38a169'])
+        fig_geo.update_layout(paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3'))
+        st.plotly_chart(fig_geo, use_container_width=True)
+        
+        st.markdown("""
+        <div style="background: #1E1E1E; border: 1px solid #B8960C; border-radius: 8px; padding: 1rem; margin-top: 1rem;">
+            <strong style="color: #C9A84C;">🌍 Geographic Risk Summary</strong>
+            <br><small style="color: #A0A0A0;">Highest concentration in Lagos (Churchgate Group operations)</small>
+            <br><small style="color: #A0A0A0;">Cross-border threats: Medium</small>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # ===== TAB 6: ENTITY RISK MATRIX =====
+    with analytics_tabs[5]:
+        st.subheader("🏢 Entity Risk Matrix")
             
             entity_risk_data = []
             for entity in SENSITIVE_ENTITIES:
