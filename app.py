@@ -22996,13 +22996,13 @@ def ai_dlp_monitor_dashboard():
                     groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
                     
                     # Get REAL-TIME status from monitor
-                        live_status = background_monitor.get_status()
-                        
-                        report_context = f"""
-                        Churchgate Group AI DLP Security Report
-                        Generated: {get_lagos_time().strftime('%Y-%m-%d %H:%M:%S WAT')}
-                        
-                        REAL-TIME MONITORING DATA:
+                    live_status = background_monitor.get_status()
+                    
+                    report_context = f"""
+                    Churchgate Group AI DLP Security Report
+                    Generated: {get_lagos_time().strftime('%Y-%m-%d %H:%M:%S WAT')}
+                    
+                    REAL-TIME MONITORING DATA:
                         - Entities Monitored: {len(SENSITIVE_ENTITIES)}
                         - Keywords Monitored: {len(SENSITIVE_KEYWORDS)}
                         - Categories: {len(SENSITIVE_KEYWORD_CATEGORIES)}
