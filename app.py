@@ -22944,51 +22944,33 @@ def ai_dlp_monitor_dashboard():
         st.subheader("🔮 AI Predictive Intelligence")
         
         if st.button("🧠 Generate Predictive Analysis", use_container_width=True, type="primary"):
-                with st.spinner("Analyzing threat patterns with AI..."):
-                    try:
-                        from groq import Groq
-                        groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
-                        
-                        # Get REAL-TIME scan data
-                        live_status = background_monitor.get_status()
-                        
-                        alert_summary = f"""
-                        REAL-TIME DLP MONITORING DATA:
-                        - Total Scans: {live_status['scan_count']}
-                        - Total Searches: {live_status['searches_completed']}
-                        - Total Alerts: {live_status['total_alerts']}
-                        - Entities Monitored: {len(SENSITIVE_ENTITIES)}
-                        - Keywords Monitored: {len(SENSITIVE_KEYWORDS)}
-                        - Last Scan: {live_status['last_scan_time']}
-                        - Progress: {live_status['progress']:.1f}%
-                        - Errors: {live_status['error_count']}
-                        
-                        Recent Alerts:
-                        {json.dumps(live_status['alerts'][-10:], indent=2) if live_status['alerts'] else 'None'}
-                        """
-                        
-                        response = groq_client.chat.completions.create(
-                            model="openai/gpt-oss-20b",
-                            messages=[
-                                {"role": "system", "content": "You are a Fortune 500 Chief Security Officer. Based on the REAL monitoring data provided, generate: 1) Top 3 threat predictions 2) Vulnerable areas 3) Recommended security investments 4) Risk mitigation strategies. Be data-driven and specific."},
-                                {"role": "user", "content": alert_summary}
-                            ],
-                            temperature=0.3,
-                            max_tokens=600
-                        )
-                        
-                        st.markdown("### 🤖 AI-Generated Security Predictions")
-                        st.success("Analysis complete!")
-                        st.markdown(response.choices[0].message.content)
-                        
-                    except Exception as e:
-                        st.error(f"❌ AI analysis failed: {str(e)}")
-                        st.info("Please check GROQ_API_KEY in Railway variables.")
+            with st.spinner("Analyzing threat patterns with AI..."):
+                try:
+                    from groq import Groq
+                    groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
+                    
+                    # Get REAL-TIME scan data
+                    live_status = background_monitor.get_status()
+                    
+                    alert_summary = f"""
+                    REAL-TIME DLP MONITORING DATA:
+                    - Total Scans: {live_status['scan_count']}
+                    - Total Searches: {live_status['searches_completed']}
+                    - Total Alerts: {live_status['total_alerts']}
+                    - Entities Monitored: {len(SENSITIVE_ENTITIES)}
+                    - Keywords Monitored: {len(SENSITIVE_KEYWORDS)}
+                    - Last Scan: {live_status['last_scan_time']}
+                    - Progress: {live_status['progress']:.1f}%
+                    - Errors: {live_status['error_count']}
+                    
+                    Recent Alerts:
+                    {json.dumps(live_status['alerts'][-10:], indent=2) if live_status['alerts'] else 'None'}
+                    """
                     
                     response = groq_client.chat.completions.create(
                         model="openai/gpt-oss-20b",
                         messages=[
-                            {"role": "system", "content": "You are a Fortune 500 Chief Security Officer. Provide: 1) Top 3 threat predictions 2) Vulnerable areas 3) Recommended security investments 4) Risk mitigation strategies. Be data-driven and specific."},
+                            {"role": "system", "content": "You are a Fortune 500 Chief Security Officer. Based on the REAL monitoring data provided, generate: 1) Top 3 threat predictions 2) Vulnerable areas 3) Recommended security investments 4) Risk mitigation strategies. Be data-driven and specific."},
                             {"role": "user", "content": alert_summary}
                         ],
                         temperature=0.3,
@@ -23000,7 +22982,8 @@ def ai_dlp_monitor_dashboard():
                     st.markdown(response.choices[0].message.content)
                     
                 except Exception as e:
-                    st.warning(f"AI analysis unavailable: {str(e)}")
+                    st.error(f"❌ AI analysis failed: {str(e)}")
+                    st.info("Please check GROQ_API_KEY in Railway variables.")
     
     # ===== TAB 4: EXECUTIVE REPORT =====
     with analytics_tabs[3]:
