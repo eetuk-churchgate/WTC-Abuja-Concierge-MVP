@@ -4,6 +4,7 @@ Enterprise-Grade AI-Powered Human Resource Information System
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 from streamlit_option_menu import option_menu
 import pandas as pd
 import numpy as np
@@ -203,15 +204,437 @@ def clear_all_cache():
     """Clear all cached data"""
     st.cache_data.clear()
 
+
+
+def render_clipboard_monitor():
+    """Render clipboard DLP monitor"""
+    components.html("""
+    <script>
+    (function() {
+        const SENSITIVE_PATTERNS = [
+            {name: 'Churchgate', regex: /Churchgate/gi},
+            {name: 'Salary', regex: /salary/gi},
+            {name: 'Naira Amount', regex: /₦\d{1,3}(,\d{3})*(\.\d+)?/g},
+            {name: 'Confidential', regex: /confidential/gi},
+            {name: 'Invoice', regex: /invoice/gi},
+            {name: 'Password', regex: /password/gi},
+            {name: 'API Key', regex: /api[_-]?key/gi},
+            {name: 'BVN', regex: /\b\d{11}\b/g},
+            {name: 'World Trade Center', regex: /World Trade Center/gi},
+            {name: 'First Continental', regex: /First Continental/gi}
+        ];
+        let lastAlertTime = 0;
+        function detectSensitiveContent(text) {
+            let detected = [];
+            SENSITIVE_PATTERNS.forEach(function(pattern) {
+                if (pattern.regex.test(text)) { detected.push(pattern.name); }
+            });
+            return detected;
+        }
+        function showWarning(detectedPatterns, action) {
+            const now = Date.now();
+            if (now - lastAlertTime < 3000) return;
+            lastAlertTime = now;
+            alert('⚠️ CHURCHGATE DLP WARNING\n\nSensitive content detected during ' + action + '.\n\nPatterns: ' + detectedPatterns.join(', '));
+        }
+        document.addEventListener('copy', function(e) {
+            const text = window.getSelection() ? window.getSelection().toString() : '';
+            if (text.length > 5) {
+                const detected = detectSensitiveContent(text);
+                if (detected.length > 0) { showWarning(detected, 'copying'); }
+            }
+        });
+        document.addEventListener('paste', function(e) {
+            const text = e.clipboardData ? e.clipboardData.getData('text') : '';
+            if (text.length > 5) {
+                const detected = detectSensitiveContent(text);
+                if (detected.length > 0) { showWarning(detected, 'pasting'); }
+            }
+        });
+    })();
+    </script>
+    """, height=0)
+
+
+
 # ============================================================
 # PAGE CONFIG
 # ============================================================
 logo_icon = Path(__file__).parent / "churchgate-logo.jpeg"
-
 if logo_icon.exists():
     st.set_page_config(page_title="Churchgate Group HRIS", page_icon=str(logo_icon), layout="wide", initial_sidebar_state="expanded")
 else:
     st.set_page_config(page_title="Churchgate Group HRIS", page_icon="🏢", layout="wide", initial_sidebar_state="expanded")
+
+# ============================================================
+# COMPLETE HELP CENTER - GLOBAL SEARCH ACROSS ALL MODULES
+# ============================================================
+
+# Massive Help Database - All Modules
+GLOBAL_HELP_DB = {
+    "Dashboard": {
+        "icon": "🏠",
+        "description": "Your personalized overview of KPIs, celebrations, and quick actions.",
+        "faqs": [
+            {"q": "How do I view my KPI progress?", "a": "Scroll down to the 'My KPI Progress' section. Each strategic pillar shows a progress bar with percentage."},
+            {"q": "How do I see team birthdays?", "a": "Check the right column under 'Birthdays This Month'. Today's birthdays appear highlighted."},
+            {"q": "How do I rate a colleague?", "a": "Scroll down to 'Rate a Colleague'. Select their name, add a star rating (1-5), leave a comment, and submit."},
+            {"q": "How do I check my leave balance?", "a": "Your leave balance appears in the top metrics row as 'Leave Days'."},
+            {"q": "How do I see upcoming holidays?", "a": "Check the right sidebar under 'Upcoming Holidays & Events'."},
+            {"q": "How do I see my performance score?", "a": "The first metric card at the top shows your latest appraisal score."},
+            {"q": "How do I upload my profile picture?", "a": "Click on your name/avatar in the top card to go to My Profile, then upload your photo."},
+            {"q": "How do I see team members?", "a": "The second metric card shows your team size. Click the Directory module for full list."},
+        ]
+    },
+    "Employee Management": {
+        "icon": "👥",
+        "description": "Manage employee records, directory, and organizational structure.",
+        "faqs": [
+            {"q": "How do I add a new employee?", "a": "Click the 'Add Employee' tab, fill all required fields (First Name, Last Name, Employee ID, Department, Position), then click 'Add Employee'."},
+            {"q": "How do I edit employee details?", "a": "In the Directory tab, click any employee card to expand. Use 'Quick Edit' to change department, grade, position, status, region, subsidiary, or reports-to."},
+            {"q": "How do I bulk upload employees?", "a": "Go to 'Bulk Upload' tab. Download the CSV template, fill it with employee data, then upload. Smart correction automatically fixes department names."},
+            {"q": "How do I generate login credentials?", "a": "Go to 'Generate Logins' tab. Select employees (single or bulk), set password, click generate. Welcome emails are sent automatically."},
+            {"q": "How do I archive an employee?", "a": "Click the employee in Directory, scroll to 'Employee Actions', click 'Archive'. Archived employees are hidden but can be restored."},
+            {"q": "How do I delete an employee?", "a": "Click the employee, scroll to 'Employee Actions', click 'Delete'. Confirm deletion. This is permanent."},
+            {"q": "How do I search for an employee?", "a": "Use the search bar at the top of Directory. Search by name, ID, email, department, or position."},
+            {"q": "How do I filter by region?", "a": "Use the Region dropdown filter. Options include Abuja, Lagos, and Aba."},
+            {"q": "How do I see the org chart?", "a": "Click the 'Org Chart' tab. You'll see the Sankey diagram showing GMD → COO → HODs → Teams."},
+            {"q": "How do I export employee data?", "a": "Go to 'Export' tab. Download full directory or filter by department."},
+        ]
+    },
+    "Performance & OKRs": {
+        "icon": "📈",
+        "description": "Set KPIs, submit self-assessments, and manage appraisals.",
+        "faqs": [
+            {"q": "How do I set my KPIs?", "a": "Go to 'My KPIs' tab. Select a Strategic Pillar, enter KPI title, target, weight (%), and deadline. Click Save."},
+            {"q": "How many KPIs can I set?", "a": "Unlimited! You can add as many KPIs as needed per pillar."},
+            {"q": "How do I submit my self-assessment?", "a": "Go to 'Self-Assessment' tab. Score each KPI (0-100%), add justifications, upload evidence files, click 'Submit Self-Assessment'."},
+            {"q": "What happens after I submit?", "a": "Your HOD reviews your scores and comments. You'll be notified when the review is complete."},
+            {"q": "How do I accept or reject a review?", "a": "When your HOD completes the review, you'll see 'Accept Review' or 'Reject - Request Re-review' buttons. Choose accordingly."},
+            {"q": "What if I reject the review?", "a": "Your appraisal is escalated to the Appraisal Committee. They review all evidence and make the final decision."},
+            {"q": "How do I download my certificate?", "a": "Once your appraisal is accepted, go to Dashboard tab and click 'Download Certificate (PDF)'."},
+            {"q": "What are the strategic pillars?", "a": "FY 26/27: 1) Occupancy & Revenue Growth, 2) Process Simplification, 3) Asset Reliability & Digitalization, 4) People & Culture."},
+            {"q": "How is my overall score calculated?", "a": "Weighted average of all pillar scores based on their assigned weights."},
+            {"q": "How do I upload evidence files?", "a": "In Self-Assessment, each pillar has a file uploader. Upload PDFs, Word docs, or images as evidence."},
+        ]
+    },
+    "AI Recruitment Agent": {
+        "icon": "🤖",
+        "description": "AI-powered CV screening and candidate tiering.",
+        "faqs": [
+            {"q": "How do I analyze a Job Description?", "a": "Paste the JD text or upload a file. Click 'Analyze JD with AI'. The AI extracts required skills, experience, and responsibilities."},
+            {"q": "How do I bulk process CVs?", "a": "Upload multiple CVs (PDF/DOCX). Click 'Analyze All CVs'. Each CV is scored against the JD."},
+            {"q": "What is Tier 1?", "a": "Tier 1 = 85-100% match = Strong Fit. Recommended for final interview."},
+            {"q": "What is Tier 2?", "a": "Tier 2 = 65-84% match = Good Fit. Keep in view."},
+            {"q": "What is Tier 3?", "a": "Tier 3 = below 65% = Not Recommended."},
+            {"q": "Can I parse LinkedIn profiles?", "a": "Yes! Use the LinkedIn Parse tab. Enter the profile URL."},
+            {"q": "How do I save candidates?", "a": "After analysis, go to 'Save Results' and click 'Save All Candidates'."},
+            {"q": "What file formats are supported?", "a": "PDF, DOCX, and TXT files."},
+            {"q": "How accurate is the AI scoring?", "a": "The AI matches skills, experience, and education against the JD criteria."},
+            {"q": "Can I analyze multiple JDs?", "a": "Yes, analyze one JD at a time. The system remembers the current JD for CV scoring."},
+        ]
+    },
+    "Recruitment Hub": {
+        "icon": "💼",
+        "description": "Post jobs and manage the recruitment pipeline.",
+        "faqs": [
+            {"q": "How do I post a new job?", "a": "Go to 'Post New Job' tab. Fill title, department, location, type, salary, and JD. Click 'Post Job'."},
+            {"q": "How do I view applications?", "a": "Go to 'Applications' tab to see all candidates with status and AI scores."},
+            {"q": "What is the recruitment pipeline?", "a": "Applied → Screened → Interviewed → Offered → Hired."},
+            {"q": "How do I track a candidate?", "a": "Each candidate has a status badge. Use the pipeline view to see stages."},
+        ]
+    },
+    "Staff Confirmation": {
+        "icon": "✅",
+        "description": "Manage probation reviews and employee confirmation.",
+        "faqs": [
+            {"q": "Who appears in the confirmation review?", "a": "Employees with 'Probation' status whose period ends within 30 days or is overdue."},
+            {"q": "How do I complete the decision form?", "a": "Select the employee, rate 10 performance criteria (0-10 each), add strengths/weaknesses, submit."},
+            {"q": "What happens after HOD submits?", "a": "COO reviews and approves. HR processes the confirmation letter."},
+            {"q": "What if I recommend extension?", "a": "Employee is notified, probation extends 1-3 months, reviewed again."},
+        ]
+    },
+    "Chat & Communications": {
+        "icon": "💬",
+        "description": "Team chat, announcements, and AI assistant.",
+        "faqs": [
+            {"q": "How do I chat with a colleague?", "a": "Go to Team Chat. Click the + button to select from the Directory."},
+            {"q": "Can I use emojis?", "a": "Yes! Click the smiley face icon in the chat input."},
+            {"q": "What is the AI Assistant?", "a": "A chatbot that answers HR questions using real employee data (leave, KPIs, training)."},
+            {"q": "How do I see announcements?", "a": "Click the Announcements tab in Chat & Communications."},
+        ]
+    },
+    "Training & Development": {
+        "icon": "🎓",
+        "description": "Access 150+ courses from world-class institutions.",
+        "faqs": [
+            {"q": "How do I enroll in a course?", "a": "Browse the catalog, click 'Enroll Now' on any course."},
+            {"q": "Are courses free?", "a": "Many are free (Harvard CS50, Google certificates, Udemy). Some have fees."},
+            {"q": "How do I track progress?", "a": "Go to 'My Courses' tab to see enrolled courses and status."},
+            {"q": "What institutions are available?", "a": "Harvard, IBM, Google, Yale, Stanford, Wharton, Udemy, LinkedIn Learning, and more."},
+        ]
+    },
+    "My Profile": {
+        "icon": "👤",
+        "description": "Manage your personal information, skills, and documents.",
+        "faqs": [
+            {"q": "How do I upload a profile photo?", "a": "Go to My Profile → Upload Photo. Select your image."},
+            {"q": "How do I change my password?", "a": "Go to Security tab. Enter current password and new password."},
+            {"q": "How do I add skills?", "a": "Go to Skills tab. Add your technical/professional skills."},
+            {"q": "How do I upload documents?", "a": "Go to Documents tab. Upload personal docs and certificates."},
+            {"q": "How do I reach 100% profile completeness?", "a": "Fill all basic fields + 5 skills + 5 certifications + 2 personal docs + 2 cert docs."},
+        ]
+    },
+    "Leave Requests": {
+        "icon": "🏖️",
+        "description": "Apply for leave and track your requests.",
+        "faqs": [
+            {"q": "How do I apply for leave?", "a": "Go to Requests Hub → Leave tab. Select type, dates, reason. Submit."},
+            {"q": "How do I check my balance?", "a": "Your leave balance shows on the Employee Dashboard."},
+            {"q": "Who approves my leave?", "a": "Your line manager or HOD. You'll be notified of the decision."},
+        ]
+    },
+}
+
+
+@st.dialog("❓ Help Center — Churchgate Group HRIS", width="large")
+def show_help_dialog():
+    """GLOBAL HELP CENTER with search across ALL modules"""
+    
+    # ============================================================
+    # DIALOG DARK THEME CSS - COMPLETE
+    # ============================================================
+    st.markdown("""
+    <style>
+        /* Dialog container - dark background */
+        [data-testid="stDialog"] {
+            background: #1E1E1E !important;
+            border: 2px solid #B8960C !important;
+            border-radius: 12px !important;
+            box-shadow: 0 8px 32px rgba(184, 150, 12, 0.3) !important;
+        }
+        
+        /* Dialog title bar - GOLD */
+        [data-testid="stDialog"] [data-testid="stDialogHeader"] {
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d) !important;
+            border-bottom: 2px solid #B8960C !important;
+            padding: 1rem 1.5rem !important;
+        }
+        
+        /* Dialog title text - GOLD BOLD */
+        [data-testid="stDialog"] [data-testid="stDialogHeader"] h1,
+        [data-testid="stDialog"] [data-testid="stDialogHeader"] h2,
+        [data-testid="stDialog"] [data-testid="stDialogHeader"] h3,
+        [data-testid="stDialog"] [data-testid="stDialogHeader"] p {
+            color: #C9A84C !important;
+            font-family: 'Georgia', serif !important;
+            font-weight: 800 !important;
+            font-size: 1.2rem !important;
+        }
+        
+        /* Close button - GOLD CIRCLE with GOLD X */
+        [data-testid="stDialog"] button[aria-label="Close"],
+        [data-testid="stDialog"] button[data-testid="stDialogCloseButton"] {
+            background: rgba(184, 150, 12, 0.15) !important;
+            border: 2px solid #B8960C !important;
+            border-radius: 50% !important;
+            width: 35px !important;
+            height: 35px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            transition: all 0.2s !important;
+        }
+        
+        /* Close button X icon - GOLD */
+        [data-testid="stDialog"] button[aria-label="Close"] svg,
+        [data-testid="stDialog"] button[data-testid="stDialogCloseButton"] svg {
+            fill: #C9A84C !important;
+            color: #C9A84C !important;
+            stroke: #C9A84C !important;
+            width: 18px !important;
+            height: 18px !important;
+        }
+        
+        /* Close button hover - BRIGHTER GOLD */
+        [data-testid="stDialog"] button[aria-label="Close"]:hover,
+        [data-testid="stDialog"] button[data-testid="stDialogCloseButton"]:hover {
+            background: rgba(184, 150, 12, 0.3) !important;
+            border-color: #E8D18C !important;
+        }
+        
+        [data-testid="stDialog"] button[aria-label="Close"]:hover svg,
+        [data-testid="stDialog"] button[data-testid="stDialogCloseButton"]:hover svg {
+            fill: #E8D18C !important;
+            color: #E8D18C !important;
+            stroke: #E8D18C !important;
+        }
+        
+        /* Dialog headers */
+        [data-testid="stDialog"] h1,
+        [data-testid="stDialog"] h2,
+        [data-testid="stDialog"] h3 {
+            color: #C9A84C !important;
+            font-family: 'Georgia', serif !important;
+        }
+        
+        /* Dialog text */
+        [data-testid="stDialog"] p,
+        [data-testid="stDialog"] span,
+        [data-testid="stDialog"] div,
+        [data-testid="stDialog"] label {
+            color: #E0E0E0 !important;
+        }
+        
+        /* Dialog expanders */
+        [data-testid="stDialog"] [data-testid="stExpander"] details {
+            background: #2A2A2A !important;
+            border: 1px solid #3A3A3A !important;
+        }
+        [data-testid="stDialog"] [data-testid="stExpander"] details summary {
+            background: #2A2A2A !important;
+            border-left: 4px solid #B8960C !important;
+            color: #C9A84C !important;
+        }
+        [data-testid="stDialog"] [data-testid="stExpander"] details summary * {
+            color: #C9A84C !important;
+        }
+        [data-testid="stDialog"] [data-testid="stExpander"] details div {
+            color: #E0E0E0 !important;
+        }
+        
+        /* Dialog inputs */
+        [data-testid="stDialog"] input,
+        [data-testid="stDialog"] textarea,
+        [data-testid="stDialog"] select {
+            background: #2A2A2A !important;
+            color: #E0E0E0 !important;
+            border: 1px solid #B8960C !important;
+            border-radius: 6px !important;
+        }
+        
+        /* Dialog selectbox */
+        [data-testid="stDialog"] [data-testid="stSelectbox"] label {
+            color: #C9A84C !important;
+        }
+        [data-testid="stDialog"] [data-testid="stSelectbox"] [data-baseweb="select"] {
+            background: #2A2A2A !important;
+            border: 1px solid #B8960C !important;
+        }
+        [data-testid="stDialog"] [data-testid="stSelectbox"] [data-baseweb="select"] * {
+            color: #E0E0E0 !important;
+        }
+        
+        /* Dialog info box */
+        [data-testid="stDialog"] .stInfo {
+            background: rgba(184, 150, 12, 0.1) !important;
+            border: 1px solid rgba(184, 150, 12, 0.3) !important;
+            color: #C9A84C !important;
+        }
+        
+        /* Dialog warning */
+        [data-testid="stDialog"] .stWarning {
+            background: rgba(230, 168, 23, 0.1) !important;
+            border: 1px solid rgba(230, 168, 23, 0.3) !important;
+            color: #E6A817 !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    current_page = st.session_state.get('current_page', 'Dashboard')
+    
+    # Map current page to help key
+    page_to_help = {
+        "Dashboard": "Dashboard",
+        "🏠 Employee Dashboard": "Dashboard",
+        "📊 Executive Dashboard": "Dashboard",
+        "👥 Employee Management": "Employee Management",
+        "📈 Performance & OKRs": "Performance & OKRs",
+        "📈 My Performance & OKRs": "Performance & OKRs",
+        "🤖 AI Recruitment Agent": "AI Recruitment Agent",
+        "💼 Recruitment Hub": "Recruitment Hub",
+        "✅ Staff Confirmation": "Staff Confirmation",
+        "🔄 Requests Hub": "Leave Requests",
+        "🎓 Training & Development": "Training & Development",
+        "💬 Chat & Communications": "Chat & Communications",
+        "👤 My Profile": "My Profile",
+    }
+    
+    current_help_key = page_to_help.get(current_page, "Dashboard")
+    current_help = GLOBAL_HELP_DB.get(current_help_key, GLOBAL_HELP_DB["Dashboard"])
+    
+    # Header
+    st.markdown(f"### {current_help['icon']} Help for: **{current_help_key}**")
+    st.markdown(f"*{current_help['description']}*")
+    st.markdown("---")
+    
+    # GLOBAL SEARCH
+    search_query = st.text_input("🔍 Search ALL help topics", placeholder="e.g., 'leave', 'KPI', 'upload', 'password'...", key="global_help_search")
+    
+    if search_query:
+        # SEARCH ACROSS ALL MODULES
+        st.markdown(f"### 🔍 Search Results for \"{search_query}\"")
+        st.markdown("---")
+        
+        results_found = 0
+        for module_name, module_data in GLOBAL_HELP_DB.items():
+            matching_faqs = []
+            for faq in module_data["faqs"]:
+                if (search_query.lower() in faq["q"].lower() or 
+                    search_query.lower() in faq["a"].lower() or
+                    search_query.lower() in module_name.lower()):
+                    matching_faqs.append(faq)
+            
+            if matching_faqs:
+                results_found += len(matching_faqs)
+                st.markdown(f"### {module_data['icon']} {module_name}")
+                for faq in matching_faqs:
+                    with st.expander(f"❓ {faq['q']}", expanded=False):
+                        st.markdown(faq["a"])
+                st.markdown("---")
+        
+        if results_found == 0:
+            st.warning("No results found. Try different keywords like 'leave', 'KPI', 'upload', 'password', 'employee', 'appraisal', 'chat', etc.")
+    else:
+        # Show current page FAQs
+        st.markdown(f"### ❓ Frequently Asked Questions — {current_help_key}")
+        for faq in current_help["faqs"]:
+            with st.expander(f"❓ {faq['q']}", expanded=False):
+                st.markdown(faq["a"])
+        
+        st.markdown("---")
+        st.markdown("### 📋 Browse Other Topics")
+        
+        other_modules = [(name, data) for name, data in GLOBAL_HELP_DB.items() if name != current_help_key]
+        
+        selected_module = st.selectbox(
+            "📋 Browse Other Topics",
+            ["Select a module..."] + [f"{data['icon']} {name}" for name, data in other_modules],
+            key="help_browse_select"
+        )
+        
+        if selected_module != "Select a module...":
+            selected_name = selected_module.split(" ", 1)[1] if " " in selected_module else selected_module
+            selected_data = GLOBAL_HELP_DB.get(selected_name)
+            if selected_data:
+                st.markdown("---")
+                st.markdown(f"### {selected_data['icon']} Help for: **{selected_name}**")
+                st.markdown(f"*{selected_data['description']}*")
+                st.markdown("---")
+                for faq in selected_data["faqs"]:
+                    with st.expander(f"❓ {faq['q']}", expanded=False):
+                        st.markdown(faq["a"])
+    
+    
+    
+    
+
+    
+    st.markdown("---")
+    st.info("📧 Still need help? Contact **HR Support**: hris@churchgate.com | 📞 0702-662 6248CHURCHGATE")
+
+
 
 # ============================================================
 # INITIALIZE ALL SESSION STATE VARIABLES
@@ -1464,6 +1887,141 @@ st.markdown("""
     [data-testid="stSidebar"] {
         min-width: 280px !important;
     }
+    
+    /* ===== DATE PICKER - NUCLEAR AGGRESSIVE ===== */
+    
+    /* Force dark background on calendar container */
+    [data-baseweb="calendar"],
+    [data-baseweb="calendar"] > div,
+    [data-baseweb="calendar"] > div > div,
+    [data-baseweb="calendar"] > div > div > div {
+        background-color: #1E1E1E !important;
+    }
+    
+    /* Force ALL text inside calendar to be visible */
+    [data-baseweb="calendar"] p,
+    [data-baseweb="calendar"] span,
+    [data-baseweb="calendar"] div,
+    [data-baseweb="calendar"] strong,
+    [data-baseweb="calendar"] b {
+        color: #FFFFFF !important;
+        opacity: 1 !important;
+    }
+    
+    /* Day names M T W T F S S - GOLD */
+    [data-baseweb="calendar"] [class*="weekday"],
+    [data-baseweb="calendar"] [class*="week-header"],
+    [data-baseweb="calendar"] [class*="Week"] {
+        color: #C9A84C !important;
+        font-weight: 800 !important;
+        font-size: 14px !important;
+    }
+    
+    /* Individual day cells */
+    [data-baseweb="calendar"] [class*="day"],
+    [data-baseweb="calendar"] [class*="date"] {
+        color: #FFFFFF !important;
+        background-color: #1E1E1E !important;
+        border: 1px solid #333333 !important;
+        border-radius: 4px !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Day hover */
+    [data-baseweb="calendar"] [class*="day"]:hover,
+    [data-baseweb="calendar"] [class*="date"]:hover {
+        background-color: #333333 !important;
+        color: #C9A84C !important;
+        border-color: #C9A84C !important;
+    }
+    
+    /* Selected day */
+    [data-baseweb="calendar"] [aria-selected="true"],
+    [data-baseweb="calendar"] [class*="selected"],
+    [data-baseweb="calendar"] [class*="highlighted"] {
+        background-color: #C9A84C !important;
+        color: #111111 !important;
+        border-color: #E8D18C !important;
+        font-weight: 800 !important;
+    }
+    
+    /* Today */
+    [data-baseweb="calendar"] [class*="today"] {
+        border: 2px solid #C9A84C !important;
+        color: #C9A84C !important;
+    }
+    
+    /* Month and Year header */
+    [data-baseweb="calendar"] [class*="month"],
+    [data-baseweb="calendar"] [class*="year"],
+    [data-baseweb="calendar"] [class*="header"] {
+        color: #C9A84C !important;
+        font-weight: 800 !important;
+        font-size: 16px !important;
+        background-color: #1E1E1E !important;
+    }
+    
+    /* Navigation arrows */
+    [data-baseweb="calendar"] button,
+    [data-baseweb="calendar"] [class*="arrow"],
+    [data-baseweb="calendar"] [class*="nav"] {
+        background-color: #2D2D2D !important;
+        color: #C9A84C !important;
+        border: 1px solid #B8960C !important;
+        border-radius: 4px !important;
+    }
+    
+    [data-baseweb="calendar"] button:hover {
+        background-color: #B8960C !important;
+        color: #111111 !important;
+    }
+    
+    /* Date input field itself */
+    [data-testid="stDateInput"] input {
+        background-color: #1E1E1E !important;
+        color: #FFFFFF !important;
+        border: 2px solid #B8960C !important;
+        border-radius: 6px !important;
+        font-size: 14px !important;
+    }
+    
+    /* Popover container */
+    [data-testid="stDateInput"] [data-baseweb="popover"] {
+        background-color: #1E1E1E !important;
+        border: 2px solid #B8960C !important;
+        border-radius: 10px !important;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.8) !important;
+    }
+    
+    /* ===== DATE INPUT - FORCE DARK CONTAINER ===== */
+    [data-testid="stDateInput"] > div,
+    [data-testid="stDateInput"] > div > div,
+    [data-testid="stDateInput"] > div > div > div {
+        background: #1E1E1E !important;
+    }
+    [data-testid="stDateInput"] input {
+        background: #1E1E1E !important;
+        color: #FFFFFF !important;
+        border: 1px solid #B8960C !important;
+        border-radius: 4px !important;
+        font-weight: 700 !important;
+    }
+    [data-testid="stDateInput"] [data-baseweb="select"] > div {
+        background: #2D2D2D !important;
+        border: 1px solid #B8960C !important;
+    }
+    [data-testid="stDateInput"] [data-baseweb="select"] span {
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+    }
+    [data-testid="stDateInput"] div[style*="background"] {
+        background: #1E1E1E !important;
+    }
+    [data-testid="stDateInput"] label {
+        color: #C9A84C !important;
+        font-weight: 800 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1756,128 +2314,150 @@ setInterval(fixFileUploaders, 500);
 st.markdown("""
 <script>
 // ===== CHURCHGATE INTERNAL DLP - CLIPBOARD MONITORING =====
+(function() {
+    const SENSITIVE_PATTERNS = [
+        {name: 'OpenAI API Key', regex: /sk-[a-zA-Z0-9]{20,}/g},
+        {name: 'Groq API Key', regex: /gsk_[a-zA-Z0-9]{20,}/g},
+        {name: 'Google API Key', regex: /AIza[0-9A-Za-z_-]{35}/g},
+        {name: 'SendGrid API Key', regex: /SG\\.[a-zA-Z0-9_-]{20,}\\.[a-zA-Z0-9_-]{20,}/g},
+        {name: 'NUBAN Account', regex: /\\b\\d{10}\\b/g},
+        {name: 'Sort Code', regex: /\\b\\d{3}-\\d{3}-\\d{4}\\b/g},
+        {name: 'BVN', regex: /\\b\\d{11}\\b/g},
+        {name: 'NIN', regex: /\\b\\d{11}\\b/g},
+        {name: 'Naira Amount', regex: /₦\\d{1,3}(,\\d{3})*(\\.\\d+)?/g},
+        {name: 'Churchgate', regex: /Churchgate/gi},
+        {name: 'World Trade Center', regex: /World Trade Center/gi},
+        {name: 'First Continental', regex: /First Continental/gi},
+        {name: 'Aba Textile', regex: /Aba Textile/gi},
+        {name: 'Confidential', regex: /confidential/gi},
+        {name: 'Internal Memo', regex: /internal memo/gi},
+        {name: 'Payslip', regex: /payslip/gi},
+        {name: 'Salary', regex: /salary/gi},
+        {name: 'Procurement', regex: /procurement/gi},
+        {name: 'Invoice', regex: /invoice/gi},
+        {name: 'Password', regex: /password/gi},
+        {name: 'API Key', regex: /api[_-]?key/gi}
+    ];
 
-const SENSITIVE_PATTERNS = [
-    {name: 'OpenAI API Key', regex: /sk-[a-zA-Z0-9]{20,}/g},
-    {name: 'Groq API Key', regex: /gsk_[a-zA-Z0-9]{20,}/g},
-    {name: 'Google API Key', regex: /AIza[0-9A-Za-z_-]{35}/g},
-    {name: 'SendGrid API Key', regex: /SG\.[a-zA-Z0-9_-]{20,}\.[a-zA-Z0-9_-]{20,}/g},
-    {name: 'NUBAN Account', regex: /\b\d{10}\b/g},
-    {name: 'Sort Code', regex: /\b\d{3}-\d{3}-\d{4}\b/g},
-    {name: 'BVN', regex: /\b\d{11}\b/g},
-    {name: 'NIN', regex: /\b\d{11}\b/g},
-    {name: 'Naira Amount', regex: /₦\d{1,3}(,\d{3})*(\.\d+)?/g},
-    {name: 'Churchgate', regex: /Churchgate/gi},
-    {name: 'World Trade Center', regex: /World Trade Center/gi},
-    {name: 'First Continental', regex: /First Continental/gi},
-    {name: 'Aba Textile', regex: /Aba Textile/gi},
-    {name: 'Confidential', regex: /confidential/gi},
-    {name: 'Internal Memo', regex: /internal memo/gi},
-    {name: 'Payslip', regex: /payslip/gi},
-    {name: 'Salary', regex: /salary/gi},
-    {name: 'Procurement', regex: /procurement/gi},
-    {name: 'Invoice', regex: /invoice/gi},
-    {name: 'Password', regex: /password/gi},
-    {name: 'API Key', regex: /api[_-]?key/gi}
-];
+    let lastAlertTime = 0;
+    const ALERT_COOLDOWN = 3000;
 
-let lastAlertTime = 0;
-const ALERT_COOLDOWN = 5000; // 5 seconds between alerts
-
-function detectSensitiveContent(text) {
-    let detected = [];
-    
-    SENSITIVE_PATTERNS.forEach(pattern => {
-        if (pattern.regex.test(text)) {
-            detected.push(pattern.name);
-        }
-    });
-    
-    return detected;
-}
-
-function showDLPWarning(detectedPatterns, action) {
-    const now = Date.now();
-    if (now - lastAlertTime < ALERT_COOLDOWN) return;
-    lastAlertTime = now;
-    
-    console.warn('🚨 DLP ALERT:', {
-        action: action,
-        patterns: detectedPatterns,
-        timestamp: new Date().toISOString()
-    });
-    
-    // Show warning overlay
-    const warningDiv = document.createElement('div');
-    warningDiv.style.cssText = `
-        position: fixed; top: 20px; right: 20px; z-index: 99999;
-        background: linear-gradient(135deg, #CC0000, #8B0000);
-        color: white; padding: 15px 20px; border-radius: 8px;
-        font-family: Arial, sans-serif; font-size: 14px;
-        box-shadow: 0 4px 20px rgba(204,0,0,0.5);
-        max-width: 400px;
-    `;
-    warningDiv.innerHTML = `
-        <strong>⚠️ CHURCHGATE DLP WARNING</strong><br>
-        <small>Sensitive content detected during ${action}.</small><br>
-        <small>Patterns: ${detectedPatterns.join(', ')}</small><br>
-        <small style="font-size: 10px;">This action has been logged and reported to Security.</small>
-    `;
-    document.body.appendChild(warningDiv);
-    
-    setTimeout(() => warningDiv.remove(), 5000);
-    
-    // Send to Streamlit backend
-    if (window.parent) {
-        window.parent.postMessage({
-            type: 'CHURCHGATE_DLP_ALERT',
-            action: action,
-            patterns: detectedPatterns.join(', '),
-            textSnippet: text.substring(0, 200),
-            timestamp: new Date().toISOString()
-        }, '*');
+    function detectSensitiveContent(text) {
+        let detected = [];
+        SENSITIVE_PATTERNS.forEach(pattern => {
+            if (pattern.regex.test(text)) {
+                detected.push(pattern.name);
+            }
+        });
+        return detected;
     }
-}
 
-// Monitor copy events
-document.addEventListener('copy', function(e) {
-    const text = window.getSelection()?.toString() || '';
-    if (text.length > 5) {
-        const detected = detectSensitiveContent(text);
-        if (detected.length > 0) {
-            showDLPWarning(detected, 'copying');
-        }
+    function showDLPWarning(detectedPatterns, action) {
+        const now = Date.now();
+        if (now - lastAlertTime < ALERT_COOLDOWN) return;
+        lastAlertTime = now;
+        
+        const warningDiv = document.createElement('div');
+        warningDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 99999; background: linear-gradient(135deg, #CC0000, #8B0000); color: white; padding: 15px 20px; border-radius: 8px; font-family: Arial, sans-serif; font-size: 14px; box-shadow: 0 4px 20px rgba(204,0,0,0.5); max-width: 400px;';
+        warningDiv.innerHTML = '<strong>⚠️ CHURCHGATE DLP WARNING</strong><br><small>Sensitive content detected during ' + action + '.</small><br><small>Patterns: ' + detectedPatterns.join(', ') + '</small><br><small style="font-size: 10px;">This action has been logged and reported to Security.</small>';
+        document.body.appendChild(warningDiv);
+        setTimeout(function() { warningDiv.remove(); }, 5000);
     }
-});
 
-// Monitor paste events
-document.addEventListener('paste', function(e) {
-    const text = e.clipboardData?.getData('text') || '';
-    if (text.length > 5) {
-        const detected = detectSensitiveContent(text);
-        if (detected.length > 0) {
-            showDLPWarning(detected, 'pasting');
-        }
-    }
-});
-
-// Monitor text inputs
-document.addEventListener('input', function(e) {
-    if (e.target && (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT')) {
-        const text = e.target.value || '';
-        if (text.length > 20) {
+    document.addEventListener('copy', function(e) {
+        const text = window.getSelection() ? window.getSelection().toString() : '';
+        if (text.length > 5) {
             const detected = detectSensitiveContent(text);
             if (detected.length > 0) {
-                console.warn('🚨 DLP PATTERN DETECTED in input:', detected);
+                showDLPWarning(detected, 'copying');
             }
         }
-    }
-});
+    });
 
-console.log('✅ Churchgate Internal DLP Clipboard Monitor ACTIVE');
+    document.addEventListener('paste', function(e) {
+        const text = e.clipboardData ? e.clipboardData.getData('text') : '';
+        if (text.length > 5) {
+            const detected = detectSensitiveContent(text);
+            if (detected.length > 0) {
+                showDLPWarning(detected, 'pasting');
+            }
+        }
+    });
+
+    console.log('✅ Churchgate Internal DLP Clipboard Monitor ACTIVE');
+})();
 </script>
 """, unsafe_allow_html=True)
 
+
+
+st.markdown("""
+<script>
+// DLP Clipboard Monitor - Enhanced with keyboard detection
+(function() {
+    console.log('✅ DLP Clipboard Monitor ACTIVE');
+    
+    var lastText = '';
+    
+    function checkText(text, action) {
+        if (!text || text.length < 3) return;
+        
+        var patterns = ['Churchgate', 'salary', '₦', 'confidential', 'invoice', 'password', 'World Trade'];
+        var found = [];
+        
+        for (var i = 0; i < patterns.length; i++) {
+            if (text.toLowerCase().indexOf(patterns[i].toLowerCase()) !== -1) {
+                found.push(patterns[i]);
+            }
+        }
+        
+        if (found.length > 0) {
+            alert('⚠️ CHURCHGATE DLP WARNING\n\nSensitive content detected during ' + action + '.\n\nPatterns: ' + found.join(', '));
+        }
+    }
+    
+    // Monitor copy event
+    document.addEventListener('copy', function(e) {
+        var text = '';
+        if (window.getSelection) {
+            text = window.getSelection().toString();
+        }
+        if (!text && e.clipboardData) {
+            text = e.clipboardData.getData('text');
+        }
+        checkText(text, 'copying');
+    });
+    
+    // Monitor cut event
+    document.addEventListener('cut', function(e) {
+        var text = '';
+        if (window.getSelection) {
+            text = window.getSelection().toString();
+        }
+        checkText(text, 'cutting');
+    });
+    
+    // Monitor keyboard Ctrl+C
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+            setTimeout(function() {
+                var text = window.getSelection ? window.getSelection().toString() : '';
+                checkText(text, 'copying');
+            }, 100);
+        }
+    });
+    
+    // Monitor paste
+    document.addEventListener('paste', function(e) {
+        var text = '';
+        if (e.clipboardData) {
+            text = e.clipboardData.getData('text');
+        }
+        checkText(text, 'pasting');
+    });
+})();
+</script>
+""", unsafe_allow_html=True)
 
 
 
@@ -3045,13 +3625,31 @@ def sidebar_navigation():
         user_role = st.session_state.user['role'] if st.session_state.user else 'Employee'
         if user_role in ['Admin', 'HR Director']:
             menu_options = [
-                "🏠 Employee Dashboard", "📊 Executive Dashboard", "👥 Employee Management", 
-                "📈 Performance & OKRs", "✅ Staff Confirmation", "🚀 Promotions", 
-                "💼 Recruitment Hub", "🤖 AI Recruitment Agent", "🔄 Requests Hub",
-                "📊 Reports & Analytics", "💬 Chat & Communications", "🎓 Training & Development", 
-                "🔔 Notifications", "📋 My Documents", "💡 Ideas Box", "📅 Calendar", 
-                "🎯 My Goals", "🌐 Directory", "📚 Knowledge Base", "🎉 Wellness & Perks", 
-                "🎓 LMS", "📋 Audit Log", "📊 Advanced Analytics", "🛡️ AI DLP Monitor", "👤 My Profile"
+                "🤖 AI Recruitment Agent",
+                "📊 Advanced Analytics",
+                "🛡️ AI DLP Monitor",
+                "📋 Audit Log",
+                "📅 Calendar",
+                "💬 Chat & Communications",
+                "🌐 Directory",
+                "🏠 Employee Dashboard",
+                "👥 Employee Management",
+                "📊 Executive Dashboard",
+                "💡 Ideas Box",
+                "📚 Knowledge Base",
+                "🎓 LMS",
+                "🎯 My Goals",
+                "📋 My Documents",
+                "👤 My Profile",
+                "🔔 Notifications",
+                "📈 Performance & OKRs",
+                "🚀 Promotions",
+                "💼 Recruitment Hub",
+                "📊 Reports & Analytics",
+                "🔄 Requests Hub",
+                "✅ Staff Confirmation",
+                "🎓 Training & Development",
+                "🎉 Wellness & Perks",
             ]
             all_icons = [
                 "house-fill", "speedometer2", "people-fill", "graph-up-arrow", 
@@ -3063,11 +3661,24 @@ def sidebar_navigation():
             ]
         elif user_role in ['Manager', 'HOD', 'Senior Manager', 'General Manager', 'Head of Department(HOD)', 'Management', 'Senior Management/C-Level', 'Senior Management']:
             menu_options = [
-                "🏠 Employee Dashboard", "✅ Staff Confirmation", "💼 Recruitment Hub", 
-                "🤖 AI Recruitment Agent", "📈 Performance & OKRs", "🔄 Requests Hub",
-                "💬 Chat & Communications", "🎓 Training & Development", "📋 My Documents", 
-                "💡 Ideas Box", "📅 Calendar", "🎯 My Goals", "🌐 Directory", 
-                "📚 Knowledge Base", "🎉 Wellness & Perks", "🎓 LMS", "🛡️ AI DLP Monitor", "👤 My Profile"
+                "🤖 AI Recruitment Agent",
+                "🛡️ AI DLP Monitor",
+                "📅 Calendar",
+                "💬 Chat & Communications",
+                "🌐 Directory",
+                "🏠 Employee Dashboard",
+                "💡 Ideas Box",
+                "📚 Knowledge Base",
+                "🎓 LMS",
+                "🎯 My Goals",
+                "📋 My Documents",
+                "👤 My Profile",
+                "📈 Performance & OKRs",
+                "💼 Recruitment Hub",
+                "🔄 Requests Hub",
+                "✅ Staff Confirmation",
+                "🎓 Training & Development",
+                "🎉 Wellness & Perks",
             ]
             all_icons = [
                 "house-fill", "check-circle-fill", "briefcase-fill", "robot", 
@@ -3078,10 +3689,20 @@ def sidebar_navigation():
 
         else:
             menu_options = [
-                "🏠 Employee Dashboard", "📈 My Performance & OKRs", "🔄 Requests Hub",
-                "💬 Chat & Communications", "🎓 Training & Development", "📋 My Documents", 
-                "💡 Ideas Box", "📅 Calendar", "🎯 My Goals", "🌐 Directory", 
-                "📚 Knowledge Base", "🎉 Wellness & Perks", "🎓 LMS", "👤 My Profile"
+                "📅 Calendar",
+                "💬 Chat & Communications",
+                "🌐 Directory",
+                "🏠 Employee Dashboard",
+                "💡 Ideas Box",
+                "📚 Knowledge Base",
+                "🎓 LMS",
+                "🎯 My Goals",
+                "📋 My Documents",
+                "👤 My Profile",
+                "📈 My Performance & OKRs",
+                "🔄 Requests Hub",
+                "🎓 Training & Development",
+                "🎉 Wellness & Perks",
             ]
             all_icons = [
                 "house-fill", "graph-up-arrow", "inbox-fill", "chat-dots-fill", 
@@ -3121,6 +3742,8 @@ def sidebar_navigation():
             st.success("✅ Data refreshed!")
             time.sleep(0.5)
             st.rerun()
+        if st.button("❓ Help Center", use_container_width=True, key="help_center_btn"):
+            show_help_dialog()
         if st.session_state.user:
             if st.button("🚪 Sign Out", use_container_width=True):
                 st.session_state.user = None
@@ -3893,7 +4516,7 @@ def executive_dashboard():
         emp_df = db.get_all_employees()
         if not emp_df.empty:
             total_employees = len(emp_df)
-            active_employees = len(emp_df[emp_df['status'] == 'Active'])
+            active_employees = len(emp_df[emp_df['status'] == 'Confirmed'])
             departments = len(emp_df['department'].unique())
             if 'gender' in emp_df.columns:
                 male_count = len(emp_df[emp_df['gender'].str.lower() == 'male'])
@@ -4470,7 +5093,7 @@ def employee_management():
         st.subheader("📋 Employee Directory")
         
         total_emp = len(employees_df)
-        active_emp = len(employees_df[employees_df['status'] == 'Active']) if not employees_df.empty else 0
+        confirmed_emp = len(employees_df[employees_df['status'] == 'Confirmed']) if not employees_df.empty else 0
         new_this_month = 0
         try:
             current_month = datetime.now().month
@@ -4492,7 +5115,7 @@ def employee_management():
         
         c1, c2, c3, c4 = st.columns(4)
         with c1: st.metric("👥 Total", total_emp)
-        with c2: st.metric("✅ Active", active_emp)
+        with c2: st.metric("✅ Confirmed", confirmed_emp)
         with c3: st.metric("🏢 Departments", len(employees_df['department'].unique()) if not employees_df.empty else 0)
         with c4: st.metric("🆕 New This Month", new_this_month)
         
@@ -4504,16 +5127,46 @@ def employee_management():
         current_day = today.day
         current_month = today.month
         
-        # Today's celebrations
-        todays_birthdays = [b for b in [
-            ("Denis Ugoh", 1), ("Barry Maigida", 2), ("Benjamin Iwan", 4), ("Chukwunonye Ibeabuchi", 5),
-            ("Andrew Anthony", 6), ("Ikechi Okezie", 7), ("Emmanuel Olagbaju", 8), ("Emmanuel Aiyedebinu", 9),
-            ("George Adaramola", 10), ("Vishwajeet Kamble", 12), ("Aliyu Garba", 18), ("Shegun Orhuamen", 19),
-            ("Benjamin Okhueleigbe", 20), ("Kazeem Tijani", 23), ("Olatunde Obe", 24), ("Geraldine Ejimonye", 25),
-            ("Anand Bora", 28), ("Yemisi Kolawole", 29)
-        ] if b[1] == current_day]
+        # ============ LOAD CELEBRATIONS FROM DATABASE ============
+        todays_birthdays = []
+        todays_anniversaries = []
+        month_birthdays = []
+        month_anniversaries = []
         
-        # Today's Celebrations
+        try:
+            for _, emp in employees_df.iterrows():
+                emp_name = f"{emp['first_name']} {emp['last_name']}".strip()
+                if not emp_name:
+                    continue
+                
+                # Check birthdays
+                dob = emp.get('date_of_birth')
+                if dob and str(dob) != 'None' and str(dob) != 'nan':
+                    try:
+                        dob_date = pd.to_datetime(dob)
+                        if dob_date.month == current_month and dob_date.day == current_day:
+                            todays_birthdays.append(emp_name)
+                        elif dob_date.month == current_month:
+                            month_birthdays.append({'name': emp_name, 'day': dob_date.day})
+                    except:
+                        pass
+                
+                # Check work anniversaries
+                jd = emp.get('join_date')
+                if jd and str(jd) != 'None' and str(jd) != 'nan':
+                    try:
+                        jd_date = pd.to_datetime(jd)
+                        years = today.year - jd_date.year
+                        if years > 0 and jd_date.month == current_month and jd_date.day == current_day:
+                            todays_anniversaries.append({'name': emp_name, 'years': years})
+                        elif years > 0 and jd_date.month == current_month:
+                            month_anniversaries.append({'name': emp_name, 'years': years})
+                    except:
+                        pass
+        except:
+            pass
+        
+        # Today's Birthday Celebrations - DARK THEME
         if todays_birthdays:
             st.markdown(f"""
             <div style="background:linear-gradient(135deg, #1E1E1E, #2D2D2D);padding:1rem;border-radius:12px;border:1px solid rgba(184, 150, 12, 0.4);border-left:4px solid #CC0000;margin-bottom:0.5rem;">
@@ -4521,64 +5174,75 @@ def employee_management():
                     <span style="font-size:2rem;">🎂</span>
                     <div>
                         <strong style="color:#C9A84C;">Happy Birthday Today!</strong><br>
-                        <span style="color:#F0E6D3;">{', '.join([str(b) for b in todays_birthdays])}</span>
+                        <span style="color:#E0E0E0;">{', '.join(todays_birthdays)}</span>
                     </div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
         
-        # This Month's Celebrations - Clean collapsible view
-        with st.expander(f"🎉 This Month's Celebrations ({current_month})", expanded=False):
+        # Today's Work Anniversaries - DARK THEME
+        if todays_anniversaries:
+            anniv_text = ', '.join([f"{a['name']} ({a['years']} yrs)" for a in todays_anniversaries])
+            st.markdown(f"""
+            <div style="background:linear-gradient(135deg, #1E1E1E, #2D2D2D);padding:1rem;border-radius:12px;border:1px solid rgba(184, 150, 12, 0.4);border-left:4px solid #D4AF37;margin-bottom:0.5rem;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:2rem;">⭐</span>
+                    <div>
+                        <strong style="color:#C9A84C;">Work Anniversary Today!</strong><br>
+                        <span style="color:#E0E0E0;">{anniv_text}</span>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # This Month's Celebrations - FROM DATABASE
+        with st.expander(f"🎉 This Month's Celebrations ({today.strftime('%B')})", expanded=False):
             col1, col2 = st.columns(2)
             
             with col1:
                 st.markdown("### 🎂 Birthdays This Month")
-                birthdays_by_week = {}
-                for name, day in [
-                    ("Denis Ugoh", 1), ("Barry Maigida", 2), ("Benjamin Iwan", 4), ("Chukwunonye Ibeabuchi", 5),
-                    ("Andrew Anthony", 6), ("Ikechi Okezie", 7), ("Emmanuel Olagbaju", 8), ("Emmanuel Aiyedebinu", 9),
-                    ("George Adaramola", 10), ("Vishwajeet Kamble", 12), ("Aliyu Garba", 18), ("Shegun Orhuamen", 19),
-                    ("Benjamin Okhueleigbe", 20), ("Kazeem Tijani", 23), ("Olatunde Obe", 24), ("Geraldine Ejimonye", 25),
-                    ("Anand Bora", 28), ("Yemisi Kolawole", 29)
-                ]:
-                    if day <= 7: week = "Week 1 (1-7)"
-                    elif day <= 14: week = "Week 2 (8-14)"
-                    elif day <= 21: week = "Week 3 (15-21)"
-                    else: week = "Week 4 (22-31)"
+                if month_birthdays:
+                    birthdays_by_week = {}
+                    for b in sorted(month_birthdays, key=lambda x: x['day']):
+                        day = b['day']
+                        if day <= 7: week = "Week 1 (1-7)"
+                        elif day <= 14: week = "Week 2 (8-14)"
+                        elif day <= 21: week = "Week 3 (15-21)"
+                        else: week = "Week 4 (22-31)"
+                        
+                        if week not in birthdays_by_week:
+                            birthdays_by_week[week] = []
+                        is_today = " 🎈" if day == current_day else ""
+                        birthdays_by_week[week].append(f"{b['name']} ({day}{is_today})")
                     
-                    if week not in birthdays_by_week: birthdays_by_week[week] = []
-                    is_today = " 🎈" if day == current_day else ""
-                    birthdays_by_week[week].append(f"{name} ({day}{is_today})")
-                
-                for week, names in birthdays_by_week.items():
-                    st.markdown(f"**{week}**")
-                    for name in names:
-                        st.markdown(f"• {name}")
+                    for week, names in birthdays_by_week.items():
+                        st.markdown(f"**{week}**")
+                        for name in names:
+                            st.markdown(f"• {name}")
+                else:
+                    st.markdown("*No birthdays this month*")
             
             with col2:
                 st.markdown("### ⭐ Work Anniversaries")
-                anniversaries_by_years = {}
-                for name, years in [
-                    ("Sanjeev Purwar", 29), ("John Peter", 25), ("Geraldine Ejimonye", 17), ("Boniface Ali", 17),
-                    ("Robert Akinniyi", 17), ("Safdar Hasnain", 12), ("Charles Onwukwe", 10), ("Magesh Gopal", 10),
-                    ("Partab Lalchandani", 10), ("Bamidele Mayaki", 10), ("Nchor Agba", 10), ("Chisom Nwachinemere", 10),
-                    ("Dinesh Vadher", 7), ("Olatunde Obe", 6), ("Kefas Mathew", 5), ("Ujunwa Onyemechalu", 3),
-                    ("Kayode Oniyide", 3), ("Martins Ezeh", 3), ("Thankgod Ochayi", 3), ("Gabriel Jeremiah", 3),
-                    ("Tabitha Mallo", 3), ("Dandy Shemang", 3), ("Alfred Obot", 3), ("Edwin Adobi", 3),
-                    ("Shedrack Augustine", 3), ("Soji Alademehin", 2), ("Raphael Ayeomoni", 1), ("David Oyinbo", 1)
-                ]:
-                    if years >= 20: milestone = "🏆 20+ Years"
-                    elif years >= 10: milestone = "🌟 10-19 Years"
-                    elif years >= 5: milestone = "👔 5-9 Years"
-                    else: milestone = "🌱 1-4 Years"
+                if month_anniversaries:
+                    anniversaries_by_years = {}
+                    for a in month_anniversaries:
+                        years = a['years']
+                        if years >= 20: milestone = "🏆 20+ Years"
+                        elif years >= 10: milestone = "🌟 10-19 Years"
+                        elif years >= 5: milestone = "👔 5-9 Years"
+                        else: milestone = "🌱 1-4 Years"
+                        
+                        if milestone not in anniversaries_by_years:
+                            anniversaries_by_years[milestone] = []
+                        anniversaries_by_years[milestone].append(f"{a['name']} ({years} yrs)")
                     
-                    if milestone not in anniversaries_by_years: anniversaries_by_years[milestone] = []
-                    anniversaries_by_years[milestone].append(f"{name} ({years} yrs)")
-                
-                for milestone, names in anniversaries_by_years.items():
-                    st.markdown(f"**{milestone}**")
-                    for name in names:
-                        st.markdown(f"• {name}")
+                    for milestone, names in anniversaries_by_years.items():
+                        st.markdown(f"**{milestone}**")
+                        for name in names:
+                            st.markdown(f"• {name}")
+                else:
+                    st.markdown("*No work anniversaries this month*")
         
         st.markdown("---")
         
@@ -4670,8 +5334,8 @@ def employee_management():
             
             for _, emp in filtered_df.iloc[start_idx:end_idx].iterrows():
                 initials = generate_initials(f"{emp['first_name']} {emp['last_name']}")
-                status_color = "#38a169" if emp.get('status') == 'Active' else "#d69e2e" if emp.get('status') == 'On Leave' else "#CC0000"
-                status_bg = "#e6f9e6" if emp.get('status') == 'Active' else "#fff8e6" if emp.get('status') == 'On Leave' else "#ffe6e6"
+                status_color = "#38a169" if emp.get('status') == 'Confirmed' else "#d69e2e" if emp.get('status') == 'On Leave' else "#CC0000"
+                status_bg = "#e6f9e6" if emp.get('status') == 'Confirmed' else "#fff8e6" if emp.get('status') == 'On Leave' else "#ffe6e6"
                 border_color = dept_colors.get(emp.get('department', ''), '#CC0000')
                 
                 with st.expander(f"👤 {emp['first_name']} {emp['last_name']} • {emp.get('position', 'N/A')}", expanded=False):
@@ -4684,7 +5348,7 @@ def employee_management():
                         reports_to_str = f" • 👔 Reports to: {emp.get('reports_to', 'N/A')}" if emp.get('reports_to') else ""
                         st.markdown(f"""<div style="line-height:1.6;"><strong style="font-size:1.1rem;">{emp['first_name']} {emp['last_name']}</strong><br><span style="color:#666;">💼 {emp.get('position', 'N/A')}</span><br><span style="color:#888;font-size:0.85rem;">🏢 {emp.get('department', 'N/A')}{region_str}{subsidiary_str}{reports_to_str} • 🆔 {emp.get('employee_id', 'N/A')}</span></div>""", unsafe_allow_html=True)
                     with col3:
-                        st.markdown(f"""<div style="text-align:right;"><span style="background:{status_bg};color:{status_color};padding:0.3rem 0.8rem;border-radius:20px;font-size:0.8rem;font-weight:600;border:1px solid {status_color};">{emp.get('status', 'Active')}</span><br><small style="color:#888;">📅 {emp.get('join_date', 'N/A')}</small></div>""", unsafe_allow_html=True)
+                        st.markdown(f"""<div style="text-align:right;"><span style="background:{status_bg};color:{status_color};padding:0.3rem 0.8rem;border-radius:20px;font-size:0.8rem;font-weight:600;border:1px solid {status_color};">{emp.get('status', 'Confirmed')}</span><br><small style="color:#888;">📅 {emp.get('join_date', 'N/A')}</small></div>""", unsafe_allow_html=True)
                     
                     st.markdown("---")
                     c1, c2, c3, c4 = st.columns(4)
@@ -4741,8 +5405,8 @@ def employee_management():
                             with ec2:
                                 new_position = st.text_input("Position", value=str(emp.get('position', '')), key=f"pos_{emp['employee_id']}_{st.session_state.dir_page}")
                                 
-                                current_status = str(emp.get('status', 'Active'))
-                                status_options = ['Active', 'On Leave', 'Probation', 'Terminated', 'Archived', 'Inactive']
+                                current_status = str(emp.get('status', 'Confirmed'))
+                                status_options = ['Confirmed', 'On Leave', 'Probation', 'Terminated', 'Archived', 'Inactive']
                                 status_idx = status_options.index(current_status) if current_status in status_options else 0
                                 new_status = st.selectbox("Status", status_options, index=status_idx, key=f"sts_{emp['employee_id']}_{st.session_state.dir_page}")
                                 
@@ -4810,7 +5474,7 @@ def employee_management():
                         with action_col2:
                             if current_status == 'Archived':
                                 if st.button("🔄 Restore", key=f"restore_{emp['employee_id']}_{st.session_state.dir_page}", use_container_width=True):
-                                    db._patch("employees", {"status": "Active"}, {"employee_id": emp['employee_id']})
+                                    db._patch("employees", {"status": "Confirmed"}, {"employee_id": emp['employee_id']})
                                     st.success(f"✅ Restored!")
                                     st.cache_data.clear()
                             else:
@@ -4875,7 +5539,7 @@ def employee_management():
                 join_date = st.date_input("Join Date", min_value=date(1970, 1, 1), max_value=date.today())
                 date_of_birth = st.date_input("Date of Birth *", min_value=date(1920, 1, 1), max_value=date(2026, 12, 31), value=date(1990, 1, 1))
                 system_role = st.selectbox("System Role *", ['Admin', 'HOD', 'Manager', 'Team Lead', 'Team Member'], index=4)
-                status = st.selectbox("Status", ['Active', 'Probation'])
+                status = st.selectbox("Status", ['Confirmed', 'Probation'])
             
             if st.form_submit_button("✅ Add Employee", use_container_width=True):
                 if first_name and last_name and employee_id and department and position:
@@ -5211,6 +5875,11 @@ def employee_management():
     with tab4:
         st.subheader("🔑 Generate Employee Login Credentials")
         
+        # Initialize session state for auto-fill
+        for key in ['single_email', 'single_name', 'single_dept', 'single_id', 'single_position']:
+            if key not in st.session_state:
+                st.session_state[key] = ''
+        
         # Build employee dropdown list
         emp_options_list = []
         if not employees_df.empty:
@@ -5219,7 +5888,7 @@ def employee_management():
         st.markdown("### ⚡ Quick Single Employee")
         
         # Single employee - NOT in form, use session state
-        selected_emp = st.selectbox("👤 Select Employee", ["Select employee..."] + emp_options_list, key="single_emp_select")
+        selected_emp = st.selectbox("👤 Select Employee", ["Select employee..."] + emp_options_list, key="single_emp_select", on_change=None)
         
         # Auto-fill using session state
         if selected_emp != "Select employee...":
@@ -5228,31 +5897,28 @@ def employee_management():
             if not emp_match.empty:
                 emp_row = emp_match.iloc[0]
                 # Store in session state
-                st.session_state.single_email = emp_row.get('email', '')
+                st.session_state.single_email = str(emp_row.get('email', ''))
                 st.session_state.single_name = f"{emp_row['first_name']} {emp_row['last_name']}"
-                st.session_state.single_dept = emp_row.get('department', '')
-                st.session_state.single_id = emp_row.get('employee_id', '')
-                st.session_state.single_position = emp_row.get('position', '')
+                st.session_state.single_dept = str(emp_row.get('department', ''))
+                st.session_state.single_id = str(emp_row.get('employee_id', ''))
+                st.session_state.single_position = str(emp_row.get('position', ''))
         
         # Input fields with session state defaults
         c1, c2 = st.columns(2)
         with c1:
             single_email = st.text_input("Employee Email *", 
-                value=st.session_state.get('single_email', ''), 
-                key="single_email_input")
+                value=st.session_state.get('single_email', ''))
             single_name = st.text_input("Full Name *", 
-                value=st.session_state.get('single_name', ''), 
-                key="single_name_input")
-            single_pw = st.text_input("Password", value="churchgate2026", key="single_pw_input")
+                value=st.session_state.get('single_name', ''))
+            single_pw = st.text_input("Password", value="churchgate2026")
         with c2:
             dept_options = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering', 'Admin']
             current_dept = st.session_state.get('single_dept', 'Senior Management')
             dept_idx = dept_options.index(current_dept) if current_dept in dept_options else 0
-            single_dept = st.selectbox("Department", dept_options, index=dept_idx, key="single_dept_select")
-            single_role = st.selectbox("Role", ['Team Member', 'Team Lead', 'Manager', 'HOD', 'Admin'], key="single_role_select")
+            single_dept = st.selectbox("Department", dept_options, index=dept_idx)
+            single_role = st.selectbox("Role", ['Team Member', 'Team Lead', 'Manager', 'HOD', 'Admin'])
             single_id = st.text_input("Employee ID", 
-                value=st.session_state.get('single_id', ''), 
-                key="single_id_input")
+                value=st.session_state.get('single_id', ''))
         
         if st.button("🔑 Create Single Login", use_container_width=True, type="primary", key="single_login_button"):
             if single_email and single_name:
@@ -12845,7 +13511,6 @@ APPLY NOW: {public_url}
         
         messages = []
         
-        # Auto-post to personal profile
         if linkedin_token:
             try:
                 user_url = "https://api.linkedin.com/v2/userinfo"
@@ -12886,7 +13551,6 @@ APPLY NOW: {public_url}
         else:
             messages.append('⚠️ No LinkedIn token')
         
-        # LinkedIn share links
         li_share = f"https://www.linkedin.com/shareArticle?mini=true&url={urllib.parse.quote(public_url)}&title={urllib.parse.quote('WE ARE HIRING: ' + job_title)}&summary={urllib.parse.quote(clean_jd[:200])}"
         messages.append(f'🔗 [Share on LinkedIn]({li_share})')
         
@@ -12903,7 +13567,6 @@ APPLY NOW: {public_url}
         try:
             import xml.etree.ElementTree as ET
             
-            # Create XML for Indeed
             job_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <job>
     <title><![CDATA[{job_title}]]></title>
@@ -12941,12 +13604,12 @@ APPLY NOW: {public_url}
         }
         
         # ============================================
-        # 4. MYJOBMAG - Pre-filled Post Template
+        # 4. MYJOBMAG
         # ============================================
         myjobmag_fields = {
             'job_title': job_title,
             'specialization': job_department,
-            'experience': '3-5 years',  # Adjust based on level
+            'experience': '3-5 years',
             'job_mode': 'Full Time' if job_type.lower() == 'full-time' else 'Onsite',
             'location': job_location,
             'relocation': 'No',
@@ -12961,23 +13624,13 @@ APPLY NOW: {public_url}
             'cover_letter': 'No'
         }
         
-        myjobmag_message = f"""📋 **MyJobMag Post Ready - Copy these fields:**
+        myjobmag_message = f"""📋 **MyJobMag Post Ready:**
 
-**Job Title:** {myjobmag_fields['job_title']}
-**Specialization:** {myjobmag_fields['specialization']}
-**Experience:** {myjobmag_fields['experience']}
-**Job Mode:** {myjobmag_fields['job_mode']}
-**Location:** {myjobmag_fields['location']}
-**Qualification:** {myjobmag_fields['qualification']}
-**Salary:** {myjobmag_fields['salary']}
-**Hiring Company:** Churchgate Group
-**Apply Method:** Use link → {public_url}
-**Deadline:** Set to closing date
-
-**Description:**
-{clean_jd[:500]}...
-
-[Open MyJobMag Post Page](https://www.myjobmag.com/post-job)"""
+**Job Title:** {job_title}
+**Specialization:** {job_department}
+**Location:** {job_location}
+**Salary:** {job_salary if job_salary else 'Competitive'}
+**Apply:** {public_url}"""
         
         results['myjobmag'] = {
             'status': 'ready',
@@ -12986,43 +13639,19 @@ APPLY NOW: {public_url}
         }
         
         # ============================================
-        # 5. HOTNIGERIANJOBS - Pre-filled Post Template
+        # 5. HOTNIGERIANJOBS
         # ============================================
-        hnj_fields = {
-            'company': 'Churchgate Group',
-            'position_title': job_title,
-            'job_field': job_department,
-            'qualification': 'Degree',
-            'employment_type': job_type,
-            'location': job_location,
-            'city': job_location.split()[-1] if job_location else 'Abuja',
-            'salary_min': job_salary.split('-')[0].strip() if job_salary and '-' in job_salary else '',
-            'salary_max': job_salary.split('-')[1].strip() if job_salary and '-' in job_salary else '',
-            'deadline': '',
-            'description': clean_jd[:3000],
-            'apply_method': 'Direct applications to a different website',
-            'apply_url': public_url
-        }
-        
-        hnj_message = f"""📋 **HotNigerianJobs Post Ready - Copy these fields:**
+        hnj_message = f"""📋 **HotNigerianJobs Post Ready:**
 
-**Company:** Churchgate Group
-**Position Title:** {hnj_fields['position_title']}
-**Job Field:** {hnj_fields['job_field']}
-**Employment Type:** {hnj_fields['employment_type']}
-**Location:** {hnj_fields['location']}
+**Position:** {job_title}
+**Field:** {job_department}
+**Location:** {job_location}
 **Salary:** {job_salary if job_salary else 'Competitive'}
-**Application Method:** Direct to website → {public_url}
-
-**Description:**
-{clean_jd[:500]}...
-
-[Open HotNigerianJobs Post Page](https://www.hotnigerianjobs.com/employer/post-job)"""
+**Apply:** {public_url}"""
         
         results['hotnigerianjobs'] = {
             'status': 'ready',
-            'message': hnj_message,
-            'fields': hnj_fields
+            'message': hnj_message
         }
         
         return results
@@ -13031,13 +13660,11 @@ APPLY NOW: {public_url}
     
     user_role = st.session_state.user['role'] if st.session_state.user else 'Employee'
     
-    # Auto-expire jobs past closing date
     try:
         today = datetime.now().strftime('%Y-%m-%d')
         for i, req in enumerate(st.session_state.job_requisitions):
             if req.get('status') == 'Approved - Live' and req.get('closing', '') and req.get('closing', '') < today:
                 st.session_state.job_requisitions[i]['status'] = 'Expired'
-                st.session_state.active_jobs = [j for j in st.session_state.active_jobs if j.get('ref') != req.get('id')]
         st.session_state.active_jobs = [j for j in st.session_state.active_jobs if j.get('closing', '9999-12-31') >= today]
     except:
         pass
@@ -13054,7 +13681,7 @@ APPLY NOW: {public_url}
     
     STREAMLIT_URL = "https://hris.churchgate.com"
     
-    # CHANGE 1: Load from database
+    # Load from database
     if 'job_requisitions' not in st.session_state:
         st.session_state.job_requisitions = []
         try:
@@ -13070,7 +13697,11 @@ APPLY NOW: {public_url}
                     'posts': json.loads(r.get('posts', '{}')),
                     'status': r.get('status', ''), 'submitted_by': r.get('submitted_by', ''),
                     'date': r.get('date', ''), 'lm_comment': r.get('lm_comment', ''),
-                    'admin_comment': r.get('admin_comment', ''), 'coo_comment': r.get('coo_comment', '')
+                    'admin_comment': r.get('admin_comment', ''), 'coo_comment': r.get('coo_comment', ''),
+                    'lm_name': r.get('lm_name', ''),
+                    'admin_name': r.get('admin_name', ''),
+                    'coo_name': r.get('coo_name', ''),
+                    'evidence_files': json.loads(r.get('evidence_files', '[]'))
                 })
         except:
             pass
@@ -13109,19 +13740,16 @@ APPLY NOW: {public_url}
     if 'referrals' not in st.session_state:
         st.session_state.referrals = []
     
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
-        "📋 Job Requisition", "📢 Active Jobs", "🌐 Candidate Portal", 
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs([
+        "📋 Job Requisition", "✅ Approval Dashboard", "📢 Active Jobs", "🌐 Candidate Portal", 
         "🤖 AI Screening", "📅 Interviews", "📝 Offer Letters",
         "🎯 Onboarding", "🔍 Background Checks", "📊 Analytics"
     ])
     
-    # ============ TAB 1: JOB REQUISITION ============
+    # ============ TAB 1: JOB REQUISITION (FORM ONLY) ============
     with tab1:
-        st.subheader("📋 Job Requisition & Approval Workflow")
+        st.subheader("📋 Job Requisition Form")
         st.info("Workflow: Line Manager → Super Admin → COO → Job Goes LIVE on Careers Page")
-        
-        
-
         
         with st.form("job_requisition_form"):
             st.markdown("### New Job Requisition")
@@ -13143,7 +13771,6 @@ APPLY NOW: {public_url}
             if 'jd_html_content' not in st.session_state:
                 st.session_state.jd_html_content = ""
             
-            # Rich text editor
             jd_text_for_submission = st_quill(
                 value=st.session_state.jd_html_content,
                 placeholder="Start typing your job description here...",
@@ -13155,15 +13782,12 @@ APPLY NOW: {public_url}
                 st.session_state.jd_html_content = jd_text_for_submission
                 with st.expander("👁️ Live Preview", expanded=True):
                     st.markdown(jd_text_for_submission, unsafe_allow_html=True)
-            else:
-                st.info("👆 Use the rich text editor above to create your job description. Click a template to get started.")
             
             st.markdown("### Screening Questions (Optional)")
-            st.markdown("*Leave blank if not needed*")
-            screening_q1 = st.text_input("Screening Question 1", placeholder="e.g., Cisco Certified (CCNP minimum)")
-            screening_q2 = st.text_input("Screening Question 2", placeholder="e.g., 5+ years experience in similar role")
-            screening_q3 = st.text_input("Screening Question 3", placeholder="e.g., Experience with security systems")
-            screening_q4 = st.text_input("Screening Question 4", placeholder="e.g., B.Sc. Computer Science or related field")
+            screening_q1 = st.text_input("Screening Question 1", key="sq1")
+            screening_q2 = st.text_input("Screening Question 2", key="sq2")
+            screening_q3 = st.text_input("Screening Question 3", key="sq3")
+            screening_q4 = st.text_input("Screening Question 4", key="sq4")
             
             st.markdown("### Auto-Post Settings")
             c1, c2, c3, c4, c5 = st.columns(5)
@@ -13191,10 +13815,11 @@ APPLY NOW: {public_url}
                         'posts': {'linkedin': post_linkedin, 'indeed': post_indeed, 'glassdoor': post_glassdoor, 'myjobmag': post_myjobmag, 'hotnigerianjobs': post_hotnigerianjobs},
                         'status': 'Pending LM Approval',
                         'submitted_by': user_name, 'date': datetime.now().strftime('%Y-%m-%d %H:%M'),
-                        'lm_comment': '', 'admin_comment': '', 'coo_comment': ''
+                        'lm_comment': '', 'admin_comment': '', 'coo_comment': '',
+                        'lm_name': '', 'admin_name': '', 'coo_name': '',
+                        'evidence_files': []
                     }
                     st.session_state.job_requisitions.append(req)
-                    # CHANGE 2: Save to database
                     try:
                         db.save_job_requisition(req['id'], req['title'], req['department'], req['location'],
                             req['type'], req['salary'], req['level'], req['positions'], req['closing'],
@@ -13202,7 +13827,7 @@ APPLY NOW: {public_url}
                             req['lm_comment'], req['admin_comment'], req['coo_comment'])
                     except:
                         pass
-                    # Send email to Line Manager
+                    
                     lm_emails = {
                         'Accounts & Finance': 'jeff@churchgate.com',
                         'Facility Management': 'deffiong@churchgate.com',
@@ -13226,7 +13851,6 @@ APPLY NOW: {public_url}
                             f"🔔 New Job Requisition Awaiting Authorization: {job_title}",
                             f"A new job requisition for '{job_title}' ({department}) has been submitted by {user_name}.\n\nPlease review and authorize in the HRIS: https://hris.churchgate.com\n\nRequisition ID: {req['id']}"
                         )
-                        st.info(f"📧 Authorization request sent to Line Manager")
                     except:
                         pass
                     
@@ -13234,173 +13858,275 @@ APPLY NOW: {public_url}
                     st.balloons()
                 else:
                     st.error("❌ Required fields missing!")
+    
+    # ============ TAB 2: APPROVAL DASHBOARD ============
+    with tab2:
+        st.subheader("✅ Requisition Approval Dashboard")
+        st.info("Workflow: Line Manager → Super Admin → COO → Job Goes LIVE")
         
-        if st.session_state.job_requisitions:
-            st.markdown("---")
-            st.markdown("### 📋 Requisition Approval Dashboard")
-            
-            # Load email service for notifications
+        if not st.session_state.job_requisitions:
+            st.info("No requisitions submitted yet.")
+        else:
             try:
                 from utils.email_service import EmailService
                 email_svc = EmailService()
             except:
                 email_svc = None
             
-            for i, req in enumerate(st.session_state.job_requisitions):
-                with st.expander(f"{req['id']} - {req['title']} | {req['department']} | {req['status']}", expanded=True):
-                    
-                    # ===== FULL DETAIL VIEW =====
-                    st.markdown(f"**Submitted By:** {req['submitted_by']} | **Date:** {req['date']}")
-                    st.markdown(f"**Department:** {req['department']} | **Location:** {req['location']}")
-                    st.markdown(f"**Type:** {req['type']} | **Level:** {req['level']} | **Positions:** {req.get('positions', 1)}")
-                    st.markdown(f"**Salary Range:** {req.get('salary', 'Not specified')}")
-                    st.markdown(f"**Closing Date:** {req.get('closing', 'Not set')}")
-                    
-                    st.markdown("---")
-                    st.markdown("**📋 Job Description:**")
-                    jd_content = req.get('jd', 'No JD provided')
-                    if '<' in jd_content and '>' in jd_content:
-                        st.markdown(jd_content, unsafe_allow_html=True)
-                    else:
-                        formatted = jd_content.replace('\n\n', '<br><br>').replace('\n', '<br>')
-                        st.markdown(formatted, unsafe_allow_html=True)
-                    
-                    if req.get('screening'):
-                        st.markdown("---")
-                        st.markdown("**❓ Screening Questions:**")
-                        for q in req.get('screening', []):
-                            if q:
-                                st.markdown(f"- {q}")
-                    
-                    st.markdown("---")
-                    st.markdown(f"**Platform Posts:** LinkedIn: {'✅' if req.get('posts', {}).get('linkedin') else '❌'} | Indeed: {'✅' if req.get('posts', {}).get('indeed') else '❌'} | Glassdoor: {'✅' if req.get('posts', {}).get('glassdoor') else '❌'}")
-                    
-                    if req.get('lm_comment'):
-                        st.markdown(f"**LM Comment:** {req['lm_comment']}")
-                    if req.get('admin_comment'):
-                        st.markdown(f"**Admin Comment:** {req['admin_comment']}")
-                    if req.get('coo_comment'):
-                        st.markdown(f"**COO Comment:** {req['coo_comment']}")
-                    
-                    # ===== APPROVAL WORKFLOW WITH EDIT ACCESS =====
-                    if is_admin or is_manager:
-                        st.markdown("---")
+            # ============================================================
+            # SLA & ANALYTICS METRICS
+            # ============================================================
+            st.markdown("### 📊 Approval SLA Metrics")
+            
+            pending_lm = len([r for r in st.session_state.job_requisitions if r['status'] == 'Pending LM Approval'])
+            pending_admin = len([r for r in st.session_state.job_requisitions if r['status'] == 'Pending Admin Approval'])
+            pending_coo = len([r for r in st.session_state.job_requisitions if r['status'] == 'Pending COO Approval'])
+            revision_req = len([r for r in st.session_state.job_requisitions if r['status'] == 'Revision Requested by COO'])
+            rejected = len([r for r in st.session_state.job_requisitions if r['status'] == 'Rejected by COO'])
+            approved = len([r for r in st.session_state.job_requisitions if r['status'] == 'Approved - Live'])
+            
+            m1, m2, m3, m4, m5, m6 = st.columns(6)
+            m1.metric("👔 Pending LM", pending_lm)
+            m2.metric("🔍 Pending Admin", pending_admin)
+            m3.metric("🏢 Pending COO", pending_coo)
+            m4.metric("🔄 Revisions", revision_req)
+            m5.metric("❌ Rejected", rejected)
+            m6.metric("✅ Approved", approved)
+            
+            # SLA Tracking
+            st.markdown("---")
+            st.markdown("### ⏱️ Approval SLA Tracking")
+            
+            sla_data = []
+            for req in st.session_state.job_requisitions:
+                submitted_date = req.get('date', '')
+                status = req['status']
+                
+                # Calculate SLA based on status
+                if submitted_date:
+                    try:
+                        submitted_dt = datetime.strptime(submitted_date, '%Y-%m-%d %H:%M')
+                        elapsed_hours = (datetime.now() - submitted_dt).total_seconds() / 3600
                         
-                        # LM APPROVAL
-                        if req['status'] == 'Pending LM Approval':
-                            st.markdown("#### 👔 Line Manager Review")
-                            with st.form(key=f"lm_form_{i}"):
-                                st.markdown("**✏️ Edit Job Description:**")
-                                edit_jd = st_quill(value=jd_content, html=True, key=f"edit_jd_quill_{i}")
-                                edit_screening = st.text_area("Edit Screening Questions (one per line)", value='\n'.join([q for q in req.get('screening', []) if q]), height=80, key=f"edit_screening_{i}")
-                                lm_comment = st.text_area("Line Manager Comment *", key=f"lm_comment_{i}", placeholder="Reason for authorization or any notes...")
-                                
-                                if st.form_submit_button("✅ Authorize & Send to HR", use_container_width=True):
-                                    if lm_comment:
-                                        st.session_state.job_requisitions[i]['status'] = 'Pending Admin Approval'
-                                        st.session_state.job_requisitions[i]['lm_comment'] = lm_comment
-                                        st.session_state.job_requisitions[i]['jd'] = edit_jd
-                                        st.session_state.job_requisitions[i]['screening'] = [s.strip() for s in edit_screening.split('\n') if s.strip()]
-                                        
-                                        try:
-                                            r = st.session_state.job_requisitions[i]
-                                            db.save_job_requisition(r['id'], r['title'], r['department'], r['location'],
-                                                r['type'], r['salary'], r['level'], r['positions'], r['closing'],
-                                                r['jd'], r['screening'], r['posts'], r['status'], r['submitted_by'], r['date'],
-                                                r['lm_comment'], r['admin_comment'], r['coo_comment'])
-                                        except:
-                                            pass
-                                        
-                                        if email_svc:
-                                            try:
-                                                hr_emails = ["bsakote@churchgate.com", "gbalogun@churchgate.com", "ichukwunonye@churchgate.com"]
-                                                for hr_email in hr_emails:
-                                                    email_svc.send_email(
-                                                        hr_email,
-                                                        f"🔔 Job Requisition Authorized by LM: {req['title']}",
-                                                        f"Line Manager has authorized '{req['title']}' ({req['department']}).\n\nValidate at: https://hris.churchgate.com\n\nRequisition ID: {req['id']}"
-                                                    )
-                                                st.info("📧 HR team notified")
-                                            except:
-                                                pass
-                                        
-                                        st.success("✅ Authorized!")
-                                        st.rerun()
-                                    else:
-                                        st.error("❌ Comment required!")
+                        # SLA thresholds
+                        if status == 'Pending LM Approval':
+                            sla = "24h"
+                            sla_met = elapsed_hours <= 24
+                        elif status == 'Pending Admin Approval':
+                            sla = "48h"
+                            sla_met = elapsed_hours <= 48
+                        elif status == 'Pending COO Approval':
+                            sla = "72h"
+                            sla_met = elapsed_hours <= 72
+                        elif status == 'Approved - Live':
+                            sla = "Completed"
+                            sla_met = True
+                        elif status == 'Rejected by COO':
+                            sla = "Completed"
+                            sla_met = True
+                        elif status == 'Revision Requested by COO':
+                            sla = "In Revision"
+                            sla_met = True
+                        else:
+                            sla = "N/A"
+                            sla_met = True
                         
-                        # ===== ADMIN VALIDATION =====
-                        if req['status'] == 'Pending Admin Approval':
-                            st.markdown("#### 🔍 HR Admin Validation")
+                        sla_data.append({
+                            'Requisition': req['id'],
+                            'Title': req['title'],
+                            'Status': status,
+                            'Submitted': submitted_date,
+                            'Elapsed Hours': f"{elapsed_hours:.1f}h",
+                            'SLA Target': sla,
+                            'SLA Status': '✅ Met' if sla_met else '⚠️ Breached'
+                        })
+                    except:
+                        pass
+            
+            if sla_data:
+                sla_df = pd.DataFrame(sla_data)
+                html_table = sla_df.to_html(classes='dark-csv-table', index=False, border=0, escape=False)
+                st.markdown(html_table, unsafe_allow_html=True)
+            
+            st.markdown("---")
+            
+            # ============================================================
+            # SUB-TABS FOR BETTER ORGANIZATION
+            # ============================================================
+            approval_subtab1, approval_subtab2, approval_subtab3, approval_subtab4 = st.tabs([
+                f"📋 Pending Action ({pending_lm + pending_admin + pending_coo})",
+                f"🔄 Revisions ({revision_req})",
+                f"✅ Approved ({approved})",
+                f"❌ Rejected ({rejected})"
+            ])
+            
+            # ============ SUB-TAB 1: PENDING ACTION ============
+            with approval_subtab1:
+                st.subheader("📋 Requisitions Awaiting Action")
+                
+                pending_reqs = [r for r in st.session_state.job_requisitions 
+                               if r['status'] in ['Pending LM Approval', 'Pending Admin Approval', 'Pending COO Approval']]
+                
+                if not pending_reqs:
+                    st.success("✅ No pending requisitions!")
+                else:
+                    for i, req in enumerate(st.session_state.job_requisitions):
+                        if req['status'] not in ['Pending LM Approval', 'Pending Admin Approval', 'Pending COO Approval']:
+                            continue
+                        
+                        with st.expander(f"{req['id']} - {req['title']} | {req['department']} | {req['status']}", expanded=True):
                             
-                            # JD Preview
-                            st.markdown("**📋 Job Description Preview:**")
+                            # ===== DETAILS =====
+                            st.markdown(f"**Submitted By:** {req['submitted_by']} | **Date:** {req['date']}")
+                            st.markdown(f"**Department:** {req['department']} | **Location:** {req['location']}")
+                            st.markdown(f"**Type:** {req['type']} | **Level:** {req['level']} | **Positions:** {req.get('positions', 1)}")
+                            st.markdown(f"**Salary Range:** {req.get('salary', 'Not specified')}")
+                            
+                            st.markdown("---")
+                            st.markdown("**📋 Job Description:**")
                             jd_content = req.get('jd', 'No JD provided')
                             if '<' in jd_content and '>' in jd_content:
                                 st.markdown(jd_content, unsafe_allow_html=True)
                             else:
                                 st.markdown(jd_content)
-                            st.markdown("---")
                             
-                            with st.form(key=f"admin_form_{i}"):
-                                st.markdown("**✏️ Edit Job Description:**")
-                                edit_jd = st_quill(value=req.get('jd', ''), html=True, key=f"edit_jd_admin_quill_{i}")
-                                edit_salary = st.text_input("Edit Salary Range", value=req.get('salary', ''), key=f"edit_salary_{i}")
-                                admin_comment = st.text_area("Admin Validation Comment *", key=f"admin_comment_{i}", placeholder="Confirm JD quality, budget alignment, grade fit...")
-                                
-                                if st.form_submit_button("✅ Validate & Send to COO", use_container_width=True):
-                                    if admin_comment:
-                                        st.session_state.job_requisitions[i]['status'] = 'Pending COO Approval'
-                                        st.session_state.job_requisitions[i]['admin_comment'] = admin_comment
-                                        st.session_state.job_requisitions[i]['jd'] = edit_jd
-                                        st.session_state.job_requisitions[i]['salary'] = edit_salary
-                                        
-                                        try:
-                                            r = st.session_state.job_requisitions[i]
-                                            db.save_job_requisition(r['id'], r['title'], r['department'], r['location'],
-                                                r['type'], r['salary'], r['level'], r['positions'], r['closing'],
-                                                r['jd'], r['screening'], r['posts'], r['status'], r['submitted_by'], r['date'],
-                                                r['lm_comment'], r['admin_comment'], r['coo_comment'])
-                                        except:
-                                            pass
-                                        
-                                        if email_svc:
+                            # Platform Posts + Names
+                            st.markdown("---")
+                            posts = req.get('posts', {})
+                            st.markdown(f"**Platform Posts:** LinkedIn: {'✅' if posts.get('linkedin') else '❌'} | Indeed: {'✅' if posts.get('indeed') else '❌'} | Glassdoor: {'✅' if posts.get('glassdoor') else '❌'}")
+                            
+                            lm_display = req.get('lm_name', '') or 'Pending'
+                            admin_display = req.get('admin_name', '') or 'Pending'
+                            coo_display = req.get('coo_name', '') or 'Pending'
+                            
+                            st.markdown(f"**👔 Line Manager:** {lm_display}")
+                            st.markdown(f"**🔍 Admin:** {admin_display}")
+                            st.markdown(f"**🏢 COO:** {coo_display}")
+                            
+                            # ===== LM APPROVAL =====
+                            if req['status'] == 'Pending LM Approval' and is_manager:
+                                st.markdown("---")
+                                st.markdown("#### 👔 Line Manager Authorization")
+                                with st.form(key=f"lm_form_{i}"):
+                                    edit_jd = st_quill(value=jd_content, html=True, key=f"edit_jd_lm_{i}")
+                                    lm_comment = st.text_area("Line Manager Comment *", key=f"lm_comment_{i}", placeholder="e.g., This position is for expansion purposes")
+                                    
+                                    st.markdown("**📎 Attach Evidence (Optional):**")
+                                    evidence_file = st.file_uploader("Upload evidence", key=f"lm_evidence_{i}", type=['pdf', 'docx', 'xlsx', 'png', 'jpg'])
+                                    
+                                    if st.form_submit_button("✅ Authorize & Send to HR", use_container_width=True):
+                                        if lm_comment:
+                                            st.session_state.job_requisitions[i]['status'] = 'Pending Admin Approval'
+                                            st.session_state.job_requisitions[i]['lm_comment'] = lm_comment
+                                            st.session_state.job_requisitions[i]['jd'] = edit_jd
+                                            st.session_state.job_requisitions[i]['lm_name'] = user_name
+                                            
+                                            if evidence_file:
+                                                try:
+                                                    from supabase import create_client
+                                                    supabase_url = os.environ.get('SUPABASE_URL', '')
+                                                    supabase_key = os.environ.get('SUPABASE_SERVICE_KEY', os.environ.get('SUPABASE_KEY', ''))
+                                                    supabase_client = create_client(supabase_url, supabase_key)
+                                                    
+                                                    file_name = f"req_evidence_{req['id']}_{evidence_file.name}"
+                                                    supabase_client.storage.from_('dlp-evidence').upload(file_name, evidence_file.getvalue())
+                                                    evidence_url = supabase_client.storage.from_('dlp-evidence').get_public_url(file_name)
+                                                    
+                                                    if 'evidence_files' not in st.session_state.job_requisitions[i]:
+                                                        st.session_state.job_requisitions[i]['evidence_files'] = []
+                                                    st.session_state.job_requisitions[i]['evidence_files'].append(evidence_url)
+                                                    st.success(f"✅ Evidence uploaded")
+                                                except Exception as e:
+                                                    st.warning(f"Evidence upload failed: {str(e)}")
+                                            
                                             try:
-                                                email_svc.send_email(
-                                                    "jeromedas@churchgate.com",
-                                                    f"🔔 Job Requisition Ready for Final Approval: {req['title']}",
-                                                    f"HR has validated '{req['title']}' ({req['department']}).\n\nApprove at: https://hris.churchgate.com\n\nRequisition ID: {req['id']}\nAdmin Comment: {admin_comment}"
-                                                )
-                                                st.info("📧 Email sent to COO (Jerome Das)")
+                                                r = st.session_state.job_requisitions[i]
+                                                db.save_job_requisition(r['id'], r['title'], r['department'], r['location'],
+                                                    r['type'], r['salary'], r['level'], r['positions'], r['closing'],
+                                                    r['jd'], r['screening'], r['posts'], r['status'], r['submitted_by'], r['date'],
+                                                    r['lm_comment'], r['admin_comment'], r['coo_comment'])
                                             except:
                                                 pass
-                                        
-                                        st.success("✅ Validated! Sent to COO for final approval.")
-                                        st.rerun()
-                                    else:
-                                        st.error("❌ Comment required!")
-                        
-                        # COO APPROVAL
-                        if req['status'] == 'Pending COO Approval':
-                            st.markdown("#### 🏢 COO Final Approval")
-                            with st.form(key=f"coo_form_{i}"):
-                                st.markdown("**Review:** Full requisition details are shown above.")
-                                coo_comment = st.text_area("COO Comment *", key=f"coo_comment_{i}", placeholder="Final approval notes, rejection reason, or revision request...")
-                                
-                                col_coo1, col_coo2, col_coo3 = st.columns(3)
-                                with col_coo1:
-                                    approve_btn = st.form_submit_button("✅ Approve & Activate", use_container_width=True)
-                                with col_coo2:
-                                    reject_btn = st.form_submit_button("❌ Reject", use_container_width=True)
-                                with col_coo3:
-                                    revise_btn = st.form_submit_button("🔄 Request Revision", use_container_width=True)
-                                
-                                if approve_btn:
-                                    if coo_comment:
+                                            
+                                            if email_svc:
+                                                hr_emails = ["bsakote@churchgate.com", "gbalogun@churchgate.com", "ichukwunonye@churchgate.com"]
+                                                for hr_email in hr_emails:
+                                                    try:
+                                                        email_svc.send_email(
+                                                            hr_email,
+                                                            f"🔔 Job Requisition Authorized by LM: {req['title']}",
+                                                            f"Line Manager ({user_name}) has authorized '{req['title']}'.\n\nComment: {lm_comment}\n\nValidate at: https://hris.churchgate.com"
+                                                        )
+                                                    except:
+                                                        pass
+                                            
+                                            st.success("✅ Authorized!")
+                                            st.rerun()
+                                        else:
+                                            st.error("❌ Comment required!")
+                            
+                            # ===== ADMIN VALIDATION =====
+                            if req['status'] == 'Pending Admin Approval' and is_admin:
+                                st.markdown("---")
+                                st.markdown("#### 🔍 HR Admin Validation")
+                                with st.form(key=f"admin_form_{i}"):
+                                    edit_jd = st_quill(value=req.get('jd', ''), html=True, key=f"edit_jd_admin_{i}")
+                                    edit_salary = st.text_input("Edit Salary Range", value=req.get('salary', ''), key=f"edit_salary_{i}")
+                                    admin_comment = st.text_area("Admin Validation Comment *", key=f"admin_comment_{i}", placeholder="e.g., Approved for expansion purposes")
+                                    
+                                    if st.form_submit_button("✅ Validate & Send to COO", use_container_width=True):
+                                        if admin_comment:
+                                            st.session_state.job_requisitions[i]['status'] = 'Pending COO Approval'
+                                            st.session_state.job_requisitions[i]['admin_comment'] = admin_comment
+                                            st.session_state.job_requisitions[i]['jd'] = edit_jd
+                                            st.session_state.job_requisitions[i]['salary'] = edit_salary
+                                            st.session_state.job_requisitions[i]['admin_name'] = user_name
+                                            
+                                            try:
+                                                r = st.session_state.job_requisitions[i]
+                                                db.save_job_requisition(r['id'], r['title'], r['department'], r['location'],
+                                                    r['type'], r['salary'], r['level'], r['positions'], r['closing'],
+                                                    r['jd'], r['screening'], r['posts'], r['status'], r['submitted_by'], r['date'],
+                                                    r['lm_comment'], r['admin_comment'], r['coo_comment'])
+                                            except:
+                                                pass
+                                            
+                                            if email_svc:
+                                                try:
+                                                    email_svc.send_email(
+                                                        "jeromedas@churchgate.com",
+                                                        f"🔔 Job Requisition Ready for Final Approval: {req['title']}",
+                                                        f"HR ({user_name}) has validated '{req['title']}'.\n\nComment: {admin_comment}\n\nApprove at: https://hris.churchgate.com"
+                                                    )
+                                                except:
+                                                    pass
+                                            
+                                            st.success("✅ Validated! Sent to COO.")
+                                            st.rerun()
+                                        else:
+                                            st.error("❌ Comment required!")
+                            
+                            # ===== COO APPROVAL =====
+                            if req['status'] == 'Pending COO Approval' and (is_admin or user_dept == 'Senior Management'):
+                                st.markdown("---")
+                                st.markdown("#### 🏢 COO Final Approval")
+                                with st.form(key=f"coo_form_{i}"):
+                                    coo_comment = st.text_area("COO Comment *", key=f"coo_comment_{i}", placeholder="e.g., Is it budgeted in the manpower budget?")
+                                    
+                                    col_coo1, col_coo2, col_coo3 = st.columns(3)
+                                    with col_coo1:
+                                        approve_btn = st.form_submit_button("✅ Approve", use_container_width=True)
+                                    with col_coo2:
+                                        reject_btn = st.form_submit_button("❌ Reject", use_container_width=True)
+                                    with col_coo3:
+                                        revise_btn = st.form_submit_button("🔄 Revision", use_container_width=True)
+                                    
+                                    if approve_btn and coo_comment:
                                         st.session_state.job_requisitions[i]['status'] = 'Approved - Live'
                                         st.session_state.job_requisitions[i]['coo_comment'] = coo_comment
+                                        st.session_state.job_requisitions[i]['coo_name'] = user_name
+                                        
                                         job_ref = req['id']
-                                        STREAMLIT_URL = "https://hris.churchgate.com"
                                         public_url = f"{STREAMLIT_URL}/Careers?job={job_ref}"
                                         
                                         st.session_state.active_jobs.append({
@@ -13420,61 +14146,40 @@ APPLY NOW: {public_url}
                                         except:
                                             pass
                                         
+                                        # Email Submitter + LM + ALL HR
                                         if email_svc:
+                                            # Submitter
                                             try:
-                                                submitter_email = req.get('submitted_by', '')
-                                                if '@' in str(submitter_email):
-                                                    email_svc.send_email(
-                                                        submitter_email,
-                                                        f"✅ Job Posting LIVE: {req['title']}",
-                                                        f"The job requisition for '{req['title']}' has been fully approved and is now LIVE on the Careers Page.\n\nPublic URL: {public_url}\n\nShare this link with candidates!"
-                                                    )
+                                                email_svc.send_email(
+                                                    req.get('submitted_by', ''),
+                                                    f"✅ Job Posting APPROVED: {req['title']}",
+                                                    f"Your requisition for '{req['title']}' is FULLY APPROVED and LIVE!\n\nURL: {public_url}"
+                                                )
                                             except:
                                                 pass
+                                            
+                                            # ALL HR
+                                            hr_emails = ["bsakote@churchgate.com", "gbalogun@churchgate.com", "ichukwunonye@churchgate.com"]
+                                            for hr_email in hr_emails:
+                                                try:
+                                                    email_svc.send_email(
+                                                        hr_email,
+                                                        f"✅ Job Posting LIVE: {req['title']}",
+                                                        f"Requisition '{req['title']}' APPROVED by COO ({user_name}).\n\nURL: {public_url}"
+                                                    )
+                                                except:
+                                                    pass
                                         
-                                        # ===== AUTO-POST TO JOB BOARDS =====
-                                        post_settings = req.get('posts', {})
-                                        posting_results = []
-                                        
-                                        # Call auto_post_job ONCE
-                                        result = auto_post_job(req['title'], req['department'], req['location'], req['type'], req.get('salary', ''), req['jd'], job_ref, public_url)
-                                        
-                                        if post_settings.get('linkedin'):
-                                            posting_results.append(result['linkedin']['message'])
-                                        
-                                        if post_settings.get('indeed'):
-                                            posting_results.append(result['indeed']['message'])
-                                        
-                                        if post_settings.get('glassdoor'):
-                                            posting_results.append(result['glassdoor']['message'])
-                                        
-                                        if post_settings.get('myjobmag'):
-                                            posting_results.append(result['myjobmag']['message'])
-                                        
-                                        if post_settings.get('hotnigerianjobs'):
-                                            posting_results.append(result['hotnigerianjobs']['message'])
-                                        
-                                        if posting_results:
-                                            st.markdown("### 📢 Job Posting Results")
-                                            for msg in posting_results:
-                                                if 'MyJobMag' in msg or 'HotNigerianJobs' in msg or 'Copy these fields' in msg:
-                                                    with st.expander("📋 Platform Post Template"):
-                                                        st.markdown(msg)
-                                                else:
-                                                    st.success(msg)
-                                        # ===================================
-                                        
-                                        st.success(f"✅ Job is LIVE on Careers Page!")
-                                        st.code(public_url, language=None)
+                                        st.success("✅ Job LIVE!")
+                                        st.code(public_url)
                                         st.balloons()
                                         st.rerun()
-                                    else:
-                                        st.error("❌ Comment required!")
-                                
-                                if reject_btn:
-                                    if coo_comment:
+                                    
+                                    if reject_btn and coo_comment:
                                         st.session_state.job_requisitions[i]['status'] = 'Rejected by COO'
                                         st.session_state.job_requisitions[i]['coo_comment'] = coo_comment
+                                        st.session_state.job_requisitions[i]['coo_name'] = user_name
+                                        
                                         try:
                                             r = st.session_state.job_requisitions[i]
                                             db.save_job_requisition(r['id'], r['title'], r['department'], r['location'],
@@ -13483,26 +14188,27 @@ APPLY NOW: {public_url}
                                                 r['lm_comment'], r['admin_comment'], r['coo_comment'])
                                         except:
                                             pass
+                                        
                                         if email_svc:
-                                            try:
-                                                submitter_email = req.get('submitted_by', '')
-                                                if '@' in str(submitter_email):
+                                            hr_emails = ["bsakote@churchgate.com", "gbalogun@churchgate.com", "ichukwunonye@churchgate.com"]
+                                            for hr_email in hr_emails:
+                                                try:
                                                     email_svc.send_email(
-                                                        submitter_email,
+                                                        hr_email,
                                                         f"❌ Job Requisition Rejected: {req['title']}",
-                                                        f"The job requisition for '{req['title']}' has been rejected by the COO.\n\nReason: {coo_comment}\n\nPlease review and resubmit if needed."
+                                                        f"COO ({user_name}) rejected '{req['title']}'.\n\nReason: {coo_comment}"
                                                     )
-                                            except:
-                                                pass
-                                        st.error(f"❌ Requisition rejected. Reason: {coo_comment}")
+                                                except:
+                                                    pass
+                                        
+                                        st.error(f"❌ Rejected: {coo_comment}")
                                         st.rerun()
-                                    else:
-                                        st.error("❌ Comment required for rejection!")
-                                
-                                if revise_btn:
-                                    if coo_comment:
+                                    
+                                    if revise_btn and coo_comment:
                                         st.session_state.job_requisitions[i]['status'] = 'Revision Requested by COO'
                                         st.session_state.job_requisitions[i]['coo_comment'] = coo_comment
+                                        st.session_state.job_requisitions[i]['coo_name'] = user_name
+                                        
                                         try:
                                             r = st.session_state.job_requisitions[i]
                                             db.save_job_requisition(r['id'], r['title'], r['department'], r['location'],
@@ -13511,32 +14217,152 @@ APPLY NOW: {public_url}
                                                 r['lm_comment'], r['admin_comment'], r['coo_comment'])
                                         except:
                                             pass
+                                        
                                         if email_svc:
-                                            try:
-                                                submitter_email = req.get('submitted_by', '')
-                                                if '@' in str(submitter_email):
+                                            hr_emails = ["bsakote@churchgate.com", "gbalogun@churchgate.com", "ichukwunonye@churchgate.com"]
+                                            for hr_email in hr_emails:
+                                                try:
                                                     email_svc.send_email(
-                                                        submitter_email,
+                                                        hr_email,
                                                         f"🔄 Revision Requested: {req['title']}",
-                                                        f"The COO has requested revisions for '{req['title']}'.\n\nRevision Notes: {coo_comment}\n\nPlease update and resubmit for approval."
+                                                        f"COO ({user_name}) requested revisions.\n\nNotes: {coo_comment}"
                                                     )
+                                                except:
+                                                    pass
+                                        
+                                        st.warning(f"🔄 Revision requested: {coo_comment}")
+                                        st.rerun()
+            
+            # ============ SUB-TAB 2: REVISIONS ============
+            with approval_subtab2:
+                st.subheader("🔄 Revisions Requested")
+                
+                revision_reqs = [r for r in st.session_state.job_requisitions if r['status'] == 'Revision Requested by COO']
+                
+                if not revision_reqs:
+                    st.success("✅ No revisions pending!")
+                else:
+                    for i, req in enumerate(st.session_state.job_requisitions):
+                        if req['status'] != 'Revision Requested by COO':
+                            continue
+                        
+                        with st.expander(f"{req['id']} - {req['title']} | {req['department']}", expanded=True):
+                            st.warning(f"**COO Revision Notes:** {req.get('coo_comment', '')}")
+                            st.markdown(f"**COO:** {req.get('coo_name', '')}")
+                            
+                            st.markdown("---")
+                            st.markdown("**📋 Current JD:**")
+                            jd_content = req.get('jd', '')
+                            if '<' in jd_content:
+                                st.markdown(jd_content, unsafe_allow_html=True)
+                            else:
+                                st.markdown(jd_content)
+                            
+                            if is_admin or is_manager:
+                                st.markdown("---")
+                                st.markdown("#### 🔄 Edit & Resubmit")
+                                with st.form(key=f"revise_form_{i}"):
+                                    edit_jd = st_quill(value=req.get('jd', ''), html=True, key=f"revise_jd_{i}")
+                                    edit_salary = st.text_input("Salary Range", value=req.get('salary', ''), key=f"revise_salary_{i}")
+                                    
+                                    st.markdown("**📎 Attach Evidence (Optional):**")
+                                    evidence_file = st.file_uploader("Upload evidence", key=f"revise_evidence_{i}", type=['pdf', 'docx', 'xlsx', 'png', 'jpg'])
+                                    
+                                    revise_comment = st.text_area("Update Comment *", key=f"revise_comment_{i}")
+                                    
+                                    if st.form_submit_button("✅ Resubmit for Approval", use_container_width=True):
+                                        if revise_comment:
+                                            st.session_state.job_requisitions[i]['status'] = 'Pending COO Approval'
+                                            st.session_state.job_requisitions[i]['jd'] = edit_jd
+                                            st.session_state.job_requisitions[i]['salary'] = edit_salary
+                                            st.session_state.job_requisitions[i]['lm_comment'] = revise_comment
+                                            st.session_state.job_requisitions[i]['lm_name'] = user_name
+                                            
+                                            if evidence_file:
+                                                try:
+                                                    from supabase import create_client
+                                                    supabase_url = os.environ.get('SUPABASE_URL', '')
+                                                    supabase_key = os.environ.get('SUPABASE_SERVICE_KEY', os.environ.get('SUPABASE_KEY', ''))
+                                                    supabase_client = create_client(supabase_url, supabase_key)
+                                                    
+                                                    file_name = f"req_evidence_{req['id']}_{evidence_file.name}"
+                                                    supabase_client.storage.from_('dlp-evidence').upload(file_name, evidence_file.getvalue())
+                                                    evidence_url = supabase_client.storage.from_('dlp-evidence').get_public_url(file_name)
+                                                    
+                                                    if 'evidence_files' not in st.session_state.job_requisitions[i]:
+                                                        st.session_state.job_requisitions[i]['evidence_files'] = []
+                                                    st.session_state.job_requisitions[i]['evidence_files'].append(evidence_url)
+                                                except Exception as e:
+                                                    st.warning(f"Evidence upload failed: {str(e)}")
+                                            
+                                            try:
+                                                r = st.session_state.job_requisitions[i]
+                                                db.save_job_requisition(r['id'], r['title'], r['department'], r['location'],
+                                                    r['type'], r['salary'], r['level'], r['positions'], r['closing'],
+                                                    r['jd'], r['screening'], r['posts'], r['status'], r['submitted_by'], r['date'],
+                                                    r['lm_comment'], r['admin_comment'], r['coo_comment'])
                                             except:
                                                 pass
-                                        st.warning(f"🔄 Revision requested. Reason: {coo_comment}")
-                                        st.rerun()
-                                    else:
-                                        st.error("❌ Comment required for revision request!")
+                                            
+                                            if email_svc:
+                                                try:
+                                                    email_svc.send_email(
+                                                        "jeromedas@churchgate.com",
+                                                        f"🔔 Revised Requisition Resubmitted: {req['title']}",
+                                                        f"Updated by {user_name}.\n\nComment: {revise_comment}"
+                                                    )
+                                                except:
+                                                    pass
+                                            
+                                            st.success("✅ Resubmitted!")
+                                            st.rerun()
+                                        else:
+                                            st.error("❌ Comment required!")
+            
+            # ============ SUB-TAB 3: APPROVED ============
+            with approval_subtab3:
+                st.subheader("✅ Approved Requisitions")
+                
+                approved_reqs = [r for r in st.session_state.job_requisitions if r['status'] == 'Approved - Live']
+                
+                if not approved_reqs:
+                    st.info("No approved requisitions yet.")
+                else:
+                    for req in approved_reqs:
+                        st.markdown(f"""
+                        <div style="background: rgba(56, 161, 105, 0.1); border: 1px solid #38a169; border-radius: 8px; padding: 12px; margin-bottom: 8px;">
+                            <strong style="color: #38a169;">✅ {req['id']} - {req['title']}</strong><br>
+                            <small style="color: #E0E0E0;">{req['department']} | Submitted by {req['submitted_by']}</small><br>
+                            <small style="color: #A0A0A0;">LM: {req.get('lm_name', '')} → Admin: {req.get('admin_name', '')} → COO: {req.get('coo_name', '')}</small>
+                        </div>
+                        """, unsafe_allow_html=True)
+            
+            # ============ SUB-TAB 4: REJECTED ============
+            with approval_subtab4:
+                st.subheader("❌ Rejected Requisitions")
+                
+                rejected_reqs = [r for r in st.session_state.job_requisitions if r['status'] == 'Rejected by COO']
+                
+                if not rejected_reqs:
+                    st.info("No rejected requisitions.")
+                else:
+                    for i, req in enumerate(st.session_state.job_requisitions):
+                        if req['status'] != 'Rejected by COO':
+                            continue
                         
-                        # Show LIVE status
-                        if req['status'] == 'Approved - Live':
-                            st.success("🟢 LIVE — Accepting applications on Careers Page")
-                            for job in st.session_state.active_jobs:
-                                if job['title'] == req['title'] and job['department'] == req['department']:
-                                    st.code(job['public_url'], language=None)
-                                    break
+                        with st.expander(f"❌ {req['id']} - {req['title']} | {req['department']}", expanded=False):
+                            st.error(f"**Rejection Reason:** {req.get('coo_comment', '')}")
+                            st.markdown(f"**Rejected by:** {req.get('coo_name', '')}")
+                            
+                            if is_admin:
+                                if st.button("🗑️ Delete Rejected Requisition", key=f"delete_req_{i}"):
+                                    st.session_state.job_requisitions.pop(i)
+                                    st.success("✅ Deleted!")
+                                    st.rerun()
+                                        st.rerun()
     
-    # ============ TAB 2: ACTIVE JOBS ============
-    with tab2:
+    # ============ TAB 3: ACTIVE JOBS ============
+    with tab3:
         st.subheader("📢 Active Job Postings")
         
         # Get expired jobs
@@ -13712,8 +14538,8 @@ APPLY NOW: {public_url}
         if not st.session_state.active_jobs and not expired_jobs:
             st.info("No active or expired jobs. Submit a requisition in Tab 1.")
     
-    # ============ TAB 3: CANDIDATE PORTAL ============
-    with tab3:
+    # ============ TAB 4: CANDIDATE PORTAL ============
+    with tab4:
         st.subheader("🌐 Candidate Management Portal")
         
         # Stats row
@@ -14033,8 +14859,8 @@ APPLY NOW: {public_url}
                 st.file_uploader("Upload Other Documents (Optional)", type=['pdf', 'docx', 'jpg', 'png'], disabled=True, accept_multiple_files=True)
                 st.text_area("Screening Questions", disabled=True, placeholder="Auto-generated per job role")
     
-     # ============ TAB 4: AI SCREENING ============
-    with tab4:
+     # ============ TAB 5: AI SCREENING ============
+    with tab5:
         st.subheader("🤖 AI-Powered Candidate Screening & Talent Intelligence")
         st.caption(f"🧠 AI Engine: {'OpenAI (95%+ confidence)' if ai_agent.use_openai else 'Enhanced Keyword (85%+ confidence)'}")
         
@@ -14453,8 +15279,8 @@ APPLY NOW: {public_url}
             </div>
             """, unsafe_allow_html=True)
     
-    # ============ TAB 5: INTERVIEWS ============
-    with tab5:
+    # ============ TAB 6: INTERVIEWS ============
+    with tab6:
         st.subheader("📅 Interview Scheduler")
         with st.form("schedule_interview"):
             c1, c2 = st.columns(2)
@@ -14487,8 +15313,8 @@ APPLY NOW: {public_url}
                 </div>
                 """, unsafe_allow_html=True)
     
-    # ============ TAB 6: OFFER LETTERS ============
-    with tab6:
+    # ============ TAB 7: OFFER LETTERS ============
+    with tab7:
         st.subheader("📝 Enterprise Offer Letter Management")
         
         tab_offer1, tab_offer2 = st.tabs(["📝 Generate Offer", "📊 Offer Status Board"])
@@ -14699,8 +15525,8 @@ APPLY NOW: {public_url}
             else:
                 st.info("No offers generated yet.")
     
-    # ============ TAB 7: ONBOARDING ============
-    with tab7:
+    # ============ TAB 8: ONBOARDING ============
+    with tab8:
         st.subheader("🎯 Enterprise Onboarding Management")
         
         tab_onb1, tab_onb2, tab_onb3 = st.tabs(["➕ New Hire Setup", "📋 Onboarding Tracker", "📊 Dashboard"])
@@ -14955,8 +15781,8 @@ APPLY NOW: {public_url}
             else:
                 st.info("No onboarding data yet.")
     
-     # ============ TAB 8: BACKGROUND CHECKS ============
-    with tab8:
+     # ============ TAB 9: BACKGROUND CHECKS ============
+    with tab9:
         st.subheader("🔍 Enterprise Background Check Management")
         
         tab_bg1, tab_bg2, tab_bg3, tab_bg4 = st.tabs(["📋 Internal BG Check", "📤 External Verification", "📊 Status Dashboard", "📈 Analytics"])
@@ -15283,8 +16109,8 @@ APPLY NOW: {public_url}
             else:
                 st.info("Analytics will appear once background checks are submitted.")
     
-    # ============ TAB 9: ANALYTICS ============
-    with tab9:
+    # ============ TAB 10: ANALYTICS ============
+    with tab10:
         st.subheader("📊 Recruitment Analytics")
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Active Jobs", len(st.session_state.active_jobs))
@@ -17337,7 +18163,7 @@ def reports_analytics():
         st.subheader("👥 Workforce Analytics")
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Total", total_emp)
-        c2.metric("Active", active_emp)
+        c2.metric("Confirmed", confirmed_emp)
         c3.metric("Departments", departments)
         c4.metric("M:F Ratio", f"{male_count}:{female_count}" if female_count > 0 else "N/A")
         st.markdown("---")
@@ -17732,7 +18558,7 @@ def notifications_page():
                 try:
                     dob_date = pd.to_datetime(dob)
                     if dob_date.month == now.month:
-                        if dob_date.day == now.day:
+                        if dob_date.month == now.month and dob_date.day == now.day:
                             notifications.append({
                                 'id': f"birthday_{emp['employee_id']}",
                                 'title': '🎂 Birthday Today!',
@@ -17743,11 +18569,11 @@ def notifications_page():
                                 'action': 'send_wishes',
                                 'action_label': '🎉 Send Wishes'
                             })
-                        elif 1 <= (dob_date.day - now.day) <= 7:
+                        elif dob_date.month == now.month and 1 <= (dob_date.day - now.day) <= 7:
                             notifications.append({
                                 'id': f"birthday_upcoming_{emp['employee_id']}",
                                 'title': '🎂 Upcoming Birthday',
-                                'message': f"{emp['first_name']} {emp['last_name']}'s birthday is in {dob_date.day - now.day} days (May {dob_date.day})",
+                                'message': f"{emp['first_name']} {emp['last_name']}'s birthday is in {dob_date.day - now.day} days ({dob_date.strftime('%B')} {dob_date.day})",
                                 'time': f'In {dob_date.day - now.day} days',
                                 'category': 'birthday',
                                 'priority': 'low',
@@ -20953,7 +21779,7 @@ def my_profile():
     emp_grade = emp_data.get('grade', 'N/A') if emp_data else 'N/A'
     emp_join = emp_data.get('join_date', 'N/A') if emp_data else 'N/A'
     emp_leave = int(emp_data.get('leave_balance', 20)) if emp_data else 20
-    emp_status = emp_data.get('status', 'Active') if emp_data else 'Active'
+    emp_status = emp_data.get('status', 'Confirmed') if emp_data else 'Confirmed'
     emp_region = emp_data.get('region', 'Abuja') if emp_data else 'Abuja'
     emp_gender = emp_data.get('gender', 'Male') if emp_data else 'Male'
     
@@ -22543,6 +23369,9 @@ def ai_dlp_monitor_dashboard():
     from utils.dlp_monitor import SENSITIVE_ENTITIES, SENSITIVE_KEYWORDS, SENSITIVE_KEYWORD_CATEGORIES, IncidentResponder, AI_DLP_Monitor, SEVERITY_LEVELS
     from utils.background_monitor import background_monitor
     
+    # Render clipboard monitoring (iframe-based - NOT sanitized)
+    render_clipboard_monitor()
+    
     from datetime import timezone, timedelta
     
     def get_lagos_time():
@@ -22955,24 +23784,30 @@ def ai_dlp_monitor_dashboard():
     st.markdown("### 🖥️ Internal DLP Alerts (Clipboard Monitoring)")
     
     try:
-        from utils.database import db
         internal_alerts = db._get("dlp_internal_alerts")
         
-        if internal_alerts:
+        if internal_alerts and len(internal_alerts) > 0:
             internal_df = pd.DataFrame(internal_alerts)
             html_table = internal_df.head(20).to_html(classes='dark-csv-table', index=False, border=0, escape=False)
             st.markdown(html_table, unsafe_allow_html=True)
         else:
-            st.info("No internal clipboard alerts detected yet.")
             st.markdown("""
             <div style="background: #1E1E1E; border: 1px solid #B8960C; border-radius: 8px; padding: 1rem;">
-                <strong style="color: #C9A84C;">🖥️ Internal DLP Active</strong>
+                <strong style="color: #C9A84C;">🖥️ Internal DLP Monitoring Active</strong>
                 <br><small style="color: #A0A0A0;">Monitoring clipboard copy/paste for sensitive patterns</small>
                 <br><small style="color: #A0A0A0;">Patterns: API keys, BVN, NIN, salaries, company names, invoices</small>
+                <br><small style="color: #38a169;">✅ Database connected and ready</small>
+                <br><small style="color: #A0A0A0;">No clipboard alerts detected yet.</small>
             </div>
             """, unsafe_allow_html=True)
-    except:
-        st.info("Internal DLP monitoring active. Database logging will be available after table creation.")
+    except Exception as e:
+        st.markdown(f"""
+        <div style="background: #1E1E1E; border: 1px solid #CC0000; border-radius: 8px; padding: 1rem;">
+            <strong style="color: #CC0000;">🖥️ Internal DLP Monitoring Active</strong>
+            <br><small style="color: #A0A0A0;">Database connection issue: {str(e)}</small>
+            <br><small style="color: #A0A0A0;">Monitoring still active in browser</small>
+        </div>
+        """, unsafe_allow_html=True)
     
     st.divider()
     
@@ -23385,7 +24220,7 @@ def advanced_analytics():
         emp_df = db.get_all_employees()
         total_emp = len(emp_df) if not emp_df.empty else 0
         dept_count = len(emp_df['department'].unique()) if not emp_df.empty else 0
-        active_emp = len(emp_df[emp_df['status'] == 'Active']) if not emp_df.empty else 0
+        confirmed_emp = len(emp_df[emp_df['status'] == 'Confirmed']) if not emp_df.empty else 0
     except:
         emp_df = pd.DataFrame()
         total_emp = 0
@@ -24111,6 +24946,10 @@ def main():
     if st.session_state.user is None:
         login_section()
     else:
+        # Help button at top of main content
+        if st.button("❓ Help Center", key="main_help_center_btn", help="Open Help Center"):
+            show_help_dialog()
+        
         page = sidebar_navigation()
         if 'navigate_to' in st.session_state:
             page = st.session_state.pop('navigate_to')
@@ -24143,8 +24982,11 @@ def main():
             "🛡️ AI DLP Monitor": ai_dlp_monitor_dashboard,
             "👤 My Profile": my_profile,
         }
+        
         page_func = page_routes.get(page, employee_dashboard)
         page_func()
+        
+        
 
 # Show pending browser notifications
     if st.session_state.get('pending_notifications'):
