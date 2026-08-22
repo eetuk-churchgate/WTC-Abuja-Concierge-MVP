@@ -3652,12 +3652,13 @@ def sidebar_navigation():
                 "🎉 Wellness & Perks",
             ]
             all_icons = [
-                "house-fill", "speedometer2", "people-fill", "graph-up-arrow", 
-                "check-circle-fill", "trophy-fill", "briefcase-fill", "robot", 
-                "inbox-fill", "file-earmark-bar-graph", "chat-dots-fill", "book-fill", 
-                "bell-fill", "folder-fill", "lightbulb-fill", "calendar-fill", 
-                "bullseye", "globe", "book-half", "heart-fill", 
-                "mortarboard-fill", "shield-fill", "graph-up", "shield-lock-fill", "person-circle"
+                "robot", "graph-up", "shield-lock-fill", "file-earmark-bar-graph",
+                "calendar-fill", "chat-dots-fill", "globe", "house-fill",
+                "people-fill", "speedometer2", "lightbulb-fill", "book-half",
+                "mortarboard-fill", "bullseye", "folder-fill", "person-circle",
+                "bell-fill", "graph-up-arrow", "trophy-fill", "briefcase-fill",
+                "file-earmark-bar-graph", "inbox-fill", "check-circle-fill", "book-fill",
+                "heart-fill"
             ]
         elif user_role in ['Manager', 'HOD', 'Senior Manager', 'General Manager', 'Head of Department(HOD)', 'Management', 'Senior Management/C-Level', 'Senior Management']:
             menu_options = [
@@ -3681,10 +3682,11 @@ def sidebar_navigation():
                 "🎉 Wellness & Perks",
             ]
             all_icons = [
-                "house-fill", "check-circle-fill", "briefcase-fill", "robot", 
-                "graph-up-arrow", "inbox-fill", "chat-dots-fill", "book-fill", 
-                "folder-fill", "lightbulb-fill", "calendar-fill", "bullseye", 
-                "globe", "book-half", "heart-fill", "mortarboard-fill", "shield-lock-fill", "person-circle"
+                "robot", "shield-lock-fill", "calendar-fill", "chat-dots-fill",
+                "globe", "house-fill", "lightbulb-fill", "book-half",
+                "mortarboard-fill", "bullseye", "folder-fill", "person-circle",
+                "graph-up-arrow", "briefcase-fill", "inbox-fill", "check-circle-fill",
+                "book-fill", "heart-fill"
             ]
 
         else:
@@ -3705,10 +3707,10 @@ def sidebar_navigation():
                 "🎉 Wellness & Perks",
             ]
             all_icons = [
-                "house-fill", "graph-up-arrow", "inbox-fill", "chat-dots-fill", 
-                "book-fill", "folder-fill", "lightbulb-fill", "calendar-fill", 
-                "bullseye", "globe", "book-half", "heart-fill", 
-                "mortarboard-fill", "person-circle"
+                "calendar-fill", "chat-dots-fill", "globe", "house-fill",
+                "lightbulb-fill", "book-half", "mortarboard-fill", "bullseye",
+                "folder-fill", "person-circle", "graph-up-arrow", "inbox-fill",
+                "book-fill", "heart-fill"
             ]
         
         selected = option_menu(
@@ -3716,7 +3718,7 @@ def sidebar_navigation():
             options=menu_options, 
             icons=all_icons, 
             menu_icon="cast", 
-            default_index=0, 
+            default_index=menu_options.index("🏠 Employee Dashboard") if "🏠 Employee Dashboard" in menu_options else 0, 
             styles={
                 "container": {"padding": "0!important", "background-color": "transparent"}, 
                 "icon": {"color": "#CC0000", "font-size": "16px"}, 
@@ -4323,69 +4325,273 @@ def employee_dashboard():
         pass
     
     with st.expander("📊 View Full Org Chart", expanded=False):
-        st.markdown("### 🔗 Group Reporting Hierarchy")
-        st.info("GMD → COO (All Depts) / VP Sales (Sales & Mkt) / GEA | Regions: Abuja & Lagos")
-        
-        labels = ['GMD', 'COO', 'VP Sales', 'GEA',
-            'Technology (Abuja)', 'Technology (Lagos)',
-            'Facility Mgmt (Abuja)', 'Facility Mgmt (Lagos)',
-            'Engineering/MEP', 'HR', 'Accounts & Finance',
-            'Sales & Marketing', 'Procurement', 'Security',
-            'Legal', 'Operations']
-        
-        colors = ['#CC0000', '#e53e3e', '#dd6b20', '#805ad5',
-            '#3182ce', '#3182ce', '#38a169', '#38a169',
-            '#d53f8c', '#d69e2e', '#805ad5',
-            '#dd6b20', '#2b6cb0', '#718096',
-            '#e53e3e', '#319795']
-        
-        sources = [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3]
-        targets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 11, 15]
-        values = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-        
-        for i in range(4, 16):
-            sources.append(i)
-            targets.append(16)
-            values.append(1)
-        
-        sources += [16, 16, 17, 17]
-        targets += [17, 18, 18, 19]
-        values += [10, 5, 12, 30]
-        
-        labels += ['Heads of Department', 'Sr. Managers', 'Managers', 'Team Leads', 'Team Members']
-        colors += ['#FF6B35', '#38a169', '#d69e2e', '#2b6cb0', '#718096']
-        
-        fig = go.Figure(data=[go.Sankey(
-            node=dict(pad=20, thickness=18, label=labels, color=colors),
-            link=dict(source=sources, target=targets, value=values,
-                color=['rgba(204,0,0,0.2)'] * len(sources))
-        )])
-        fig.update_layout(
-            height=500,
-            paper_bgcolor='#1E1E1E',
-            plot_bgcolor='#1E1E1E',
-            font=dict(color='#F0E6D3', family='Inter, sans-serif')
-        )
-        st.plotly_chart(fig, use_container_width=True)
-        
-        st.markdown("---")
-        st.markdown("### 👥 Department Heads")
-        try:
-            emp_df = db.get_all_employees()
-            if not emp_df.empty:
-                hod_df = emp_df[emp_df['grade'].isin(['Manager', 'Senior Manager', 'General Manager', 'Head of Department(HOD)', 'Management', 'Senior Management/C-Level'])]
-                hod_data = []
-                for _, row in hod_df.iterrows():
-                    hod_data.append({
-                        'Department': row['department'],
-                        'Name': f"{row['first_name']} {row['last_name']}",
-                        'Position': row['position']
-                    })
-                if hod_data:
-                    html_table = pd.DataFrame(hod_data).to_html(classes='dark-csv-table', index=False, border=0, escape=False)
-                    st.markdown(html_table, unsafe_allow_html=True)
-        except:
-            pass
+            st.markdown("### 🌊 Organizational Flow — Real-Time")
+            st.markdown("*Correct hierarchy. Auto-updates from database.*")
+            
+            try:
+                org_emp_df = db.get_all_employees()
+            except:
+                org_emp_df = pd.DataFrame()
+            
+            if not org_emp_df.empty:
+                reports_map = {}
+                emp_details = {}
+                
+                for _, e in org_emp_df.iterrows():
+                    if e.get('status') not in ['Active', 'Confirmed', 'Probation', 'HR Processing']:
+                        continue
+                    emp_name = f"{e['first_name']} {e['last_name']}".strip()
+                    reports_to = str(e.get('reports_to', '')).strip() if e.get('reports_to') else ''
+                    
+                    emp_details[emp_name] = {
+                        'position': e.get('position', ''), 'department': e.get('department', ''),
+                        'region': e.get('region', ''), 'subsidiary': e.get('subsidiary', ''),
+                        'reports_to': reports_to
+                    }
+                    
+                    if reports_to and reports_to != 'nan' and reports_to != 'None':
+                        if reports_to not in reports_map:
+                            reports_map[reports_to] = []
+                        reports_map[reports_to].append(emp_name)
+                
+                gmd_name = None
+                for name, details in emp_details.items():
+                    if 'Vinay' in name or 'Mahtani' in name:
+                        gmd_name = name
+                        break
+                
+                if not gmd_name:
+                    for name, details in emp_details.items():
+                        if 'GMD' in details['position'].upper() or 'CEO' in details['position'].upper():
+                            gmd_name = name
+                            break
+                
+                if not gmd_name:
+                    for name, details in emp_details.items():
+                        if not details['reports_to']:
+                            gmd_name = name
+                            break
+                
+                if gmd_name:
+                     NEVER_HOD_NAMES = ['Partab Lalchandani', 'Maikudi Kadoh', 'Adekunle Sonuga']
+                ONLY_EXCLUDE_FROM_HODS = ['Partab Lalchandani', 'Maikudi Kadoh', 'Adekunle Sonuga']
+                    
+                    executives = []
+                    for name, details in emp_details.items():
+                        if details.get('reports_to') == gmd_name:
+                            if name not in executives:
+                                executives.append(name)
+                    
+                    partab_name = 'Partab Lalchandani'
+                    if partab_name in emp_details and partab_name not in executives:
+                        executives.append(partab_name)
+                    
+                    hods = []
+                    for exec_name in executives:
+                        exec_position = emp_details.get(exec_name, {}).get('position', '').upper()
+                        if any(kw in exec_position for kw in ['VP', 'SALES', 'GEA', 'GED', 'ED', 'ADVISOR', 'DIRECTOR']):
+                            continue
+                        for report in reports_map.get(exec_name, []):
+                            if report in NEVER_HOD_NAMES:
+                                continue
+                            if report not in hods:
+                                hods.append(report)
+                    
+                    mid_managers = []
+                for hod_name in hods:
+                    for report in reports_map.get(hod_name, []):
+                        # Only skip Partab from mid_managers (he's an executive)
+                        if report == 'Partab Lalchandani':
+                            continue
+                        if report not in mid_managers:
+                            mid_managers.append(report)
+                
+                # Add Sonuga (reports to VP Sales Karim)
+                for exec_name in executives:
+                    exec_position = emp_details.get(exec_name, {}).get('position', '').upper()
+                    if 'VP' in exec_position or 'SALES' in exec_position:
+                        for report in reports_map.get(exec_name, []):
+                            if report not in mid_managers and report not in hods:
+                                mid_managers.append(report)
+                    
+                    team_members = []
+                for mgr_name in mid_managers:
+                    for report in reports_map.get(mgr_name, []):
+                        if report == 'Partab Lalchandani':
+                            continue
+                        if report not in team_members:
+                            team_members.append(report)
+                    
+                    def count_total_reports(manager_name):
+                        direct = reports_map.get(manager_name, [])
+                        total = len(direct)
+                        for d in direct:
+                            total += count_total_reports(d)
+                        return total
+                    
+                    import colorsys
+                    
+                    def generate_bright_colors(n):
+                        colors_list = []
+                        for i in range(n):
+                            hue = i / max(n, 1)
+                            r, g, b = colorsys.hsv_to_rgb(hue, 0.9, 1.0)
+                            colors_list.append(f'rgb({int(r*255)},{int(g*255)},{int(b*255)})')
+                        return colors_list
+                    
+                    all_names = [gmd_name] + executives + hods + mid_managers + team_members
+                    bright_colors = generate_bright_colors(len(all_names))
+                    name_to_color = {name: bright_colors[i] for i, name in enumerate(all_names)}
+                    
+                    labels = []
+                    colors = []
+                    sources = []
+                    targets = []
+                    values = []
+                    link_colors = []
+                    label_index = {}
+                    
+                    def add_label(name):
+                        if name not in label_index:
+                            label_index[name] = len(labels)
+                            labels.append(name)
+                            colors.append(name_to_color.get(name, '#718096'))
+                        return label_index[name]
+                    
+                    gmd_idx = add_label(gmd_name)
+                    
+                    for exec_name in executives:
+                        exec_idx = add_label(exec_name)
+                        sources.append(gmd_idx)
+                        targets.append(exec_idx)
+                        values.append(len(reports_map.get(exec_name, [])) + 1)
+                        link_colors.append('rgba(255, 200, 0, 0.7)')
+                    
+                    for hod_name in hods:
+                        hod_idx = add_label(hod_name)
+                        hod_reports_to = emp_details.get(hod_name, {}).get('reports_to', '')
+                        if hod_reports_to in label_index:
+                            sources.append(label_index[hod_reports_to])
+                            targets.append(hod_idx)
+                            values.append(len(reports_map.get(hod_name, [])) + 1)
+                            link_colors.append('rgba(255, 255, 255, 0.6)')
+                    
+                    for mgr_name in mid_managers:
+                        mgr_idx = add_label(mgr_name)
+                        mgr_reports_to = emp_details.get(mgr_name, {}).get('reports_to', '')
+                        if mgr_reports_to in label_index:
+                            sources.append(label_index[mgr_reports_to])
+                            targets.append(mgr_idx)
+                            values.append(len(reports_map.get(mgr_name, [])) + 1)
+                            link_colors.append('rgba(56, 161, 105, 0.5)')
+                    
+                    for tm_name in team_members:
+                        tm_idx = add_label(tm_name)
+                        tm_reports_to = emp_details.get(tm_name, {}).get('reports_to', '')
+                        if tm_reports_to in label_index:
+                            sources.append(label_index[tm_reports_to])
+                            targets.append(tm_idx)
+                            values.append(1)
+                            link_colors.append('rgba(160, 160, 160, 0.3)')
+                    
+                    if labels and sources and targets and values:
+                        fig = go.Figure(data=[go.Sankey(
+                            node=dict(
+                                pad=25, thickness=18,
+                                line=dict(color="rgba(0,0,0,0.3)", width=1),
+                                label=labels, color=colors
+                            ),
+                            link=dict(
+                                source=sources, target=targets, value=values, color=link_colors
+                            )
+                        )])
+                        
+                        fig.update_layout(
+                            height=max(600, len(labels) * 22),
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif', size=10),
+                            margin=dict(t=30, b=30, l=30, r=30)
+                        )
+                        
+                        st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.warning("No reporting data available.")
+                    
+                    st.markdown("---")
+                    st.markdown("#### 👥 Span of Control (Total Reports)")
+                    
+                    span_data = []
+                    for exec_name in executives:
+                        span_data.append({
+                            'Leader': exec_name, 'Level': 'Executive',
+                            'Department': emp_details.get(exec_name, {}).get('department', ''),
+                            'Region': emp_details.get(exec_name, {}).get('region', ''),
+                            'Total Reports': count_total_reports(exec_name)
+                        })
+                    
+                    for hod_name in hods:
+                        span_data.append({
+                            'Leader': hod_name, 'Level': 'HOD',
+                            'Department': emp_details.get(hod_name, {}).get('department', ''),
+                            'Region': emp_details.get(hod_name, {}).get('region', ''),
+                            'Total Reports': count_total_reports(hod_name)
+                        })
+                    
+                    for mgr_name in mid_managers:
+                        span_data.append({
+                            'Leader': mgr_name, 'Level': 'Manager/Lead',
+                            'Department': emp_details.get(mgr_name, {}).get('department', ''),
+                            'Region': emp_details.get(mgr_name, {}).get('region', ''),
+                            'Total Reports': count_total_reports(mgr_name)
+                        })
+                    
+                    if span_data:
+                        span_data.sort(key=lambda x: x['Total Reports'], reverse=True)
+                        span_df = pd.DataFrame(span_data[:10])
+                        
+                        fig_span = px.bar(span_df, x='Leader', y='Total Reports', color='Level', text='Total Reports',
+                                        color_discrete_sequence=['#CC0000', '#D4AF37', '#38a169'])
+                        fig_span.update_layout(
+                            height=300,
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                            legend=dict(font=dict(color='#F0E6D3')),
+                            xaxis_tickangle=-45,
+                            margin=dict(t=30, b=60, l=20, r=20)
+                        )
+                        fig_span.update_traces(textposition='outside')
+                        st.plotly_chart(fig_span, use_container_width=True)
+                    
+                    st.markdown("#### 🏢 Department Heads (HODs)")
+                    st.markdown("*Only people reporting DIRECTLY to COO*")
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.markdown("**Abuja**")
+                        abuja_hods = [h for h in hods if emp_details.get(h, {}).get('region') == 'Abuja' and h not in NEVER_HOD_NAMES]
+                        if abuja_hods:
+                            abuja_data = pd.DataFrame([{
+                                'Department': emp_details.get(h, {}).get('department', ''),
+                                'Name': h,
+                                'Total Reports': count_total_reports(h)
+                            } for h in abuja_hods]).sort_values('Total Reports', ascending=False)
+                            st.markdown(abuja_data.to_html(classes='dark-csv-table', index=False, border=0, escape=False), unsafe_allow_html=True)
+                    with col2:
+                        st.markdown("**Lagos**")
+                        lagos_hods = [h for h in hods if emp_details.get(h, {}).get('region') == 'Lagos' and h not in NEVER_HOD_NAMES]
+                        if lagos_hods:
+                            lagos_data = pd.DataFrame([{
+                                'Department': emp_details.get(h, {}).get('department', ''),
+                                'Name': h,
+                                'Total Reports': count_total_reports(h)
+                            } for h in lagos_hods]).sort_values('Total Reports', ascending=False)
+                            st.markdown(lagos_data.to_html(classes='dark-csv-table', index=False, border=0, escape=False), unsafe_allow_html=True)
+                else:
+                    st.warning("GMD not found in database.")
+            else:
+                st.info("No employee data available.")
     # ============ PEER RATING ============
     st.markdown("---")
     st.subheader("⭐ Rate a Colleague")
@@ -6178,92 +6384,416 @@ def employee_management():
             st.info("No employee data available.")
 
     
-    # ============ TAB 6: ORG CHART ============
+    # ============ TAB 6: ORG CHART - FINAL MASSIVE ============
     with tab6:
         st.subheader("📊 Organizational Structure — Churchgate Group")
-        st.markdown("### 🌟 Key Leadership")
-        c1, c2, c3, c4 = st.columns(4)
-        with c1:
-            st.markdown("""<div style="background:white;padding:1rem;border-radius:10px;text-align:center;border-top:3px solid #CC0000;box-shadow:0 2px 8px rgba(0,0,0,0.05);"><div style="width:50px;height:50px;border-radius:50%;background:#CC0000;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700;color:white;">VM</div><strong style="display:block;margin-top:0.5rem;">Vinay Mahtani</strong><small style="color:#888;">GMD/CEO</small><br><small style="color:#CC0000;">👥 Group-wide</small></div>""", unsafe_allow_html=True)
-        with c2:
-            st.markdown("""<div style="background:white;padding:1rem;border-radius:10px;text-align:center;border-top:3px solid #e53e3e;box-shadow:0 2px 8px rgba(0,0,0,0.05);"><div style="width:50px;height:50px;border-radius:50%;background:#e53e3e;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700;color:white;">JD</div><strong style="display:block;margin-top:0.5rem;">Jerome Das</strong><small style="color:#888;">COO</small><br><small style="color:#e53e3e;">👥 All Departments</small></div>""", unsafe_allow_html=True)
-        with c3:
-            st.markdown("""<div style="background:white;padding:1rem;border-radius:10px;text-align:center;border-top:3px solid #dd6b20;box-shadow:0 2px 8px rgba(0,0,0,0.05);"><div style="width:50px;height:50px;border-radius:50%;background:#dd6b20;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700;color:white;">AK</div><strong style="display:block;margin-top:0.5rem;">Ahmed Karim</strong><small style="color:#888;">VP Sales</small><br><small style="color:#dd6b20;">👥 Sales & Marketing</small></div>""", unsafe_allow_html=True)
-        with c4:
-            st.markdown("""<div style="background:white;padding:1rem;border-radius:10px;text-align:center;border-top:3px solid #805ad5;box-shadow:0 2px 8px rgba(0,0,0,0.05);"><div style="width:50px;height:50px;border-radius:50%;background:#805ad5;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700;color:white;">PL</div><strong style="display:block;margin-top:0.5rem;">Partab Lalchandani</strong><small style="color:#888;">GEA</small><br><small style="color:#805ad5;">👥 Group Advisor</small></div>""", unsafe_allow_html=True)
+        st.markdown("*Group-Wide Sankey + Departmental Drill-Down | Bright Links | Correct Levels*")
         
-        st.markdown("---")
-        st.markdown("### 🔗 Group Reporting Hierarchy")
-        st.info("GMD → COO (All Depts) / VP Sales (Sales & Mkt) / GEA | Regions: Abuja, Lagos & Aba")
+        try:
+            org_emp_df = db.get_all_employees()
+        except:
+            org_emp_df = pd.DataFrame()
         
-        labels = ['GMD', 'COO', 'VP Sales', 'GEA', 'Technology (Abuja)', 'Technology (Lagos)', 'Facility Mgmt (Abuja)', 'Facility Mgmt (Lagos)', 'Engineering/MEP', 'HR', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Heads of Department', 'Sr. Managers', 'Managers', 'Team Leads', 'Team Members']
-        colors = ['#CC0000', '#e53e3e', '#dd6b20', '#805ad5', '#3182ce', '#3182ce', '#38a169', '#38a169', '#d53f8c', '#d69e2e', '#805ad5', '#dd6b20', '#2b6cb0', '#718096', '#e53e3e', '#319795', '#FF6B35', '#38a169', '#d69e2e', '#2b6cb0', '#718096']
-        sources = [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3]
-        targets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 11, 15]
-        values = [1]*15
-        for i in range(4, 16): sources.append(i); targets.append(16); values.append(1)
-        sources.append(16); targets.append(17); values.append(11)
-        sources += [17, 17, 18, 18]; targets += [18, 19, 19, 20]; values += [10, 5, 12, 30]
-        
-        fig = go.Figure(data=[go.Sankey(node=dict(pad=20, thickness=18, label=labels, color=colors), link=dict(source=sources, target=targets, value=values, color=['rgba(204,0,0,0.2)']*len(sources)))])
-        fig.update_layout(
-            height=600,
-            paper_bgcolor='#1E1E1E',
-            plot_bgcolor='#1E1E1E',
-            font=dict(color='#F0E6D3', family='Inter, sans-serif')
-        )
-        st.plotly_chart(fig, use_container_width=True)
-        
-        st.markdown("---")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("### 🏢 Abuja Region — Department Heads")
-            abuja_df = pd.DataFrame({'Department': ['Technology Group', 'Facility Management', 'Engineering (MEP)', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations'], 'HOD': ['Emmanuel Etuk', 'David Effiong', 'Sanjeev Purwar', 'Adebayo Sakote', 'Jeff Arikawe', 'Ahmed Karim (VP)', 'Anand Bora', 'Usman Sani', 'David Aiyedun', 'Ibukun Adeogun'], 'Team': [12, 20, 8, 6, 8, 12, 6, 15, 3, 10]})
-            html_table = abuja_df.to_html(classes='dark-csv-table', index=False, border=0, escape=False)
-            st.markdown(html_table, unsafe_allow_html=True)
-        with col2:
-            st.markdown("### 🏢 Lagos Region — Department Heads")
-            lagos_df = pd.DataFrame({'Department': ['Technology Group', 'Facility Management', 'Engineering (MEP)', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations'], 'HOD': ['Lawal Mohammed', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD', 'TBD'], 'Team': ['TBD']*10})
-            html_table = lagos_df.to_html(classes='dark-csv-table', index=False, border=0, escape=False)
-            st.markdown(html_table, unsafe_allow_html=True)
-        
-        st.markdown("---")
-        st.markdown("### 👥 Span of Control")
-        span_data = pd.DataFrame({'Leader': ['Vinay Mahtani', 'Jerome Das', 'Ahmed Karim', 'Emmanuel Etuk', 'David Effiong', 'Sanjeev Purwar', 'All HODs (Avg)'], 'Role': ['GMD', 'COO', 'VP Sales', 'HOD Tech (Abuja)', 'HOD FM (Abuja)', 'HOD Engr (MEP)', 'Heads of Dept'], 'Region': ['Group', 'Group', 'Group', 'Abuja', 'Abuja', 'Abuja', 'Group'], 'Direct Reports': [5, 12, 6, 12, 20, 8, 10]})
-        fig2 = px.bar(span_data, x='Leader', y='Direct Reports', color='Region', text='Direct Reports', color_discrete_sequence=['#CC0000', '#3182ce', '#38a169'])
-        fig2.update_layout(
-            height=350,
-            paper_bgcolor='#1E1E1E',
-            plot_bgcolor='#1E1E1E',
-            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
-            legend=dict(font=dict(color='#F0E6D3'))
-        )
-        fig2.update_traces(textposition='outside')
-        st.plotly_chart(fig2, use_container_width=True)
-        
-        st.markdown("---")
-        st.markdown("### 🔍 Find Reporting Chain")
-        chain_search = st.text_input("Enter employee name", placeholder="e.g., Francis Asuquo", key="chain_search")
-        if chain_search:
-            found = False; chain = ""
-            try:
-                for _, emp in employees_df.iterrows():
-                    full_name = f"{emp['first_name']} {emp['last_name']}".lower()
-                    if chain_search.lower() in full_name:
-                        found = True
-                        role = emp.get('position', ''); dept = emp.get('department', ''); region = emp.get('region', 'Abuja')
-                        reports_to = emp.get('reports_to', '')
-                        if reports_to: chain = f"📋 **{emp['first_name']} {emp['last_name']}** → Reports to: {reports_to}"
-                        elif 'GMD' in role or 'CEO' in role: chain = f"📋 **{emp['first_name']} {emp['last_name']}** → Reports to Board"
-                        elif 'COO' in role: chain = f"📋 **{emp['first_name']} {emp['last_name']}** → COO → GMD"
-                        elif 'HOD' in role: chain = f"📋 **{emp['first_name']} {emp['last_name']}** → HOD ({dept}, {region}) → COO → GMD"
-                        elif 'Manager' in role: chain = f"📋 **{emp['first_name']} {emp['last_name']}** → Manager ({dept}) → HOD → COO → GMD"
-                        elif 'Team Lead' in role: chain = f"📋 **{emp['first_name']} {emp['last_name']}** → Team Lead ({dept}) → Manager → HOD → COO → GMD"
-                        else: chain = f"📋 **{emp['first_name']} {emp['last_name']}** → Team Member ({dept}) → Team Lead → Manager → HOD → COO → GMD"
+        if org_emp_df.empty:
+            st.warning("No employee data available.")
+        else:
+            reports_map = {}
+            emp_details = {}
+            
+            for _, e in org_emp_df.iterrows():
+                if e.get('status') not in ['Active', 'Confirmed', 'Probation', 'HR Processing']:
+                    continue
+                emp_name = f"{e['first_name']} {e['last_name']}".strip()
+                reports_to = str(e.get('reports_to', '')).strip() if e.get('reports_to') else ''
+                
+                emp_details[emp_name] = {
+                    'position': e.get('position', ''),
+                    'department': e.get('department', ''),
+                    'region': e.get('region', ''),
+                    'subsidiary': e.get('subsidiary', ''),
+                    'reports_to': reports_to
+                }
+                
+                if reports_to and reports_to != 'nan' and reports_to != 'None':
+                    if reports_to not in reports_map:
+                        reports_map[reports_to] = []
+                    reports_map[reports_to].append(emp_name)
+            
+            # Find GMD - look for Vinay specifically
+            gmd_name = None
+            for name, details in emp_details.items():
+                if 'Vinay' in name or 'Mahtani' in name:
+                    gmd_name = name
+                    break
+            
+            if not gmd_name:
+                for name, details in emp_details.items():
+                    if 'GMD' in details['position'].upper() or 'CEO' in details['position'].upper():
+                        gmd_name = name
                         break
-                if not found: chain = f"📋 **{chain_search}** not found."
-            except: chain = "📋 Lookup unavailable."
-            st.info(chain)
+            
+            if not gmd_name:
+                for name, details in emp_details.items():
+                    if not details['reports_to']:
+                        gmd_name = name
+                        break
+            
+            if gmd_name:
+                # HARDCODED EXCLUSIONS - Never HODs
+                NEVER_HOD_NAMES = ['Partab Lalchandani', 'Maikudi Kadoh', 'Adekunle Sonuga']
+                ONLY_EXCLUDE_FROM_HODS = ['Partab Lalchandani', 'Maikudi Kadoh', 'Adekunle Sonuga']
+                
+                # Executives = ALL people who report to GMD
+                executives = []
+                for name, details in emp_details.items():
+                    if details.get('reports_to') == gmd_name:
+                        if name not in executives:
+                            executives.append(name)
+                
+                # Hardcode Partab if still not found
+                partab_name = 'Partab Lalchandani'
+                if partab_name in emp_details and partab_name not in executives:
+                    executives.append(partab_name)
+                
+                # HODs = report to COO only (skip VP, GEA, ED, GED)
+                hods = []
+                for exec_name in executives:
+                    exec_position = emp_details.get(exec_name, {}).get('position', '').upper()
+                    if any(kw in exec_position for kw in ['VP', 'SALES', 'GEA', 'GED', 'ED', 'ADVISOR', 'DIRECTOR']):
+                        continue
+                    for report in reports_map.get(exec_name, []):
+                        if report in NEVER_HOD_NAMES:
+                            continue
+                        if report not in hods:
+                            hods.append(report)
+                
+                mid_managers = []
+                for hod_name in hods:
+                    for report in reports_map.get(hod_name, []):
+                        # Only skip Partab from mid_managers (he's an executive)
+                        if report == 'Partab Lalchandani':
+                            continue
+                        if report not in mid_managers:
+                            mid_managers.append(report)
+                
+                # Add Sonuga (reports to VP Sales Karim)
+                for exec_name in executives:
+                    exec_position = emp_details.get(exec_name, {}).get('position', '').upper()
+                    if 'VP' in exec_position or 'SALES' in exec_position:
+                        for report in reports_map.get(exec_name, []):
+                            if report not in mid_managers and report not in hods:
+                                mid_managers.append(report)
+                
+                # Team members
+                team_members = []
+                for mgr_name in mid_managers:
+                    for report in reports_map.get(mgr_name, []):
+                        if report == 'Partab Lalchandani':
+                            continue
+                        if report not in team_members:
+                            team_members.append(report)
+                
+                def count_total_reports(manager_name):
+                    direct = reports_map.get(manager_name, [])
+                    total = len(direct)
+                    for d in direct:
+                        total += count_total_reports(d)
+                    return total
+                
+                import colorsys
+                
+                def generate_bright_colors(n):
+                    colors_list = []
+                    for i in range(n):
+                        hue = i / max(n, 1)
+                        r, g, b = colorsys.hsv_to_rgb(hue, 0.9, 1.0)
+                        colors_list.append(f'rgb({int(r*255)},{int(g*255)},{int(b*255)})')
+                    return colors_list
+                
+                all_names = [gmd_name] + executives + hods + mid_managers + team_members
+                bright_colors = generate_bright_colors(len(all_names))
+                name_to_color = {name: bright_colors[i] for i, name in enumerate(all_names)}
+                
+                # ============ TABS ============
+                org_tab1, org_tab2 = st.tabs(["🌍 Group-Wide Sankey", "🏢 Department Sankey"])
+                
+                # ============ GROUP SANKEY ============
+                with org_tab1:
+                    labels = []
+                    colors = []
+                    sources = []
+                    targets = []
+                    values = []
+                    link_colors = []
+                    label_index = {}
+                    
+                    def add_label(name):
+                        if name not in label_index:
+                            label_index[name] = len(labels)
+                            labels.append(name)
+                            colors.append(name_to_color.get(name, '#718096'))
+                        return label_index[name]
+                    
+                    # GMD
+                    gmd_idx = add_label(gmd_name)
+                    
+                    # Executives - INCLUDING PARTAB - All at same level
+                    for exec_name in executives:
+                        exec_idx = add_label(exec_name)
+                        sources.append(gmd_idx)
+                        targets.append(exec_idx)
+                        # Use actual count, minimum 1 for visibility
+                        actual_reports = len(reports_map.get(exec_name, []))
+                        values.append(max(actual_reports, 1))
+                        link_colors.append('rgba(255, 200, 0, 0.7)')
+                    
+                    # HODs
+                    for hod_name in hods:
+                        hod_idx = add_label(hod_name)
+                        hod_reports_to = emp_details.get(hod_name, {}).get('reports_to', '')
+                        if hod_reports_to in label_index:
+                            sources.append(label_index[hod_reports_to])
+                            targets.append(hod_idx)
+                            values.append(len(reports_map.get(hod_name, [])) + 1)
+                            link_colors.append('rgba(255, 255, 255, 0.6)')
+                    
+                    # Mid Managers
+                    for mgr_name in mid_managers:
+                        mgr_idx = add_label(mgr_name)
+                        mgr_reports_to = emp_details.get(mgr_name, {}).get('reports_to', '')
+                        if mgr_reports_to in label_index:
+                            sources.append(label_index[mgr_reports_to])
+                            targets.append(mgr_idx)
+                            values.append(len(reports_map.get(mgr_name, [])) + 1)
+                            link_colors.append('rgba(56, 161, 105, 0.5)')
+                    
+                    # Team Members
+                    for tm_name in team_members:
+                        tm_idx = add_label(tm_name)
+                        tm_reports_to = emp_details.get(tm_name, {}).get('reports_to', '')
+                        if tm_reports_to in label_index:
+                            sources.append(label_index[tm_reports_to])
+                            targets.append(tm_idx)
+                            values.append(1)
+                            link_colors.append('rgba(160, 160, 160, 0.3)')
+                    
+                    # Build Sankey
+                    if labels and sources and targets and values:
+                        # Force levels
+                        node_x = []
+                        for name in labels:
+                            if name == gmd_name:
+                                node_x.append(0.0)
+                            elif name in executives:
+                                node_x.append(0.25)
+                            elif name in hods:
+                                node_x.append(0.5)
+                            elif name in mid_managers:
+                                node_x.append(0.75)
+                            else:
+                                node_x.append(0.9)
+                        
+                        fig = go.Figure(data=[go.Sankey(
+                            node=dict(
+                                pad=35,
+                                thickness=25,
+                                line=dict(color="rgba(0,0,0,0.3)", width=1),
+                                label=labels,
+                                color=colors,
+                                x=node_x
+                            ),
+                            link=dict(
+                                source=sources,
+                                target=targets,
+                                value=values,
+                                color=link_colors
+                            )
+                        )])
+                        
+                        fig.update_layout(
+                            height=max(800, len(labels) * 25),
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif', size=11),
+                            margin=dict(t=40, b=40, l=40, r=40)
+                        )
+                        
+                        st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.warning("No reporting data available.")
+                    
+                    st.markdown("---")
+                    
+                    # Span of Control (TOTAL)
+                    st.markdown("### 👥 Span of Control (Total Reports)")
+                    
+                    span_data = []
+                    for exec_name in executives:
+                        span_data.append({
+                            'Leader': exec_name, 'Level': 'Executive',
+                            'Department': emp_details.get(exec_name, {}).get('department', ''),
+                            'Region': emp_details.get(exec_name, {}).get('region', ''),
+                            'Total Reports': count_total_reports(exec_name)
+                        })
+                    
+                    for hod_name in hods:
+                        span_data.append({
+                            'Leader': hod_name, 'Level': 'HOD',
+                            'Department': emp_details.get(hod_name, {}).get('department', ''),
+                            'Region': emp_details.get(hod_name, {}).get('region', ''),
+                            'Total Reports': count_total_reports(hod_name)
+                        })
+                    
+                    for mgr_name in mid_managers:
+                        span_data.append({
+                            'Leader': mgr_name, 'Level': 'Manager/Lead',
+                            'Department': emp_details.get(mgr_name, {}).get('department', ''),
+                            'Region': emp_details.get(mgr_name, {}).get('region', ''),
+                            'Total Reports': count_total_reports(mgr_name)
+                        })
+                    
+                    if span_data:
+                        span_data.sort(key=lambda x: x['Total Reports'], reverse=True)
+                        span_df = pd.DataFrame(span_data[:20])
+                        
+                        fig_span = px.bar(span_df, x='Leader', y='Total Reports', color='Level', text='Total Reports',
+                                        color_discrete_sequence=['#CC0000', '#D4AF37', '#38a169'])
+                        fig_span.update_layout(
+                            height=450,
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                            legend=dict(font=dict(color='#F0E6D3')),
+                            xaxis_tickangle=-45,
+                            margin=dict(t=30, b=80, l=20, r=20)
+                        )
+                        fig_span.update_traces(textposition='outside')
+                        st.plotly_chart(fig_span, use_container_width=True)
+                    
+                    st.markdown("---")
+                    
+                    # HOD Tables
+                    st.markdown("### 🏢 Department Heads (HODs)")
+                    st.markdown("*Only people reporting DIRECTLY to COO*")
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.markdown("#### Abuja Region")
+                        abuja_hods = [h for h in hods if emp_details.get(h, {}).get('region') == 'Abuja' and h not in NEVER_HOD_NAMES]
+                        if abuja_hods:
+                            abuja_data = pd.DataFrame([{
+                                'Department': emp_details.get(h, {}).get('department', ''),
+                                'Name': h,
+                                'Total Reports': count_total_reports(h)
+                            } for h in abuja_hods]).sort_values('Total Reports', ascending=False)
+                            st.markdown(abuja_data.to_html(classes='dark-csv-table', index=False, border=0, escape=False), unsafe_allow_html=True)
+                    with col2:
+                        st.markdown("#### Lagos Region")
+                        lagos_hods = [h for h in hods if emp_details.get(h, {}).get('region') == 'Lagos' and h not in NEVER_HOD_NAMES]
+                        if lagos_hods:
+                            lagos_data = pd.DataFrame([{
+                                'Department': emp_details.get(h, {}).get('department', ''),
+                                'Name': h,
+                                'Total Reports': count_total_reports(h)
+                            } for h in lagos_hods]).sort_values('Total Reports', ascending=False)
+                            st.markdown(lagos_data.to_html(classes='dark-csv-table', index=False, border=0, escape=False), unsafe_allow_html=True)
+                
+                # ============ DEPARTMENT SANKEY ============
+                with org_tab2:
+                    st.markdown("### 🏢 Department Sankey — Drill-Down")
+                    st.markdown("*Select a department to see its full reporting structure.*")
+                    
+                    dept_options = []
+                    for name, details in emp_details.items():
+                        dept = details.get('department', '')
+                        region = details.get('region', '')
+                        if dept:
+                            option = f"{region} — {dept}"
+                            if option not in dept_options:
+                                dept_options.append(option)
+                    
+                    dept_options.sort()
+                    
+                    selected_dept = st.selectbox("Select Department", ["Select..."] + dept_options, key="dept_drilldown_tab6")
+                    
+                    if selected_dept != "Select...":
+                        selected_region = selected_dept.split(" — ")[0].strip()
+                        selected_department = selected_dept.split(" — ")[1].strip() if " — " in selected_dept else ""
+                        
+                        dept_employees = []
+                        for name, details in emp_details.items():
+                            if details.get('department') == selected_department and details.get('region') == selected_region:
+                                dept_employees.append(name)
+                        
+                        if dept_employees:
+                            dept_labels = []
+                            dept_colors = []
+                            dept_sources = []
+                            dept_targets = []
+                            dept_values = []
+                            dept_label_index = {}
+                            
+                            dept_name_to_color = {name: name_to_color.get(name, '#718096') for name in dept_employees}
+                            
+                            def add_dept_label(name):
+                                if name not in dept_label_index:
+                                    dept_label_index[name] = len(dept_labels)
+                                    dept_labels.append(name)
+                                    dept_colors.append(dept_name_to_color.get(name, '#718096'))
+                                return dept_label_index[name]
+                            
+                            dept_roots = []
+                            for emp_name in dept_employees:
+                                reports_to = emp_details.get(emp_name, {}).get('reports_to', '')
+                                if reports_to not in dept_employees:
+                                    dept_roots.append(emp_name)
+                            
+                            visited = set()
+                            
+                            def build_tree(emp_name):
+                                if emp_name in visited:
+                                    return
+                                visited.add(emp_name)
+                                
+                                emp_idx = add_dept_label(emp_name)
+                                direct_reports = [r for r in reports_map.get(emp_name, []) if r in dept_employees]
+                                
+                                for report in direct_reports:
+                                    report_idx = add_dept_label(report)
+                                    dept_sources.append(emp_idx)
+                                    dept_targets.append(report_idx)
+                                    dept_values.append(len(reports_map.get(report, [])) + 1)
+                                    build_tree(report)
+                            
+                            for root in dept_roots:
+                                build_tree(root)
+                            
+                            if dept_labels:
+                                fig_dept = go.Figure(data=[go.Sankey(
+                                    node=dict(
+                                        pad=20, thickness=18,
+                                        line=dict(color="rgba(0,0,0,0.3)", width=1),
+                                        label=dept_labels, color=dept_colors
+                                    ),
+                                    link=dict(
+                                        source=dept_sources, target=dept_targets, value=dept_values,
+                                        color=['rgba(204,0,0,0.2)'] * len(dept_sources)
+                                    )
+                                )])
+                                
+                                fig_dept.update_layout(
+                                    height=max(400, len(dept_labels) * 40),
+                                    paper_bgcolor='#1E1E1E',
+                                    plot_bgcolor='#1E1E1E',
+                                    font=dict(color='#F0E6D3', family='Inter, sans-serif', size=10),
+                                    margin=dict(t=20, b=20, l=20, r=20)
+                                )
+                                
+                                st.plotly_chart(fig_dept, use_container_width=True)
+                            else:
+                                st.info("No reporting structure found.")
+                        else:
+                            st.info(f"No employees found in {selected_department} ({selected_region}).")
     
     # ============ TAB 7: DEMOGRAPHICS ============
     with tab7:
@@ -13687,21 +14217,38 @@ APPLY NOW: {public_url}
         try:
             db_reqs = db.get_all_job_requisitions()
             for r in db_reqs:
+                try:
+                    screening_data = json.loads(r.get('screening', '[]')) if r.get('screening') else []
+                except:
+                    screening_data = []
+                
+                try:
+                    posts_data = json.loads(r.get('posts', '{}')) if r.get('posts') else {}
+                except:
+                    posts_data = {}
+                
+                try:
+                    evidence_data = json.loads(r.get('evidence_files', '[]')) if r.get('evidence_files') else []
+                except:
+                    evidence_data = []
+                
                 st.session_state.job_requisitions.append({
                     'id': r.get('req_id', ''), 'title': r.get('title', ''),
                     'department': r.get('department', ''), 'location': r.get('location', ''),
                     'type': r.get('job_type', ''), 'salary': r.get('salary', ''),
                     'level': r.get('level', ''), 'positions': r.get('positions', 1),
                     'closing': r.get('closing', ''), 'jd': r.get('jd', ''),
-                    'screening': json.loads(r.get('screening', '[]')),
-                    'posts': json.loads(r.get('posts', '{}')),
+                    'screening': screening_data,
+                    'posts': posts_data,
                     'status': r.get('status', ''), 'submitted_by': r.get('submitted_by', ''),
                     'date': r.get('date', ''), 'lm_comment': r.get('lm_comment', ''),
                     'admin_comment': r.get('admin_comment', ''), 'coo_comment': r.get('coo_comment', ''),
                     'lm_name': r.get('lm_name', ''),
                     'admin_name': r.get('admin_name', ''),
                     'coo_name': r.get('coo_name', ''),
-                    'evidence_files': json.loads(r.get('evidence_files', '[]'))
+                    'evidence_files': evidence_data,
+                    'hiring_reason': r.get('hiring_reason', ''),
+                    'submitter_comment': r.get('submitter_comment', '')
                 })
         except:
             pass
@@ -13766,6 +14313,40 @@ APPLY NOW: {public_url}
                 closing_date = st.date_input("Application Deadline")
             
             st.markdown("---")
+            st.markdown("### 📋 Hiring Reason *")
+            hiring_reason = st.selectbox("Reason for Hiring *", [
+                "Select Reason...",
+                "Replacement & Backfill",
+                "Voluntary Resignation",
+                "Involuntary Termination / Dismissal",
+                "Retirement",
+                "Internal Transfer / Promotion",
+                "Temporary Leave Coverage (Maternity/Paternity/Sick/Study)",
+                "Growth & Expansion",
+                "Business Expansion / New Headcount",
+                "Project-Based Hire (Fixed-Term)",
+                "Reorganization / Structural Change",
+                "Strategic & Specialized",
+                "Skill Gap Fill (New Technology)",
+                "Role Upgrade / Talent Optimization",
+                "Budget Optimization / Cost Reduction",
+                "Other / Compliance",
+                "Statutory / Compliance Requirement",
+                "Succession Planning",
+                "Other (Please Specify)"
+            ])
+            
+            if hiring_reason == "Other (Please Specify)":
+                other_reason = st.text_input("Please specify other reason *")
+            else:
+                other_reason = ""
+            
+            st.markdown("---")
+            st.markdown("### 📝 Submitter Comments (Justification) *")
+            submitter_comment = st.text_area("Why is this role needed? *", 
+                placeholder="Provide justification for this requisition...")
+            
+            st.markdown("---")
             st.markdown("### 📋 Full Job Description *")
             
             if 'jd_html_content' not in st.session_state:
@@ -13805,7 +14386,21 @@ APPLY NOW: {public_url}
             submitted = st.form_submit_button("📤 Submit for Approval", use_container_width=True)
             
             if submitted:
-                if job_title and department and jd_text_for_submission:
+                if not job_title:
+                    st.error("❌ Job Title is required!")
+                elif not department:
+                    st.error("❌ Department is required!")
+                elif not jd_text_for_submission:
+                    st.error("❌ Job Description is required!")
+                elif hiring_reason == "Select Reason...":
+                    st.error("❌ Please select a hiring reason!")
+                elif hiring_reason == "Other (Please Specify)" and not other_reason:
+                    st.error("❌ Please specify the other reason!")
+                elif not submitter_comment:
+                    st.error("❌ Submitter comments are required!")
+                else:
+                    final_reason = other_reason if other_reason else hiring_reason
+                    
                     req = {
                         'id': f"REQ-{datetime.now().strftime('%Y%m%d%H%M')}",
                         'title': job_title, 'department': department, 'location': location,
@@ -13817,14 +14412,18 @@ APPLY NOW: {public_url}
                         'submitted_by': user_name, 'date': datetime.now().strftime('%Y-%m-%d %H:%M'),
                         'lm_comment': '', 'admin_comment': '', 'coo_comment': '',
                         'lm_name': '', 'admin_name': '', 'coo_name': '',
-                        'evidence_files': []
+                        'evidence_files': [],
+                        'hiring_reason': final_reason,
+                        'submitter_comment': submitter_comment
                     }
                     st.session_state.job_requisitions.append(req)
                     try:
                         db.save_job_requisition(req['id'], req['title'], req['department'], req['location'],
                             req['type'], req['salary'], req['level'], req['positions'], req['closing'],
                             req['jd'], req['screening'], req['posts'], req['status'], req['submitted_by'], req['date'],
-                            req['lm_comment'], req['admin_comment'], req['coo_comment'])
+                            req['lm_comment'], req['admin_comment'], req['coo_comment'],
+                            req.get('lm_name', ''), req.get('admin_name', ''), req.get('coo_name', ''),
+                            req.get('evidence_files', []), req.get('hiring_reason', ''), req.get('submitter_comment', ''))
                     except:
                         pass
                     
@@ -13844,20 +14443,42 @@ APPLY NOW: {public_url}
                         'Trade Services': 'akarim@churchgate.com'
                     }
                     lm_email = lm_emails.get(department, 'bsakote@churchgate.com')
+                    
+                    # Send email to Line Manager
                     try:
                         from utils.email_service import EmailService
                         EmailService().send_email(
                             lm_email,
                             f"🔔 New Job Requisition Awaiting Authorization: {job_title}",
-                            f"A new job requisition for '{job_title}' ({department}) has been submitted by {user_name}.\n\nPlease review and authorize in the HRIS: https://hris.churchgate.com\n\nRequisition ID: {req['id']}"
+                            f"A new job requisition for '{job_title}' ({department}) has been submitted by {user_name}.\n\n"
+                            f"Hiring Reason: {final_reason}\n"
+                            f"Submitter Comments: {submitter_comment}\n\n"
+                            f"Please review and authorize in the HRIS: https://hris.churchgate.com\n\n"
+                            f"Requisition ID: {req['id']}"
                         )
                     except:
                         pass
                     
-                    st.success(f"✅ Job requisition {req['id']} submitted! Awaiting authorization.")
+                    # Send email to ALL HR team
+                    hr_emails = ["bsakote@churchgate.com", "gbalogun@churchgate.com", "ichukwunonye@churchgate.com", "eochala@churchgate.com"]
+                    for hr_email in hr_emails:
+                        try:
+                            EmailService().send_email(
+                                hr_email,
+                                f"🔔 New Job Requisition Submitted: {job_title}",
+                                f"A new job requisition has been submitted.\n\n"
+                                f"Title: {job_title}\n"
+                                f"Department: {department}\n"
+                                f"Submitted By: {user_name}\n"
+                                f"Hiring Reason: {final_reason}\n"
+                                f"Submitter Comments: {submitter_comment}\n\n"
+                                f"Requisition ID: {req['id']}"
+                            )
+                        except:
+                            pass
+                    
+                    st.success(f"✅ Job requisition {req['id']} submitted! HR team notified.")
                     st.balloons()
-                else:
-                    st.error("❌ Required fields missing!")
     
     # ============ TAB 2: APPROVAL DASHBOARD ============
     with tab2:
@@ -13872,11 +14493,6 @@ APPLY NOW: {public_url}
                 email_svc = EmailService()
             except:
                 email_svc = None
-            
-            # ============================================================
-            # SLA & ANALYTICS METRICS
-            # ============================================================
-            st.markdown("### 📊 Approval SLA Metrics")
             
             pending_lm = len([r for r in st.session_state.job_requisitions if r['status'] == 'Pending LM Approval'])
             pending_admin = len([r for r in st.session_state.job_requisitions if r['status'] == 'Pending Admin Approval'])
@@ -13893,473 +14509,585 @@ APPLY NOW: {public_url}
             m5.metric("❌ Rejected", rejected)
             m6.metric("✅ Approved", approved)
             
-            # SLA Tracking
-            st.markdown("---")
-            st.markdown("### ⏱️ Approval SLA Tracking")
-            
-            sla_data = []
-            for req in st.session_state.job_requisitions:
-                submitted_date = req.get('date', '')
-                status = req['status']
-                
-                # Calculate SLA based on status
-                if submitted_date:
-                    try:
-                        submitted_dt = datetime.strptime(submitted_date, '%Y-%m-%d %H:%M')
-                        elapsed_hours = (datetime.now() - submitted_dt).total_seconds() / 3600
-                        
-                        # SLA thresholds
-                        if status == 'Pending LM Approval':
-                            sla = "24h"
-                            sla_met = elapsed_hours <= 24
-                        elif status == 'Pending Admin Approval':
-                            sla = "48h"
-                            sla_met = elapsed_hours <= 48
-                        elif status == 'Pending COO Approval':
-                            sla = "72h"
-                            sla_met = elapsed_hours <= 72
-                        elif status == 'Approved - Live':
-                            sla = "Completed"
-                            sla_met = True
-                        elif status == 'Rejected by COO':
-                            sla = "Completed"
-                            sla_met = True
-                        elif status == 'Revision Requested by COO':
-                            sla = "In Revision"
-                            sla_met = True
-                        else:
-                            sla = "N/A"
-                            sla_met = True
-                        
-                        sla_data.append({
-                            'Requisition': req['id'],
-                            'Title': req['title'],
-                            'Status': status,
-                            'Submitted': submitted_date,
-                            'Elapsed Hours': f"{elapsed_hours:.1f}h",
-                            'SLA Target': sla,
-                            'SLA Status': '✅ Met' if sla_met else '⚠️ Breached'
-                        })
-                    except:
-                        pass
-            
-            if sla_data:
-                sla_df = pd.DataFrame(sla_data)
-                html_table = sla_df.to_html(classes='dark-csv-table', index=False, border=0, escape=False)
-                st.markdown(html_table, unsafe_allow_html=True)
-            
             st.markdown("---")
             
-            # ============================================================
-            # SUB-TABS FOR BETTER ORGANIZATION
-            # ============================================================
-            approval_subtab1, approval_subtab2, approval_subtab3, approval_subtab4 = st.tabs([
+            approval_subtab1, approval_subtab2, approval_subtab3, approval_subtab4, approval_subtab5 = st.tabs([
                 f"📋 Pending Action ({pending_lm + pending_admin + pending_coo})",
                 f"🔄 Revisions ({revision_req})",
                 f"✅ Approved ({approved})",
-                f"❌ Rejected ({rejected})"
+                f"❌ Rejected ({rejected})",
+                "📊 Analytics"
             ])
             
-            # ============ SUB-TAB 1: PENDING ACTION ============
+            # ============ SUB-TAB 1: PENDING ============
             with approval_subtab1:
                 st.subheader("📋 Requisitions Awaiting Action")
                 
-                pending_reqs = [r for r in st.session_state.job_requisitions 
-                               if r['status'] in ['Pending LM Approval', 'Pending Admin Approval', 'Pending COO Approval']]
-                
-                if not pending_reqs:
-                    st.success("✅ No pending requisitions!")
-                else:
-                    for i, req in enumerate(st.session_state.job_requisitions):
-                        if req['status'] not in ['Pending LM Approval', 'Pending Admin Approval', 'Pending COO Approval']:
-                            continue
+                for i, req in enumerate(st.session_state.job_requisitions):
+                    if req['status'] not in ['Pending LM Approval', 'Pending Admin Approval', 'Pending COO Approval']:
+                        continue
+                    
+                    # Ensure evidence_files exists
+                    if 'evidence_files' not in req:
+                        req['evidence_files'] = []
+                    
+                    with st.expander(f"{req['id']} - {req['title']} | {req['department']} | {req['status']}", expanded=True):
+                        st.markdown(f"**Submitted By:** {req['submitted_by']} | **Date:** {req['date']}")
+                        st.markdown(f"**Department:** {req['department']} | **Location:** {req['location']}")
+                        st.markdown(f"**Type:** {req['type']} | **Level:** {req['level']} | **Positions:** {req.get('positions', 1)}")
+                        st.markdown(f"**Salary Range:** {req.get('salary', 'Not specified')}")
                         
-                        with st.expander(f"{req['id']} - {req['title']} | {req['department']} | {req['status']}", expanded=True):
-                            
-                            # ===== DETAILS =====
-                            st.markdown(f"**Submitted By:** {req['submitted_by']} | **Date:** {req['date']}")
-                            st.markdown(f"**Department:** {req['department']} | **Location:** {req['location']}")
-                            st.markdown(f"**Type:** {req['type']} | **Level:** {req['level']} | **Positions:** {req.get('positions', 1)}")
-                            st.markdown(f"**Salary Range:** {req.get('salary', 'Not specified')}")
-                            
+                        if req.get('hiring_reason'):
+                            st.markdown(f"**🎯 Hiring Reason:** {req['hiring_reason']}")
+                        if req.get('submitter_comment'):
+                            st.markdown(f"**📝 Submitter Comments:** {req['submitter_comment']}")
+                        
+                        st.markdown("---")
+                        st.markdown("**📋 Job Description:**")
+                        jd_content = req.get('jd', 'No JD provided')
+                        if '<' in jd_content and '>' in jd_content:
+                            st.markdown(jd_content, unsafe_allow_html=True)
+                        else:
+                            st.markdown(jd_content)
+                        
+                        st.markdown("---")
+                        posts = req.get('posts', {})
+                        st.markdown(f"**Platform Posts:** LinkedIn: {'✅' if posts.get('linkedin') else '❌'} | Indeed: {'✅' if posts.get('indeed') else '❌'} | Glassdoor: {'✅' if posts.get('glassdoor') else '❌'} | MyJobMag: {'✅' if posts.get('myjobmag') else '❌'} | HotNigerianJobs: {'✅' if posts.get('hotnigerianjobs') else '❌'}")
+                        
+                        # Evidence files
+                        if req.get('evidence_files'):
                             st.markdown("---")
-                            st.markdown("**📋 Job Description:**")
-                            jd_content = req.get('jd', 'No JD provided')
-                            if '<' in jd_content and '>' in jd_content:
-                                st.markdown(jd_content, unsafe_allow_html=True)
-                            else:
-                                st.markdown(jd_content)
-                            
-                            # Platform Posts + Names
+                            st.markdown("**📎 Evidence Files:**")
+                            ev_cols = st.columns(min(3, len(req['evidence_files'])))
+                            for idx, ev in enumerate(req['evidence_files']):
+                                ev_name = ev.split('/')[-1] if '/' in ev else str(ev)
+                                with ev_cols[idx % 3]:
+                                    st.markdown(f"""
+                                    <div style="background: rgba(49, 130, 206, 0.1); border: 1px solid #3182ce; border-radius: 6px; padding: 8px; margin-bottom: 6px; text-align: center;">
+                                        <span style="font-size: 1.5rem;">📄</span><br>
+                                        <small style="color: #3182ce; word-break: break-all;">{ev_name[:30]}</small><br>
+                                        <a href="{ev}" target="_blank" download style="color: #3182ce; font-size: 0.7rem; text-decoration: none;">🔗 View / Download</a>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                        
+                        st.markdown("---")
+                        
+                        # Display names + comments
+                        lm_name = req.get('lm_name', '')
+                        lm_comment = req.get('lm_comment', '')
+                        admin_name = req.get('admin_name', '')
+                        admin_comment = req.get('admin_comment', '')
+                        coo_name = req.get('coo_name', '')
+                        coo_comment = req.get('coo_comment', '')
+                        
+                        if lm_name and lm_comment:
+                            st.markdown(f"**👔 Line Manager:** {lm_name}")
+                            st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;💬 *\"{lm_comment}\"*")
+                        elif lm_name:
+                            st.markdown(f"**👔 Line Manager:** {lm_name}")
+                        else:
+                            st.markdown("**👔 Line Manager:** Pending")
+                        
+                        if admin_name and admin_comment:
+                            st.markdown(f"**🔍 Admin:** {admin_name}")
+                            st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;💬 *\"{admin_comment}\"*")
+                        elif admin_name:
+                            st.markdown(f"**🔍 Admin:** {admin_name}")
+                        else:
+                            st.markdown("**🔍 Admin:** Pending")
+                        
+                        if coo_name and coo_comment:
+                            st.markdown(f"**🏢 COO:** {coo_name}")
+                            st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;💬 *\"{coo_comment}\"*")
+                        elif coo_name:
+                            st.markdown(f"**🏢 COO:** {coo_name}")
+                        else:
+                            st.markdown("**🏢 COO:** Pending")
+                        
+                        # LM APPROVAL
+                        if req['status'] == 'Pending LM Approval' and is_manager:
                             st.markdown("---")
-                            posts = req.get('posts', {})
-                            st.markdown(f"**Platform Posts:** LinkedIn: {'✅' if posts.get('linkedin') else '❌'} | Indeed: {'✅' if posts.get('indeed') else '❌'} | Glassdoor: {'✅' if posts.get('glassdoor') else '❌'}")
-                            
-                            lm_display = req.get('lm_name', '') or 'Pending'
-                            admin_display = req.get('admin_name', '') or 'Pending'
-                            coo_display = req.get('coo_name', '') or 'Pending'
-                            
-                            st.markdown(f"**👔 Line Manager:** {lm_display}")
-                            st.markdown(f"**🔍 Admin:** {admin_display}")
-                            st.markdown(f"**🏢 COO:** {coo_display}")
-                            
-                            # ===== LM APPROVAL =====
-                            if req['status'] == 'Pending LM Approval' and is_manager:
-                                st.markdown("---")
-                                st.markdown("#### 👔 Line Manager Authorization")
-                                with st.form(key=f"lm_form_{i}"):
-                                    edit_jd = st_quill(value=jd_content, html=True, key=f"edit_jd_lm_{i}")
-                                    lm_comment = st.text_area("Line Manager Comment *", key=f"lm_comment_{i}", placeholder="e.g., This position is for expansion purposes")
-                                    
-                                    st.markdown("**📎 Attach Evidence (Optional):**")
-                                    evidence_file = st.file_uploader("Upload evidence", key=f"lm_evidence_{i}", type=['pdf', 'docx', 'xlsx', 'png', 'jpg'])
-                                    
-                                    if st.form_submit_button("✅ Authorize & Send to HR", use_container_width=True):
-                                        if lm_comment:
-                                            st.session_state.job_requisitions[i]['status'] = 'Pending Admin Approval'
-                                            st.session_state.job_requisitions[i]['lm_comment'] = lm_comment
-                                            st.session_state.job_requisitions[i]['jd'] = edit_jd
-                                            st.session_state.job_requisitions[i]['lm_name'] = user_name
-                                            
-                                            if evidence_file:
-                                                try:
-                                                    from supabase import create_client
-                                                    supabase_url = os.environ.get('SUPABASE_URL', '')
-                                                    supabase_key = os.environ.get('SUPABASE_SERVICE_KEY', os.environ.get('SUPABASE_KEY', ''))
-                                                    supabase_client = create_client(supabase_url, supabase_key)
-                                                    
-                                                    file_name = f"req_evidence_{req['id']}_{evidence_file.name}"
-                                                    supabase_client.storage.from_('dlp-evidence').upload(file_name, evidence_file.getvalue())
-                                                    evidence_url = supabase_client.storage.from_('dlp-evidence').get_public_url(file_name)
-                                                    
-                                                    if 'evidence_files' not in st.session_state.job_requisitions[i]:
-                                                        st.session_state.job_requisitions[i]['evidence_files'] = []
+                            if req.get('coo_comment') and req.get('coo_name'):
+                                st.warning(f"🔄 COO ({req['coo_name']}) requested revision: \"{req['coo_comment']}\"")
+                            st.markdown("#### 👔 Line Manager Authorization")
+                            with st.form(key=f"lm_form_{i}"):
+                                edit_jd = st_quill(value=jd_content, html=True, key=f"edit_jd_lm_{i}")
+                                lm_comment_input = st.text_area("Line Manager Comment *", key=f"lm_comment_input_{i}", placeholder="e.g., This position is for expansion purposes")
+                                evidence_file = st.file_uploader("Upload evidence", key=f"lm_evidence_{i}", type=['pdf', 'docx', 'xlsx', 'png', 'jpg'])
+                                
+                                if st.form_submit_button("✅ Authorize & Send to HR", use_container_width=True):
+                                    if lm_comment_input:
+                                        st.session_state.job_requisitions[i]['status'] = 'Pending Admin Approval'
+                                        st.session_state.job_requisitions[i]['lm_comment'] = lm_comment_input
+                                        st.session_state.job_requisitions[i]['jd'] = edit_jd
+                                        st.session_state.job_requisitions[i]['lm_name'] = user_name
+                                        
+                                        if 'evidence_files' not in st.session_state.job_requisitions[i]:
+                                            st.session_state.job_requisitions[i]['evidence_files'] = []
+                                        
+                                        if evidence_file:
+                                            try:
+                                                clean_name = evidence_file.name.replace(' ', '_').replace('%', '_')
+                                                file_name = f"req_evidence_{req['id']}_{clean_name}"
+                                                evidence_url = db.upload_file("recruitment-evidence", file_name, evidence_file.getvalue(), evidence_file.type)
+                                                if evidence_url:
                                                     st.session_state.job_requisitions[i]['evidence_files'].append(evidence_url)
-                                                    st.success(f"✅ Evidence uploaded")
-                                                except Exception as e:
-                                                    st.warning(f"Evidence upload failed: {str(e)}")
-                                            
-                                            try:
-                                                r = st.session_state.job_requisitions[i]
-                                                db.save_job_requisition(r['id'], r['title'], r['department'], r['location'],
-                                                    r['type'], r['salary'], r['level'], r['positions'], r['closing'],
-                                                    r['jd'], r['screening'], r['posts'], r['status'], r['submitted_by'], r['date'],
-                                                    r['lm_comment'], r['admin_comment'], r['coo_comment'])
-                                            except:
-                                                pass
-                                            
-                                            if email_svc:
-                                                hr_emails = ["bsakote@churchgate.com", "gbalogun@churchgate.com", "ichukwunonye@churchgate.com"]
-                                                for hr_email in hr_emails:
-                                                    try:
-                                                        email_svc.send_email(
-                                                            hr_email,
-                                                            f"🔔 Job Requisition Authorized by LM: {req['title']}",
-                                                            f"Line Manager ({user_name}) has authorized '{req['title']}'.\n\nComment: {lm_comment}\n\nValidate at: https://hris.churchgate.com"
-                                                        )
-                                                    except:
-                                                        pass
-                                            
-                                            st.success("✅ Authorized!")
-                                            st.rerun()
-                                        else:
-                                            st.error("❌ Comment required!")
-                            
-                            # ===== ADMIN VALIDATION =====
-                            if req['status'] == 'Pending Admin Approval' and is_admin:
-                                st.markdown("---")
-                                st.markdown("#### 🔍 HR Admin Validation")
-                                with st.form(key=f"admin_form_{i}"):
-                                    edit_jd = st_quill(value=req.get('jd', ''), html=True, key=f"edit_jd_admin_{i}")
-                                    edit_salary = st.text_input("Edit Salary Range", value=req.get('salary', ''), key=f"edit_salary_{i}")
-                                    admin_comment = st.text_area("Admin Validation Comment *", key=f"admin_comment_{i}", placeholder="e.g., Approved for expansion purposes")
-                                    
-                                    if st.form_submit_button("✅ Validate & Send to COO", use_container_width=True):
-                                        if admin_comment:
-                                            st.session_state.job_requisitions[i]['status'] = 'Pending COO Approval'
-                                            st.session_state.job_requisitions[i]['admin_comment'] = admin_comment
-                                            st.session_state.job_requisitions[i]['jd'] = edit_jd
-                                            st.session_state.job_requisitions[i]['salary'] = edit_salary
-                                            st.session_state.job_requisitions[i]['admin_name'] = user_name
-                                            
-                                            try:
-                                                r = st.session_state.job_requisitions[i]
-                                                db.save_job_requisition(r['id'], r['title'], r['department'], r['location'],
-                                                    r['type'], r['salary'], r['level'], r['positions'], r['closing'],
-                                                    r['jd'], r['screening'], r['posts'], r['status'], r['submitted_by'], r['date'],
-                                                    r['lm_comment'], r['admin_comment'], r['coo_comment'])
-                                            except:
-                                                pass
-                                            
-                                            if email_svc:
-                                                try:
-                                                    email_svc.send_email(
-                                                        "jeromedas@churchgate.com",
-                                                        f"🔔 Job Requisition Ready for Final Approval: {req['title']}",
-                                                        f"HR ({user_name}) has validated '{req['title']}'.\n\nComment: {admin_comment}\n\nApprove at: https://hris.churchgate.com"
-                                                    )
-                                                except:
-                                                    pass
-                                            
-                                            st.success("✅ Validated! Sent to COO.")
-                                            st.rerun()
-                                        else:
-                                            st.error("❌ Comment required!")
-                            
-                            # ===== COO APPROVAL =====
-                            if req['status'] == 'Pending COO Approval' and (is_admin or user_dept == 'Senior Management'):
-                                st.markdown("---")
-                                st.markdown("#### 🏢 COO Final Approval")
-                                with st.form(key=f"coo_form_{i}"):
-                                    coo_comment = st.text_area("COO Comment *", key=f"coo_comment_{i}", placeholder="e.g., Is it budgeted in the manpower budget?")
-                                    
-                                    col_coo1, col_coo2, col_coo3 = st.columns(3)
-                                    with col_coo1:
-                                        approve_btn = st.form_submit_button("✅ Approve", use_container_width=True)
-                                    with col_coo2:
-                                        reject_btn = st.form_submit_button("❌ Reject", use_container_width=True)
-                                    with col_coo3:
-                                        revise_btn = st.form_submit_button("🔄 Revision", use_container_width=True)
-                                    
-                                    if approve_btn and coo_comment:
-                                        st.session_state.job_requisitions[i]['status'] = 'Approved - Live'
-                                        st.session_state.job_requisitions[i]['coo_comment'] = coo_comment
-                                        st.session_state.job_requisitions[i]['coo_name'] = user_name
+                                                else:
+                                                    st.error("Evidence upload FAILED")
+                                            except Exception as e:
+                                                st.error(f"Evidence upload FAILED: {str(e)}")
                                         
-                                        job_ref = req['id']
-                                        public_url = f"{STREAMLIT_URL}/Careers?job={job_ref}"
-                                        
-                                        st.session_state.active_jobs.append({
-                                            'ref': job_ref, 'title': req['title'], 'department': req['department'],
-                                            'location': req['location'], 'type': req['type'], 'salary': req['salary'],
-                                            'jd': req['jd'], 'screening': req['screening'], 'closing': req['closing'],
-                                            'posts': req['posts'], 'date': datetime.now().strftime('%Y-%m-%d'),
-                                            'applications': 0, 'public_url': public_url
-                                        })
-                                        
-                                        try:
-                                            r = st.session_state.job_requisitions[i]
-                                            db.save_job_requisition(r['id'], r['title'], r['department'], r['location'],
-                                                r['type'], r['salary'], r['level'], r['positions'], r['closing'],
-                                                r['jd'], r['screening'], r['posts'], r['status'], r['submitted_by'], r['date'],
-                                                r['lm_comment'], r['admin_comment'], r['coo_comment'])
-                                        except:
-                                            pass
-                                        
-                                        # Email Submitter + LM + ALL HR
-                                        if email_svc:
-                                            # Submitter
-                                            try:
-                                                email_svc.send_email(
-                                                    req.get('submitted_by', ''),
-                                                    f"✅ Job Posting APPROVED: {req['title']}",
-                                                    f"Your requisition for '{req['title']}' is FULLY APPROVED and LIVE!\n\nURL: {public_url}"
-                                                )
-                                            except:
-                                                pass
-                                            
-                                            # ALL HR
-                                            hr_emails = ["bsakote@churchgate.com", "gbalogun@churchgate.com", "ichukwunonye@churchgate.com"]
-                                            for hr_email in hr_emails:
-                                                try:
-                                                    email_svc.send_email(
-                                                        hr_email,
-                                                        f"✅ Job Posting LIVE: {req['title']}",
-                                                        f"Requisition '{req['title']}' APPROVED by COO ({user_name}).\n\nURL: {public_url}"
-                                                    )
-                                                except:
-                                                    pass
-                                        
-                                        st.success("✅ Job LIVE!")
-                                        st.code(public_url)
-                                        st.balloons()
-                                        st.rerun()
-                                    
-                                    if reject_btn and coo_comment:
-                                        st.session_state.job_requisitions[i]['status'] = 'Rejected by COO'
-                                        st.session_state.job_requisitions[i]['coo_comment'] = coo_comment
-                                        st.session_state.job_requisitions[i]['coo_name'] = user_name
-                                        
-                                        try:
-                                            r = st.session_state.job_requisitions[i]
-                                            db.save_job_requisition(r['id'], r['title'], r['department'], r['location'],
-                                                r['type'], r['salary'], r['level'], r['positions'], r['closing'],
-                                                r['jd'], r['screening'], r['posts'], r['status'], r['submitted_by'], r['date'],
-                                                r['lm_comment'], r['admin_comment'], r['coo_comment'])
-                                        except:
-                                            pass
+                                        r = st.session_state.job_requisitions[i]
+                                        db.save_job_requisition(
+                                            r['id'], r['title'], r['department'], r['location'],
+                                            r['type'], r['salary'], r['level'], r['positions'], r['closing'],
+                                            r['jd'], r['screening'], r['posts'], r['status'], r['submitted_by'], r['date'],
+                                            r['lm_comment'], r['admin_comment'], r['coo_comment'],
+                                            r.get('lm_name', ''), r.get('admin_name', ''), r.get('coo_name', ''),
+                                            r.get('evidence_files', [])
+                                        )
                                         
                                         if email_svc:
-                                            hr_emails = ["bsakote@churchgate.com", "gbalogun@churchgate.com", "ichukwunonye@churchgate.com"]
+                                            hr_emails = ["bsakote@churchgate.com", "gbalogun@churchgate.com", "ichukwunonye@churchgate.com", "eochala@churchgate.com"]
                                             for hr_email in hr_emails:
                                                 try:
-                                                    email_svc.send_email(
-                                                        hr_email,
-                                                        f"❌ Job Requisition Rejected: {req['title']}",
-                                                        f"COO ({user_name}) rejected '{req['title']}'.\n\nReason: {coo_comment}"
-                                                    )
+                                                    email_svc.send_email(hr_email, f"🔔 Job Requisition Authorized: {req['title']}", f"LM ({user_name}) authorized.\n\nComment: {lm_comment_input}")
                                                 except:
                                                     pass
                                         
-                                        st.error(f"❌ Rejected: {coo_comment}")
+                                        st.success("✅ Authorized!")
                                         st.rerun()
-                                    
-                                    if revise_btn and coo_comment:
-                                        st.session_state.job_requisitions[i]['status'] = 'Revision Requested by COO'
-                                        st.session_state.job_requisitions[i]['coo_comment'] = coo_comment
-                                        st.session_state.job_requisitions[i]['coo_name'] = user_name
+                                    else:
+                                        st.error("❌ Comment required!")
+                        
+                        # ADMIN VALIDATION
+                        if req['status'] == 'Pending Admin Approval' and is_admin:
+                            st.markdown("---")
+                            if req.get('coo_comment') and req.get('coo_name'):
+                                st.warning(f"🔄 COO ({req['coo_name']}) requested revision: \"{req['coo_comment']}\"")
+                            st.markdown("#### 🔍 HR Admin Validation")
+                            with st.form(key=f"admin_form_{i}"):
+                                edit_jd = st_quill(value=req.get('jd', ''), html=True, key=f"edit_jd_admin_{i}")
+                                edit_salary = st.text_input("Edit Salary Range", value=req.get('salary', ''), key=f"edit_salary_{i}")
+                                admin_comment_input = st.text_area("Admin Validation Comment *", key=f"admin_comment_input_{i}", placeholder="e.g., Approved for expansion purposes")
+                                
+                                if st.form_submit_button("✅ Validate & Send to COO", use_container_width=True):
+                                    if admin_comment_input:
+                                        st.session_state.job_requisitions[i]['status'] = 'Pending COO Approval'
+                                        st.session_state.job_requisitions[i]['admin_comment'] = admin_comment_input
+                                        st.session_state.job_requisitions[i]['jd'] = edit_jd
+                                        st.session_state.job_requisitions[i]['salary'] = edit_salary
+                                        st.session_state.job_requisitions[i]['admin_name'] = user_name
                                         
-                                        try:
-                                            r = st.session_state.job_requisitions[i]
-                                            db.save_job_requisition(r['id'], r['title'], r['department'], r['location'],
-                                                r['type'], r['salary'], r['level'], r['positions'], r['closing'],
-                                                r['jd'], r['screening'], r['posts'], r['status'], r['submitted_by'], r['date'],
-                                                r['lm_comment'], r['admin_comment'], r['coo_comment'])
-                                        except:
-                                            pass
+                                        r = st.session_state.job_requisitions[i]
+                                        db.save_job_requisition(
+                                            r['id'], r['title'], r['department'], r['location'],
+                                            r['type'], r['salary'], r['level'], r['positions'], r['closing'],
+                                            r['jd'], r['screening'], r['posts'], r['status'], r['submitted_by'], r['date'],
+                                            r['lm_comment'], r['admin_comment'], r['coo_comment'],
+                                            r.get('lm_name', ''), r.get('admin_name', ''), r.get('coo_name', ''),
+                                            r.get('evidence_files', [])
+                                        )
                                         
                                         if email_svc:
-                                            hr_emails = ["bsakote@churchgate.com", "gbalogun@churchgate.com", "ichukwunonye@churchgate.com"]
-                                            for hr_email in hr_emails:
-                                                try:
-                                                    email_svc.send_email(
-                                                        hr_email,
-                                                        f"🔄 Revision Requested: {req['title']}",
-                                                        f"COO ({user_name}) requested revisions.\n\nNotes: {coo_comment}"
-                                                    )
-                                                except:
-                                                    pass
+                                            try:
+                                                email_svc.send_email("jeromedas@churchgate.com", f"🔔 Job Ready for Final Approval: {req['title']}", f"HR ({user_name}) validated.\n\nComment: {admin_comment_input}")
+                                            except:
+                                                pass
                                         
-                                        st.warning(f"🔄 Revision requested: {coo_comment}")
+                                        st.success("✅ Validated!")
                                         st.rerun()
+                                    else:
+                                        st.error("❌ Comment required!")
+                        
+                        # COO APPROVAL
+                        if req['status'] == 'Pending COO Approval' and (is_admin or user_dept == 'Senior Management'):
+                            st.markdown("---")
+                            st.markdown("#### 🏢 COO Final Approval")
+                            with st.form(key=f"coo_form_{i}"):
+                                coo_comment_input = st.text_area("COO Comment *", key=f"coo_comment_input_{i}", placeholder="e.g., Is it budgeted?")
+                                col_coo1, col_coo2, col_coo3 = st.columns(3)
+                                with col_coo1:
+                                    approve_btn = st.form_submit_button("✅ Approve", use_container_width=True)
+                                with col_coo2:
+                                    reject_btn = st.form_submit_button("❌ Reject", use_container_width=True)
+                                with col_coo3:
+                                    revise_btn = st.form_submit_button("🔄 Revision", use_container_width=True)
+                                
+                                if approve_btn and coo_comment_input:
+                                    st.session_state.job_requisitions[i]['status'] = 'Approved - Live'
+                                    st.session_state.job_requisitions[i]['coo_comment'] = coo_comment_input
+                                    st.session_state.job_requisitions[i]['coo_name'] = user_name
+                                    
+                                    r = st.session_state.job_requisitions[i]
+                                    db.save_job_requisition(
+                                        r['id'], r['title'], r['department'], r['location'],
+                                        r['type'], r['salary'], r['level'], r['positions'], r['closing'],
+                                        r['jd'], r['screening'], r['posts'], r['status'], r['submitted_by'], r['date'],
+                                        r['lm_comment'], r['admin_comment'], r['coo_comment'],
+                                        r.get('lm_name', ''), r.get('admin_name', ''), r.get('coo_name', ''),
+                                        r.get('evidence_files', [])
+                                    )
+                                    
+                                    job_ref = req['id']
+                                    public_url = f"{STREAMLIT_URL}/Careers?job={job_ref}"
+                                    st.session_state.active_jobs.append({
+                                        'ref': job_ref, 'title': req['title'], 'department': req['department'],
+                                        'location': req['location'], 'type': req['type'], 'salary': req['salary'],
+                                        'jd': req['jd'], 'screening': req['screening'], 'closing': req['closing'],
+                                        'posts': req['posts'], 'date': datetime.now().strftime('%Y-%m-%d'),
+                                        'applications': 0, 'public_url': public_url
+                                    })
+                                    
+                                    if email_svc:
+                                        try:
+                                            email_svc.send_email(req.get('submitted_by', ''), f"✅ Job APPROVED: {req['title']}", f"LIVE! URL: {public_url}")
+                                        except:
+                                            pass
+                                        hr_emails = ["bsakote@churchgate.com", "gbalogun@churchgate.com", "ichukwunonye@churchgate.com", "eochala@churchgate.com"]
+                                        for hr_email in hr_emails:
+                                            try:
+                                                email_svc.send_email(hr_email, f"✅ Job LIVE: {req['title']}", f"Approved by COO ({user_name}). URL: {public_url}")
+                                            except:
+                                                pass
+                                    
+                                    st.success("✅ Job LIVE!")
+                                    st.code(public_url)
+                                    st.balloons()
+                                    st.rerun()
+                                
+                                if reject_btn and coo_comment_input:
+                                    st.session_state.job_requisitions[i]['status'] = 'Rejected by COO'
+                                    st.session_state.job_requisitions[i]['coo_comment'] = coo_comment_input
+                                    st.session_state.job_requisitions[i]['coo_name'] = user_name
+                                    
+                                    r = st.session_state.job_requisitions[i]
+                                    db.save_job_requisition(
+                                        r['id'], r['title'], r['department'], r['location'],
+                                        r['type'], r['salary'], r['level'], r['positions'], r['closing'],
+                                        r['jd'], r['screening'], r['posts'], r['status'], r['submitted_by'], r['date'],
+                                        r['lm_comment'], r['admin_comment'], r['coo_comment'],
+                                        r.get('lm_name', ''), r.get('admin_name', ''), r.get('coo_name', ''),
+                                        r.get('evidence_files', [])
+                                    )
+                                    
+                                    if email_svc:
+                                        hr_emails = ["bsakote@churchgate.com", "gbalogun@churchgate.com", "ichukwunonye@churchgate.com", "eochala@churchgate.com"]
+                                        for hr_email in hr_emails:
+                                            try:
+                                                email_svc.send_email(hr_email, f"❌ Job Rejected: {req['title']}", f"COO ({user_name}) rejected. Reason: {coo_comment_input}")
+                                            except:
+                                                pass
+                                    
+                                    st.error(f"❌ Rejected: {coo_comment_input}")
+                                    st.rerun()
+                                
+                                if revise_btn and coo_comment_input:
+                                    st.session_state.job_requisitions[i]['status'] = 'Revision Requested by COO'
+                                    st.session_state.job_requisitions[i]['coo_comment'] = coo_comment_input
+                                    st.session_state.job_requisitions[i]['coo_name'] = user_name
+                                    st.session_state.job_requisitions[i]['lm_comment'] = ''
+                                    st.session_state.job_requisitions[i]['lm_name'] = ''
+                                    st.session_state.job_requisitions[i]['admin_comment'] = ''
+                                    st.session_state.job_requisitions[i]['admin_name'] = ''
+                                    
+                                    r = st.session_state.job_requisitions[i]
+                                    db.save_job_requisition(
+                                        r['id'], r['title'], r['department'], r['location'],
+                                        r['type'], r['salary'], r['level'], r['positions'], r['closing'],
+                                        r['jd'], r['screening'], r['posts'], r['status'], r['submitted_by'], r['date'],
+                                        r['lm_comment'], r['admin_comment'], r['coo_comment'],
+                                        r.get('lm_name', ''), r.get('admin_name', ''), r.get('coo_name', ''),
+                                        r.get('evidence_files', [])
+                                    )
+                                    
+                                    if email_svc:
+                                        hr_emails = ["bsakote@churchgate.com", "gbalogun@churchgate.com", "ichukwunonye@churchgate.com", "eochala@churchgate.com"]
+                                        for hr_email in hr_emails:
+                                            try:
+                                                email_svc.send_email(hr_email, f"🔄 Revision Requested: {req['title']}", f"COO ({user_name}) notes: {coo_comment_input}")
+                                            except:
+                                                pass
+                                    
+                                    st.warning(f"🔄 Revision requested. Sent back to LM for full review cycle.")
+                                    st.rerun()
             
             # ============ SUB-TAB 2: REVISIONS ============
             with approval_subtab2:
                 st.subheader("🔄 Revisions Requested")
-                
                 revision_reqs = [r for r in st.session_state.job_requisitions if r['status'] == 'Revision Requested by COO']
-                
                 if not revision_reqs:
-                    st.success("✅ No revisions pending!")
-                else:
-                    for i, req in enumerate(st.session_state.job_requisitions):
-                        if req['status'] != 'Revision Requested by COO':
-                            continue
+                    st.info("No revisions pending.")
+                for i, req in enumerate(st.session_state.job_requisitions):
+                    if req['status'] != 'Revision Requested by COO':
+                        continue
+                    with st.expander(f"{req['id']} - {req['title']}", expanded=True):
+                        st.warning(f"**COO Notes:** {req.get('coo_comment', '')}")
+                        st.markdown(f"**🏢 COO:** {req.get('coo_name', '')}")
                         
-                        with st.expander(f"{req['id']} - {req['title']} | {req['department']}", expanded=True):
-                            st.warning(f"**COO Revision Notes:** {req.get('coo_comment', '')}")
-                            st.markdown(f"**COO:** {req.get('coo_name', '')}")
-                            
-                            st.markdown("---")
-                            st.markdown("**📋 Current JD:**")
-                            jd_content = req.get('jd', '')
-                            if '<' in jd_content:
-                                st.markdown(jd_content, unsafe_allow_html=True)
-                            else:
-                                st.markdown(jd_content)
-                            
-                            if is_admin or is_manager:
-                                st.markdown("---")
-                                st.markdown("#### 🔄 Edit & Resubmit")
-                                with st.form(key=f"revise_form_{i}"):
-                                    edit_jd = st_quill(value=req.get('jd', ''), html=True, key=f"revise_jd_{i}")
-                                    edit_salary = st.text_input("Salary Range", value=req.get('salary', ''), key=f"revise_salary_{i}")
-                                    
-                                    st.markdown("**📎 Attach Evidence (Optional):**")
-                                    evidence_file = st.file_uploader("Upload evidence", key=f"revise_evidence_{i}", type=['pdf', 'docx', 'xlsx', 'png', 'jpg'])
-                                    
-                                    revise_comment = st.text_area("Update Comment *", key=f"revise_comment_{i}")
-                                    
-                                    if st.form_submit_button("✅ Resubmit for Approval", use_container_width=True):
-                                        if revise_comment:
-                                            st.session_state.job_requisitions[i]['status'] = 'Pending COO Approval'
-                                            st.session_state.job_requisitions[i]['jd'] = edit_jd
-                                            st.session_state.job_requisitions[i]['salary'] = edit_salary
-                                            st.session_state.job_requisitions[i]['lm_comment'] = revise_comment
-                                            st.session_state.job_requisitions[i]['lm_name'] = user_name
-                                            
-                                            if evidence_file:
-                                                try:
-                                                    from supabase import create_client
-                                                    supabase_url = os.environ.get('SUPABASE_URL', '')
-                                                    supabase_key = os.environ.get('SUPABASE_SERVICE_KEY', os.environ.get('SUPABASE_KEY', ''))
-                                                    supabase_client = create_client(supabase_url, supabase_key)
-                                                    
-                                                    file_name = f"req_evidence_{req['id']}_{evidence_file.name}"
-                                                    supabase_client.storage.from_('dlp-evidence').upload(file_name, evidence_file.getvalue())
-                                                    evidence_url = supabase_client.storage.from_('dlp-evidence').get_public_url(file_name)
-                                                    
-                                                    if 'evidence_files' not in st.session_state.job_requisitions[i]:
-                                                        st.session_state.job_requisitions[i]['evidence_files'] = []
-                                                    st.session_state.job_requisitions[i]['evidence_files'].append(evidence_url)
-                                                except Exception as e:
-                                                    st.warning(f"Evidence upload failed: {str(e)}")
-                                            
+                        st.markdown("---")
+                        st.markdown("**📋 Workflow Trail:**")
+                        st.markdown(f"1. 👔 LM: {req.get('lm_name', '') or 'Pending review'}")
+                        st.markdown(f"2. 🔍 Admin: {req.get('admin_name', '') or 'Pending review'}")
+                        st.markdown(f"3. 🏢 COO: {req.get('coo_name', '')} — Revision requested")
+                        st.markdown("---")
+                        st.markdown("**🔄 Action:** LM must review and resubmit. Then Admin validates before COO sees it again.")
+                        
+                        if is_admin or is_manager:
+                            with st.form(key=f"revise_form_{i}"):
+                                edit_jd = st_quill(value=req.get('jd', ''), html=True, key=f"revise_jd_{i}")
+                                edit_salary = st.text_input("Salary", value=req.get('salary', ''), key=f"revise_salary_{i}")
+                                evidence_file = st.file_uploader("Evidence", key=f"revise_evidence_{i}", type=['pdf', 'docx', 'xlsx', 'png', 'jpg'])
+                                revise_comment = st.text_area("Update Comment *", key=f"revise_comment_{i}")
+                                
+                                if st.form_submit_button("✅ Resubmit to Admin", use_container_width=True):
+                                    if revise_comment:
+                                        st.session_state.job_requisitions[i]['status'] = 'Pending Admin Approval'
+                                        st.session_state.job_requisitions[i]['jd'] = edit_jd
+                                        st.session_state.job_requisitions[i]['salary'] = edit_salary
+                                        st.session_state.job_requisitions[i]['lm_comment'] = revise_comment
+                                        st.session_state.job_requisitions[i]['lm_name'] = user_name
+                                        
+                                        if 'evidence_files' not in st.session_state.job_requisitions[i]:
+                                            st.session_state.job_requisitions[i]['evidence_files'] = []
+                                        
+                                        if evidence_file:
                                             try:
-                                                r = st.session_state.job_requisitions[i]
-                                                db.save_job_requisition(r['id'], r['title'], r['department'], r['location'],
-                                                    r['type'], r['salary'], r['level'], r['positions'], r['closing'],
-                                                    r['jd'], r['screening'], r['posts'], r['status'], r['submitted_by'], r['date'],
-                                                    r['lm_comment'], r['admin_comment'], r['coo_comment'])
-                                            except:
-                                                pass
-                                            
-                                            if email_svc:
-                                                try:
-                                                    email_svc.send_email(
-                                                        "jeromedas@churchgate.com",
-                                                        f"🔔 Revised Requisition Resubmitted: {req['title']}",
-                                                        f"Updated by {user_name}.\n\nComment: {revise_comment}"
-                                                    )
-                                                except:
-                                                    pass
-                                            
-                                            st.success("✅ Resubmitted!")
-                                            st.rerun()
-                                        else:
-                                            st.error("❌ Comment required!")
+                                                clean_name = evidence_file.name.replace(' ', '_').replace('%', '_')
+                                                file_name = f"req_evidence_{req['id']}_{clean_name}"
+                                                evidence_url = db.upload_file("recruitment-evidence", file_name, evidence_file.getvalue(), evidence_file.type)
+                                                if evidence_url:
+                                                    st.session_state.job_requisitions[i]['evidence_files'].append(evidence_url)
+                                                else:
+                                                    st.error("Evidence upload FAILED")
+                                            except Exception as e:
+                                                st.error(f"Evidence upload FAILED: {str(e)}")
+                                        
+                                        r = st.session_state.job_requisitions[i]
+                                        db.save_job_requisition(
+                                            r['id'], r['title'], r['department'], r['location'],
+                                            r['type'], r['salary'], r['level'], r['positions'], r['closing'],
+                                            r['jd'], r['screening'], r['posts'], r['status'], r['submitted_by'], r['date'],
+                                            r['lm_comment'], r['admin_comment'], r['coo_comment'],
+                                            r.get('lm_name', ''), r.get('admin_name', ''), r.get('coo_name', ''),
+                                            r.get('evidence_files', [])
+                                        )
+                                        
+                                        st.success("✅ Resubmitted to Admin!")
+                                        st.rerun()
             
             # ============ SUB-TAB 3: APPROVED ============
             with approval_subtab3:
-                st.subheader("✅ Approved Requisitions")
-                
+                st.subheader("✅ Approved")
                 approved_reqs = [r for r in st.session_state.job_requisitions if r['status'] == 'Approved - Live']
-                
                 if not approved_reqs:
                     st.info("No approved requisitions yet.")
-                else:
-                    for req in approved_reqs:
-                        st.markdown(f"""
-                        <div style="background: rgba(56, 161, 105, 0.1); border: 1px solid #38a169; border-radius: 8px; padding: 12px; margin-bottom: 8px;">
-                            <strong style="color: #38a169;">✅ {req['id']} - {req['title']}</strong><br>
-                            <small style="color: #E0E0E0;">{req['department']} | Submitted by {req['submitted_by']}</small><br>
-                            <small style="color: #A0A0A0;">LM: {req.get('lm_name', '')} → Admin: {req.get('admin_name', '')} → COO: {req.get('coo_name', '')}</small>
-                        </div>
-                        """, unsafe_allow_html=True)
+                for req in approved_reqs:
+                    lm_name = req.get('lm_name', '') or 'N/A'
+                    lm_comment = req.get('lm_comment', '')
+                    admin_name = req.get('admin_name', '') or 'N/A'
+                    admin_comment = req.get('admin_comment', '')
+                    coo_name = req.get('coo_name', '') or 'N/A'
+                    coo_comment = req.get('coo_comment', '')
+                    
+                    st.markdown(f"""
+                    <div style="background: rgba(56, 161, 105, 0.1); border: 1px solid #38a169; border-radius: 8px; padding: 12px; margin-bottom: 8px;">
+                        <strong style="color: #38a169;">✅ {req['id']} - {req['title']}</strong><br>
+                        <small style="color: #E0E0E0;">{req['department']} | By {req['submitted_by']}</small><br>
+                        <small style="color: #A0A0A0;">👔 {lm_name}: "{lm_comment}"</small><br>
+                        <small style="color: #A0A0A0;">🔍 {admin_name}: "{admin_comment}"</small><br>
+                        <small style="color: #A0A0A0;">🏢 {coo_name}: "{coo_comment}"</small>
+                    </div>
+                    """, unsafe_allow_html=True)
             
             # ============ SUB-TAB 4: REJECTED ============
             with approval_subtab4:
-                st.subheader("❌ Rejected Requisitions")
-                
+                st.subheader("❌ Rejected")
                 rejected_reqs = [r for r in st.session_state.job_requisitions if r['status'] == 'Rejected by COO']
-                
                 if not rejected_reqs:
                     st.info("No rejected requisitions.")
-                else:
-                    for i, req in enumerate(st.session_state.job_requisitions):
-                        if req['status'] != 'Rejected by COO':
-                            continue
-                        
-                        with st.expander(f"❌ {req['id']} - {req['title']} | {req['department']}", expanded=False):
-                            st.error(f"**Rejection Reason:** {req.get('coo_comment', '')}")
-                            st.markdown(f"**Rejected by:** {req.get('coo_name', '')}")
+                for i, req in enumerate(st.session_state.job_requisitions):
+                    if req['status'] == 'Rejected by COO':
+                        with st.expander(f"❌ {req['id']} - {req['title']}", expanded=False):
+                            st.error(f"**Reason:** {req.get('coo_comment', '')}")
+                            st.markdown(f"**🏢 COO:** {req.get('coo_name', '') or 'N/A'}")
+                            st.markdown(f"**👔 LM:** {req.get('lm_name', '') or 'N/A'} — \"{req.get('lm_comment', '')}\"")
+                            st.markdown(f"**🔍 Admin:** {req.get('admin_name', '') or 'N/A'} — \"{req.get('admin_comment', '')}\"")
                             
                             if is_admin:
-                                if st.button("🗑️ Delete Rejected Requisition", key=f"delete_req_{i}"):
+                                if st.button("🗑️ Delete", key=f"delete_req_{i}"):
+                                    # Delete from database first
+                                    try:
+                                        db._delete("job_requisitions", {"req_id": req['id']})
+                                    except:
+                                        pass
+                                    # Then delete from session state
                                     st.session_state.job_requisitions.pop(i)
-                                    st.success("✅ Deleted!")
+                                    st.success("✅ Permanently deleted!")
                                     st.rerun()
-                                        st.rerun()
+            
+            # ============ SUB-TAB 5: ANALYTICS ============
+            with approval_subtab5:
+                st.subheader("📊 Requisition Analytics")
+                
+                all_reqs = st.session_state.job_requisitions
+                
+                # Status distribution - REAL DATA
+                status_counts = {}
+                for r in all_reqs:
+                    status = r['status']
+                    status_counts[status] = status_counts.get(status, 0) + 1
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                        st.markdown("#### 📊 Status Distribution")
+                        if status_counts:
+                            status_df = pd.DataFrame({
+                                'Status': list(status_counts.keys()),
+                                'Count': list(status_counts.values())
+                            })
+                            status_colors = {
+                                'Pending LM Approval': '#d69e2e',
+                                'Pending Admin Approval': '#3182ce',
+                                'Pending COO Approval': '#805ad5',
+                                'Revision Requested by COO': '#dd6b20',
+                                'Rejected by COO': '#CC0000',
+                                'Approved - Live': '#38a169'
+                            }
+                            fig1 = px.pie(status_df, values='Count', names='Status', hole=0.5,
+                                        color='Status', color_discrete_map=status_colors)
+                            fig1.update_layout(
+                                height=350, 
+                                margin=dict(t=20, b=20, l=20, r=20),
+                                paper_bgcolor='#1E1E1E',
+                                plot_bgcolor='#1E1E1E',
+                                font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                                legend=dict(
+                                    font=dict(color='#F0E6D3', size=11),
+                                    bgcolor='rgba(0,0,0,0)',
+                                    orientation='h',
+                                    yanchor='bottom',
+                                    y=-0.3,
+                                    xanchor='center',
+                                    x=0.5
+                                )
+                            )
+                            st.plotly_chart(fig1, use_container_width=True)
+                        else:
+                            st.info("No data yet.")
+                
+                with col2:
+                    st.markdown("#### 🏢 Department Breakdown")
+                    dept_counts = {}
+                    for r in all_reqs:
+                        dept = r['department']
+                        dept_counts[dept] = dept_counts.get(dept, 0) + 1
+                    
+                    if dept_counts:
+                        dept_df = pd.DataFrame({
+                            'Department': list(dept_counts.keys()),
+                            'Count': list(dept_counts.values())
+                        }).sort_values('Count', ascending=False)
+                        fig2 = px.bar(dept_df, x='Department', y='Count', color='Department',
+                                    color_discrete_sequence=['#CC0000', '#D4AF37', '#3182ce', '#38a169', '#805ad5', '#dd6b20'])
+                        fig2.update_layout(
+                            height=350, 
+                            showlegend=False, 
+                            margin=dict(t=20, b=60, l=20, r=20),
+                            xaxis_tickangle=-45,
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                        )
+                        st.plotly_chart(fig2, use_container_width=True)
+                    else:
+                        st.info("No data yet.")
+                
+                st.markdown("---")
+                
+                col3, col4 = st.columns(2)
+                
+                with col3:
+                    st.markdown("#### ⏱️ Approval Timeline (Days)")
+                    timeline_data = []
+                    for r in all_reqs:
+                        if r['status'] == 'Approved - Live':
+                            try:
+                                submit_date = datetime.strptime(r['date'], '%Y-%m-%d %H:%M')
+                                days_to_approve = (datetime.now() - submit_date).days
+                                timeline_data.append({'Requisition': r['id'][-4:], 'Days': days_to_approve})
+                            except:
+                                pass
+                    
+                    if timeline_data:
+                        timeline_df = pd.DataFrame(timeline_data)
+                        fig3 = px.bar(timeline_df, x='Requisition', y='Days', color='Days',
+                                    color_continuous_scale=['#38a169', '#d69e2e', '#CC0000'])
+                        fig3.update_layout(
+                            height=300, 
+                            showlegend=False, 
+                            margin=dict(t=20, b=20, l=20, r=20),
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                        )
+                        st.plotly_chart(fig3, use_container_width=True)
+                    else:
+                        st.info("No approved requisitions yet.")
+                
+                with col4:
+                    st.markdown("#### 📈 Monthly Submissions")
+                    monthly_counts = {}
+                    for r in all_reqs:
+                        month = r['date'][:7] if r.get('date') else 'Unknown'
+                        monthly_counts[month] = monthly_counts.get(month, 0) + 1
+                    
+                    if monthly_counts:
+                        monthly_df = pd.DataFrame({
+                            'Month': list(monthly_counts.keys()),
+                            'Count': list(monthly_counts.values())
+                        }).sort_values('Month')
+                        fig4 = px.line(monthly_df, x='Month', y='Count', markers=True,
+                                     color_discrete_sequence=['#CC0000'])
+                        fig4.update_layout(
+                            height=300, 
+                            margin=dict(t=20, b=20, l=20, r=20),
+                            paper_bgcolor='#1E1E1E',
+                            plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif')
+                        )
+                        st.plotly_chart(fig4, use_container_width=True)
+                    else:
+                        st.info("No data yet.")
+                
+                st.markdown("---")
+                
+                # Summary stats - REAL DATA
+                total_reqs = len(all_reqs)
+                approval_rate = (approved / total_reqs * 100) if total_reqs > 0 else 0
+                rejection_rate = (rejected / total_reqs * 100) if total_reqs > 0 else 0
+                revision_rate = (revision_req / total_reqs * 100) if total_reqs > 0 else 0
+                pending_rate = ((pending_lm + pending_admin + pending_coo) / total_reqs * 100) if total_reqs > 0 else 0
+                
+                c1, c2, c3, c4 = st.columns(4)
+                c1.metric("📋 Total Requisitions", total_reqs)
+                c2.metric("✅ Approval Rate", f"{approval_rate:.0f}%")
+                c3.metric("❌ Rejection Rate", f"{rejection_rate:.0f}%")
+                c4.metric("⏳ Pending Rate", f"{pending_rate:.0f}%")
+                
+                # Export
+                if all_reqs:
+                    export_data = [{
+                        'ID': r['id'], 'Title': r['title'], 'Department': r['department'],
+                        'Status': r['status'], 'Submitted By': r['submitted_by'],
+                        'Date': r['date'], 'LM': r.get('lm_name', ''), 'Admin': r.get('admin_name', ''),
+                        'COO': r.get('coo_name', '')
+                    } for r in all_reqs]
+                    st.download_button("📥 Export Requisitions CSV", 
+                        pd.DataFrame(export_data).to_csv(index=False),
+                        "requisitions_report.csv", "text/csv", use_container_width=True)
+                                        
     
     # ============ TAB 3: ACTIVE JOBS ============
     with tab3:
@@ -24955,32 +25683,32 @@ def main():
             page = st.session_state.pop('navigate_to')
         
         page_routes = {
-            "🏠 Employee Dashboard": employee_dashboard,
-            "📊 Executive Dashboard": executive_dashboard,
-            "👥 Employee Management": employee_management,
-            "📈 Performance & OKRs": performance_okrs,
-            "📈 My Performance & OKRs": performance_okrs,
-            "✅ Staff Confirmation": staff_confirmation,
-            "🚀 Promotions": promotions,
-            "💼 Recruitment Hub": recruitment_hub,
             "🤖 AI Recruitment Agent": ai_recruitment_agent,
-            "🔄 Requests Hub": requests_hub,
-            "📊 Reports & Analytics": reports_analytics,
-            "💬 Chat & Communications": chat_communications,
-            "🎓 Training & Development": training_development,
-            "🔔 Notifications": notifications_page,
-            "📋 My Documents": my_documents,
-            "💡 Ideas Box": ideas_box,
-            "📅 Calendar": company_calendar,
-            "🎯 My Goals": personal_goals,
-            "🌐 Directory": employee_directory_readonly,
-            "📚 Knowledge Base": knowledge_base,
-            "🎉 Wellness & Perks": wellness_perks,
-            "🎓 LMS": lms_dashboard,
-            "📋 Audit Log": audit_log_viewer,
             "📊 Advanced Analytics": advanced_analytics,
             "🛡️ AI DLP Monitor": ai_dlp_monitor_dashboard,
+            "📋 Audit Log": audit_log_viewer,
+            "📅 Calendar": company_calendar,
+            "💬 Chat & Communications": chat_communications,
+            "🌐 Directory": employee_directory_readonly,
+            "🏠 Employee Dashboard": employee_dashboard,
+            "👥 Employee Management": employee_management,
+            "📊 Executive Dashboard": executive_dashboard,
+            "💡 Ideas Box": ideas_box,
+            "📚 Knowledge Base": knowledge_base,
+            "🎓 LMS": lms_dashboard,
+            "🎯 My Goals": personal_goals,
+            "📋 My Documents": my_documents,
             "👤 My Profile": my_profile,
+            "🔔 Notifications": notifications_page,
+            "📈 Performance & OKRs": performance_okrs,
+            "📈 My Performance & OKRs": performance_okrs,
+            "🚀 Promotions": promotions,
+            "💼 Recruitment Hub": recruitment_hub,
+            "📊 Reports & Analytics": reports_analytics,
+            "🔄 Requests Hub": requests_hub,
+            "✅ Staff Confirmation": staff_confirmation,
+            "🎓 Training & Development": training_development,
+            "🎉 Wellness & Perks": wellness_perks,
         }
         
         page_func = page_routes.get(page, employee_dashboard)
