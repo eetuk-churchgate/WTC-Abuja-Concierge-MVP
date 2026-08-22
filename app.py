@@ -4367,27 +4367,27 @@ def employee_dashboard():
                             break
                 
                 if not gmd_name:
-                    for name, details in emp_details.items():
-                        if not details['reports_to']:
-                            gmd_name = name
-                            break
-                
-                if gmd_name:
-                     NEVER_HOD_NAMES = ['Partab Lalchandani', 'Maikudi Kadoh', 'Adekunle Sonuga']
-                ONLY_EXCLUDE_FROM_HODS = ['Partab Lalchandani', 'Maikudi Kadoh', 'Adekunle Sonuga']
-                    
-                    executives = []
-                    for name, details in emp_details.items():
-                        if details.get('reports_to') == gmd_name:
-                            if name not in executives:
-                                executives.append(name)
-                    
-                    partab_name = 'Partab Lalchandani'
-                    if partab_name in emp_details and partab_name not in executives:
-                        executives.append(partab_name)
-                    
-                    hods = []
-                    for exec_name in executives:
+    for name, details in emp_details.items():
+        if not details['reports_to']:
+            gmd_name = name
+            break
+
+if gmd_name:
+    NEVER_HOD_NAMES = ['Partab Lalchandani', 'Maikudi Kadoh', 'Adekunle Sonuga']
+    ONLY_EXCLUDE_FROM_HODS = ['Partab Lalchandani', 'Maikudi Kadoh', 'Adekunle Sonuga']
+    
+    executives = []
+    for name, details in emp_details.items():
+        if details.get('reports_to') == gmd_name:
+            if name not in executives:
+                executives.append(name)
+    
+    partab_name = 'Partab Lalchandani'
+    if partab_name in emp_details and partab_name not in executives:
+        executives.append(partab_name)
+    
+    hods = []
+    for exec_name in executives:
                         exec_position = emp_details.get(exec_name, {}).get('position', '').upper()
                         if any(kw in exec_position for kw in ['VP', 'SALES', 'GEA', 'GED', 'ED', 'ADVISOR', 'DIRECTOR']):
                             continue
