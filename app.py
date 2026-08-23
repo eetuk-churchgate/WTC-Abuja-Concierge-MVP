@@ -4264,16 +4264,34 @@ def employee_dashboard():
     # ============ ORGANIZATIONAL STRUCTURE ============
     st.markdown("---")
     st.subheader("📊 Organizational Structure")
-    st.info("GMD → COO (All Depts) / VP Sales (Sales & Mkt) / GEA | Regions: Abuja & Lagos")
+    st.info("Chairman → GMD → COO / VP Sales / GEA | Regions: Abuja & Lagos")
     
-    # Simple org view for dashboard
-    col1, col2, col3, col4 = st.columns(4)
+    # B. Mahtani - Chairman
+    st.markdown("""
+    <div style="background:white;padding:0.8rem;border-radius:8px;text-align:center;border-top:3px solid #1a365d;max-width:300px;margin:0 auto 1rem auto;">
+        <strong>B. Mahtani</strong><br>
+        <small style="color:#1a365d;">Chairman</small><br>
+        <small style="color:#888;">Group-wide</small>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Vinay Mahtani - GMD
+    st.markdown("""
+    <div style="background:white;padding:0.8rem;border-radius:8px;text-align:center;border-top:3px solid #CC0000;max-width:300px;margin:0 auto 1rem auto;">
+        <strong>Vinay Mahtani</strong><br>
+        <small style="color:#CC0000;">GMD/CEO</small><br>
+        <small style="color:#888;">Group-wide</small>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Partab, Jerome, Karim - All report to Vinay
+    col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown("""
-        <div style="background:white;padding:0.8rem;border-radius:8px;text-align:center;border-top:3px solid #CC0000;">
-            <strong>Vinay Mahtani</strong><br>
-            <small style="color:#CC0000;">GMD/CEO</small><br>
-            <small style="color:#888;">Group-wide</small>
+        <div style="background:white;padding:0.8rem;border-radius:8px;text-align:center;border-top:3px solid #805ad5;">
+            <strong>Partab Lalchandani</strong><br>
+            <small style="color:#805ad5;">GEA</small><br>
+            <small style="color:#888;">Group Advisor</small>
         </div>
         """, unsafe_allow_html=True)
     with col2:
@@ -4292,37 +4310,37 @@ def employee_dashboard():
             <small style="color:#888;">Sales & Marketing</small>
         </div>
         """, unsafe_allow_html=True)
-    with col4:
-        st.markdown("""
-        <div style="background:white;padding:0.8rem;border-radius:8px;text-align:center;border-top:3px solid #805ad5;">
-            <strong>Partab Lalchandani</strong><br>
-            <small style="color:#805ad5;">GEA</small><br>
-            <small style="color:#888;">Group Advisor</small>
-        </div>
-        """, unsafe_allow_html=True)
     
-    # Department heads from real data
+    # Department heads - HARDCODED
     st.markdown("---")
     st.markdown("**Department Heads**")
-    try:
-        emp_df = db.get_all_employees()
-        if not emp_df.empty:
-            hod_df = emp_df[emp_df['grade'].isin(['Manager', 'Senior Manager', 'General Manager', 'Head of Department(HOD)', 'Management', 'Senior Management/C-Level'])]
-            dept_list = hod_df['department'].unique()
-            cols = st.columns(min(len(dept_list), 5))
-            for i, dept in enumerate(dept_list[:10]):
-                dept_hod = hod_df[hod_df['department'] == dept].head(1)
-                if len(dept_hod) > 0:
-                    hod = dept_hod.iloc[0]
-                    with cols[i % 5]:
-                        st.markdown(f"""
-                        <div style="background:white;padding:0.6rem;border-radius:6px;text-align:center;margin-bottom:0.5rem;border:1px solid #e0e0e0;">
-                            <strong style="font-size:0.85rem;">{hod['first_name']} {hod['last_name']}</strong><br>
-                            <small style="color:#888;font-size:0.75rem;">{dept}</small>
-                        </div>
-                        """, unsafe_allow_html=True)
-    except:
-        pass
+    
+    hod_list = [
+        ('Abiola Tella', 'Legal'),
+        ('Adebayo Sakote', 'Human Resources'),
+        ('Adeogun Ibukun', 'Admin'),
+        ('Anand Bora', 'Procurement'),
+        ('David Effiong', 'Facility Management'),
+        ('Denis Ugoh', 'Accounts & Finance'),
+        ('Emmanuel Etuk', 'Technology Group'),
+        ('Lawal Mohammed', 'Technology Group'),
+        ('Magesh Gopal', 'Facility Management'),
+        ('Nchor Agba', 'Security'),
+        ('Olatubosun Otaiku', 'Central Stores'),
+        ('Peravali Kotaiah', 'Facility Management'),
+        ('Sanjeev Purwar', 'Engineering'),
+        ('Sani Usman', 'Security'),
+    ]
+    
+    cols = st.columns(5)
+    for i, (name, dept) in enumerate(hod_list):
+        with cols[i % 5]:
+            st.markdown(f"""
+            <div style="background:white;padding:0.6rem;border-radius:6px;text-align:center;margin-bottom:0.5rem;border:1px solid #e0e0e0;">
+                <strong style="font-size:0.85rem;">{name}</strong><br>
+                <small style="color:#888;font-size:0.75rem;">{dept}</small>
+            </div>
+            """, unsafe_allow_html=True)
     
     with st.expander("📊 View Full Org Chart", expanded=False):
             st.markdown("### 🌊 Organizational Flow — Real-Time")
@@ -4367,60 +4385,87 @@ def employee_dashboard():
                             break
                 
                 if not gmd_name:
-    for name, details in emp_details.items():
-        if not details['reports_to']:
-            gmd_name = name
-            break
-
-if gmd_name:
-    NEVER_HOD_NAMES = ['Partab Lalchandani', 'Maikudi Kadoh', 'Adekunle Sonuga']
-    ONLY_EXCLUDE_FROM_HODS = ['Partab Lalchandani', 'Maikudi Kadoh', 'Adekunle Sonuga']
-    
-    executives = []
-    for name, details in emp_details.items():
-        if details.get('reports_to') == gmd_name:
-            if name not in executives:
-                executives.append(name)
-    
-    partab_name = 'Partab Lalchandani'
-    if partab_name in emp_details and partab_name not in executives:
-        executives.append(partab_name)
-    
-    hods = []
-    for exec_name in executives:
+                    for name, details in emp_details.items():
+                        if not details['reports_to']:
+                            gmd_name = name
+                            break
+                
+                if gmd_name:
+                    NEVER_HOD_NAMES = ['Partab Lalchandani', 'Maikudi Kadoh', 'Adekunle Sonuga']
+                    MANAGER_EXCEPTIONS = ['Maikudi Kadoh', 'Adekunle Sonuga']
+                    
+                    executives = []
+                    for name, details in emp_details.items():
+                        if details.get('reports_to') == gmd_name:
+                            if name not in executives:
+                                executives.append(name)
+                    
+                    # Force Partab to Executive level
+                    partab_name = 'Partab Lalchandani'
+                    if partab_name in emp_details and partab_name not in executives:
+                        executives.append(partab_name)
+                    
+                    # Force Karim to Executive level if reports to GMD
+                    karim_name = None
+                    for name, details in emp_details.items():
+                        if 'Karim' in name and details.get('reports_to') == gmd_name:
+                            karim_name = name
+                            if karim_name not in executives:
+                                executives.append(karim_name)
+                            break
+                    
+                    hods = []
+                    for exec_name in executives:
                         exec_position = emp_details.get(exec_name, {}).get('position', '').upper()
-                        if any(kw in exec_position for kw in ['VP', 'SALES', 'GEA', 'GED', 'ED', 'ADVISOR', 'DIRECTOR']):
+                        # Don't skip Karim or Partab
+                        if exec_name == karim_name or exec_name == partab_name:
+                            pass
+                        elif any(kw in exec_position for kw in ['VP', 'SALES', 'GEA', 'GED', 'ED', 'ADVISOR', 'DIRECTOR']):
                             continue
                         for report in reports_map.get(exec_name, []):
                             if report in NEVER_HOD_NAMES:
+                                if report in MANAGER_EXCEPTIONS:
+                                    if report not in hods:
+                                        hods.append(report)
                                 continue
                             if report not in hods:
                                 hods.append(report)
                     
+                    # Ensure Karim's reports are included
+                    if karim_name:
+                        for report in reports_map.get(karim_name, []):
+                            if report not in NEVER_HOD_NAMES and report not in hods:
+                                hods.append(report)
+                    
+                    # Ensure Partab's reports are included
+                    if partab_name:
+                        for report in reports_map.get(partab_name, []):
+                            if report not in NEVER_HOD_NAMES and report not in hods and report not in executives:
+                                hods.append(report)
+                    
                     mid_managers = []
-                for hod_name in hods:
-                    for report in reports_map.get(hod_name, []):
-                        # Only skip Partab from mid_managers (he's an executive)
-                        if report == 'Partab Lalchandani':
-                            continue
-                        if report not in mid_managers:
-                            mid_managers.append(report)
-                
-                # Add Sonuga (reports to VP Sales Karim)
-                for exec_name in executives:
-                    exec_position = emp_details.get(exec_name, {}).get('position', '').upper()
-                    if 'VP' in exec_position or 'SALES' in exec_position:
-                        for report in reports_map.get(exec_name, []):
-                            if report not in mid_managers and report not in hods:
+                    for hod_name in hods:
+                        for report in reports_map.get(hod_name, []):
+                            if report in NEVER_HOD_NAMES and report not in MANAGER_EXCEPTIONS:
+                                continue
+                            if report not in mid_managers and report not in executives:
                                 mid_managers.append(report)
                     
+                    # Add Maikudi and Sonuga as managers
+                    for exception_name in MANAGER_EXCEPTIONS:
+                        if exception_name in emp_details:
+                            reports_to = emp_details[exception_name].get('reports_to', '')
+                            if reports_to in hods or reports_to in executives:
+                                if exception_name not in mid_managers:
+                                    mid_managers.append(exception_name)
+                    
                     team_members = []
-                for mgr_name in mid_managers:
-                    for report in reports_map.get(mgr_name, []):
-                        if report == 'Partab Lalchandani':
-                            continue
-                        if report not in team_members:
-                            team_members.append(report)
+                    for mgr_name in mid_managers:
+                        for report in reports_map.get(mgr_name, []):
+                            if report in NEVER_HOD_NAMES and report not in MANAGER_EXCEPTIONS:
+                                continue
+                            if report not in team_members and report not in executives and report not in hods:
+                                team_members.append(report)
                     
                     def count_total_reports(manager_name):
                         direct = reports_map.get(manager_name, [])
@@ -4565,12 +4610,12 @@ if gmd_name:
                         st.plotly_chart(fig_span, use_container_width=True)
                     
                     st.markdown("#### 🏢 Department Heads (HODs)")
-                    st.markdown("*Only people reporting DIRECTLY to COO*")
+                    st.markdown("*STRUCTURE*")
                     
                     col1, col2 = st.columns(2)
                     with col1:
                         st.markdown("**Abuja**")
-                        abuja_hods = [h for h in hods if emp_details.get(h, {}).get('region') == 'Abuja' and h not in NEVER_HOD_NAMES]
+                        abuja_hods = [h for h in hods if emp_details.get(h, {}).get('region') == 'Abuja' and h not in NEVER_HOD_NAMES and h not in MANAGER_EXCEPTIONS and h not in ['Omitola Olajide', 'Kiodes Osa-Alilie', 'Goodness Alabi', 'Khodor Bannout', 'Clinton Osuji']]
                         if abuja_hods:
                             abuja_data = pd.DataFrame([{
                                 'Department': emp_details.get(h, {}).get('department', ''),
@@ -4580,7 +4625,7 @@ if gmd_name:
                             st.markdown(abuja_data.to_html(classes='dark-csv-table', index=False, border=0, escape=False), unsafe_allow_html=True)
                     with col2:
                         st.markdown("**Lagos**")
-                        lagos_hods = [h for h in hods if emp_details.get(h, {}).get('region') == 'Lagos' and h not in NEVER_HOD_NAMES]
+                        lagos_hods = [h for h in hods if emp_details.get(h, {}).get('region') == 'Lagos' and h not in NEVER_HOD_NAMES and h not in MANAGER_EXCEPTIONS and h not in ['Yemisi Kolawole', 'Chisom Nwachinemere', 'Paul Fade', 'Andrew Akpan']]
                         if lagos_hods:
                             lagos_data = pd.DataFrame([{
                                 'Department': emp_details.get(h, {}).get('department', ''),
@@ -6387,7 +6432,7 @@ def employee_management():
     # ============ TAB 6: ORG CHART - FINAL MASSIVE ============
     with tab6:
         st.subheader("📊 Organizational Structure — Churchgate Group")
-        st.markdown("*Group-Wide Sankey + Departmental Drill-Down | Bright Links | Correct Levels*")
+        st.markdown("*Group-Wide Organogram*")
         
         try:
             org_emp_df = db.get_all_employees()
@@ -6441,7 +6486,7 @@ def employee_management():
             if gmd_name:
                 # HARDCODED EXCLUSIONS - Never HODs
                 NEVER_HOD_NAMES = ['Partab Lalchandani', 'Maikudi Kadoh', 'Adekunle Sonuga']
-                ONLY_EXCLUDE_FROM_HODS = ['Partab Lalchandani', 'Maikudi Kadoh', 'Adekunle Sonuga']
+                MANAGER_EXCEPTIONS = ['Maikudi Kadoh', 'Adekunle Sonuga']
                 
                 # Executives = ALL people who report to GMD
                 executives = []
@@ -6450,47 +6495,73 @@ def employee_management():
                         if name not in executives:
                             executives.append(name)
                 
-                # Hardcode Partab if still not found
+                # Force Partab to Executive level
                 partab_name = 'Partab Lalchandani'
                 if partab_name in emp_details and partab_name not in executives:
                     executives.append(partab_name)
+                
+                # Force Karim to Executive level if reports to GMD
+                karim_name = None
+                for name, details in emp_details.items():
+                    if 'Karim' in name and details.get('reports_to') == gmd_name:
+                        karim_name = name
+                        if karim_name not in executives:
+                            executives.append(karim_name)
+                        break
                 
                 # HODs = report to COO only (skip VP, GEA, ED, GED)
                 hods = []
                 for exec_name in executives:
                     exec_position = emp_details.get(exec_name, {}).get('position', '').upper()
-                    if any(kw in exec_position for kw in ['VP', 'SALES', 'GEA', 'GED', 'ED', 'ADVISOR', 'DIRECTOR']):
+                    if exec_name == karim_name or exec_name == partab_name:
+                        pass
+                    elif any(kw in exec_position for kw in ['VP', 'SALES', 'GEA', 'GED', 'ED', 'ADVISOR', 'DIRECTOR']):
                         continue
                     for report in reports_map.get(exec_name, []):
                         if report in NEVER_HOD_NAMES:
+                            if report in MANAGER_EXCEPTIONS:
+                                if report not in hods:
+                                    hods.append(report)
                             continue
                         if report not in hods:
                             hods.append(report)
                 
+                # Ensure Karim's reports are included
+                if karim_name:
+                    for report in reports_map.get(karim_name, []):
+                        if report not in NEVER_HOD_NAMES and report not in hods:
+                            hods.append(report)
+                
+                # Ensure Partab's reports are included
+                if partab_name:
+                    for report in reports_map.get(partab_name, []):
+                        if report not in NEVER_HOD_NAMES and report not in hods and report not in executives:
+                            hods.append(report)
+                
+                # Mid managers
                 mid_managers = []
                 for hod_name in hods:
                     for report in reports_map.get(hod_name, []):
-                        # Only skip Partab from mid_managers (he's an executive)
-                        if report == 'Partab Lalchandani':
+                        if report in NEVER_HOD_NAMES and report not in MANAGER_EXCEPTIONS:
                             continue
-                        if report not in mid_managers:
+                        if report not in mid_managers and report not in executives:
                             mid_managers.append(report)
                 
-                # Add Sonuga (reports to VP Sales Karim)
-                for exec_name in executives:
-                    exec_position = emp_details.get(exec_name, {}).get('position', '').upper()
-                    if 'VP' in exec_position or 'SALES' in exec_position:
-                        for report in reports_map.get(exec_name, []):
-                            if report not in mid_managers and report not in hods:
-                                mid_managers.append(report)
+                # Add Maikudi and Sonuga as managers
+                for exception_name in MANAGER_EXCEPTIONS:
+                    if exception_name in emp_details:
+                        reports_to = emp_details[exception_name].get('reports_to', '')
+                        if reports_to in hods or reports_to in executives:
+                            if exception_name not in mid_managers:
+                                mid_managers.append(exception_name)
                 
                 # Team members
                 team_members = []
                 for mgr_name in mid_managers:
                     for report in reports_map.get(mgr_name, []):
-                        if report == 'Partab Lalchandani':
+                        if report in NEVER_HOD_NAMES and report not in MANAGER_EXCEPTIONS:
                             continue
-                        if report not in team_members:
+                        if report not in team_members and report not in executives and report not in hods:
                             team_members.append(report)
                 
                 def count_total_reports(manager_name):
@@ -6515,7 +6586,7 @@ def employee_management():
                 name_to_color = {name: bright_colors[i] for i, name in enumerate(all_names)}
                 
                 # ============ TABS ============
-                org_tab1, org_tab2 = st.tabs(["🌍 Group-Wide Sankey", "🏢 Department Sankey"])
+                org_tab1, org_tab2 = st.tabs(["🌍 Group-Wide Org", "🏢 Departmental Org"])
                 
                 # ============ GROUP SANKEY ============
                 with org_tab1:
@@ -6537,7 +6608,7 @@ def employee_management():
                     # GMD
                     gmd_idx = add_label(gmd_name)
                     
-                    # Executives - INCLUDING PARTAB - All at same level
+                    # Executives - INCLUDING PARTAB AND KARIM - All at same level
                     for exec_name in executives:
                         exec_idx = add_label(exec_name)
                         sources.append(gmd_idx)
@@ -6674,12 +6745,12 @@ def employee_management():
                     
                     # HOD Tables
                     st.markdown("### 🏢 Department Heads (HODs)")
-                    st.markdown("*Only people reporting DIRECTLY to COO*")
+                    st.markdown("*STRUCTURE*")
                     
                     col1, col2 = st.columns(2)
                     with col1:
                         st.markdown("#### Abuja Region")
-                        abuja_hods = [h for h in hods if emp_details.get(h, {}).get('region') == 'Abuja' and h not in NEVER_HOD_NAMES]
+                        abuja_hods = [h for h in hods if emp_details.get(h, {}).get('region') == 'Abuja' and h not in NEVER_HOD_NAMES and h not in MANAGER_EXCEPTIONS and h not in ['Omitola Olajide', 'Kiodes Osa-Alilie', 'Goodness Alabi', 'Khodor Bannout', 'Clinton Osuji']]
                         if abuja_hods:
                             abuja_data = pd.DataFrame([{
                                 'Department': emp_details.get(h, {}).get('department', ''),
@@ -6689,7 +6760,7 @@ def employee_management():
                             st.markdown(abuja_data.to_html(classes='dark-csv-table', index=False, border=0, escape=False), unsafe_allow_html=True)
                     with col2:
                         st.markdown("#### Lagos Region")
-                        lagos_hods = [h for h in hods if emp_details.get(h, {}).get('region') == 'Lagos' and h not in NEVER_HOD_NAMES]
+                        lagos_hods = [h for h in hods if emp_details.get(h, {}).get('region') == 'Lagos' and h not in NEVER_HOD_NAMES and h not in MANAGER_EXCEPTIONS and h not in ['Yemisi Kolawole', 'Chisom Nwachinemere', 'Paul Fade', 'Andrew Akpan']]
                         if lagos_hods:
                             lagos_data = pd.DataFrame([{
                                 'Department': emp_details.get(h, {}).get('department', ''),
@@ -6697,11 +6768,208 @@ def employee_management():
                                 'Total Reports': count_total_reports(h)
                             } for h in lagos_hods]).sort_values('Total Reports', ascending=False)
                             st.markdown(lagos_data.to_html(classes='dark-csv-table', index=False, border=0, escape=False), unsafe_allow_html=True)
+                    
+                    st.markdown("---")
+                    st.markdown("### 🏗️ Block Org Structure")
+                    st.markdown("*Visual hierarchy mirroring the Group-wide Org*")
+                    
+                    org_html = """<!DOCTYPE html>
+                    <html>
+                    <head>
+                    <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    html, body { 
+                        background: #1E1E1E !important;
+                        background-color: #1E1E1E !important;
+                        margin: 0 !important;
+                        padding: 20px !important;
+                        font-family: 'Inter', sans-serif;
+                        overflow-x: auto;
+                        min-height: 100vh;
+                        width: 100%;
+                    }
+                    .tree-container {
+                        display: flex;
+                        align-items: flex-start;
+                        min-width: max-content;
+                        background: #1E1E1E !important;
+                        background-color: #1E1E1E !important;
+                        padding: 20px;
+                    }
+                    .tree-node {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        margin: 0 10px;
+                    }
+                    .card {
+                        background: #2D2D2D !important;
+                        background-color: #2D2D2D !important;
+                        padding: 10px;
+                        border-radius: 8px;
+                        text-align: center;
+                        min-width: 130px;
+                        max-width: 160px;
+                        color: #F0E6D3 !important;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.8);
+                        position: relative;
+                    }
+                    .card strong {
+                        color: #FFFFFF !important;
+                    }
+                    .card small {
+                        color: #CCCCCC !important;
+                    }
+                    .card-gmd { 
+                        border: 3px solid #CC0000 !important; 
+                        background: #1a1a1a !important;
+                    }
+                    .card-exec { 
+                        border: 2px solid #D4AF37 !important; 
+                        background: #1a1a1a !important;
+                    }
+                    .card-hod { 
+                        border: 2px solid #38a169 !important; 
+                        background: #1a1a1a !important;
+                    }
+                    .card-mgr { 
+                        border: 2px solid #dd6b20 !important; 
+                        background: #1a1a1a !important;
+                    }
+                    .card-team { 
+                        border: 1px solid #718096 !important; 
+                        background: #1a1a1a !important;
+                        min-width: 100px; 
+                    }
+                    .children {
+                        display: flex;
+                        align-items: flex-start;
+                        justify-content: center;
+                        position: relative;
+                        padding-top: 30px;
+                    }
+                    .children::before {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: 50%;
+                        width: 3px;
+                        height: 30px;
+                        background: #D4AF37 !important;
+                    }
+                    .child {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        position: relative;
+                        padding: 0 5px;
+                    }
+                    .child::before {
+                        content: '';
+                        position: absolute;
+                        top: -30px;
+                        left: 50%;
+                        width: 3px;
+                        height: 30px;
+                        background: #F0E6D3 !important;
+                    }
+                    .child::after {
+                        content: '';
+                        position: absolute;
+                        top: -30px;
+                        left: 0;
+                        width: 100%;
+                        height: 3px;
+                        background: #F0E6D3 !important;
+                    }
+                    .child:first-child::after {
+                        left: 50%;
+                        width: 50%;
+                    }
+                    .child:last-child::after {
+                        width: 50%;
+                    }
+                    </style>
+                    </head>
+                    <body>
+                    <div class="tree-container">
+                    """
+                    
+                    def render_node(name, card_class, level=0):
+                        html = """
+                        <div class="tree-node">
+                            <div class="card """ + card_class + """">
+                                <strong style="font-size:0.8rem;">""" + name + """</strong><br>
+                                <small style="color:#888;font-size:0.7rem;">""" + emp_details.get(name, {}).get('position', '') + """</small>
+                            </div>
+                        """
+                        direct_reports = [r for r in reports_map.get(name, []) if r in all_names]
+                        if direct_reports:
+                            html += """
+                            <div class="children">
+                            """
+                            for report in direct_reports:
+                                if report in executives:
+                                    html += """
+                                    <div class="child">
+                                    """ + render_node(report, "card-exec", level+1) + """
+                                    </div>
+                                    """
+                                elif report in hods:
+                                    html += """
+                                    <div class="child">
+                                    """ + render_node(report, "card-hod", level+1) + """
+                                    </div>
+                                    """
+                                elif report in mid_managers:
+                                    html += """
+                                    <div class="child">
+                                    """ + render_node(report, "card-mgr", level+1) + """
+                                    </div>
+                                    """
+                                else:
+                                    html += """
+                                    <div class="child">
+                                    """ + render_node(report, "card-team", level+1) + """
+                                    </div>
+                                    """
+                            html += """
+                            </div>
+                            """
+                        html += """
+                        </div>
+                        """
+                        return html
+                    
+                    org_html += render_node(gmd_name, "card-gmd")
+                    
+                    org_html += """
+                    </div>
+                    <script>
+                    document.body.style.backgroundColor = '#1E1E1E';
+                    document.documentElement.style.backgroundColor = '#1E1E1E';
+                    window.parent.document.querySelector('iframe').style.backgroundColor = '#1E1E1E';
+                    </script>
+                    </body>
+                    </html>
+                    """
+                    
+                    st.components.v1.html(org_html, height=600, scrolling=True)
+
                 
                 # ============ DEPARTMENT SANKEY ============
                 with org_tab2:
                     st.markdown("### 🏢 Department Sankey — Drill-Down")
                     st.markdown("*Select a department to see its full reporting structure.*")
+                    
+                    # Define group-wide departments that function as one entity
+                    GROUP_WIDE_DEPARTMENTS = [
+                        'Sales, Marketing & Trade Services',
+                        'Legal',
+                        'Human Resources',
+                        'Accounts & Finance',
+                        'Procurement'
+                    ]
                     
                     dept_options = []
                     for name, details in emp_details.items():
@@ -6721,9 +6989,18 @@ def employee_management():
                         selected_department = selected_dept.split(" — ")[1].strip() if " — " in selected_dept else ""
                         
                         dept_employees = []
-                        for name, details in emp_details.items():
-                            if details.get('department') == selected_department and details.get('region') == selected_region:
-                                dept_employees.append(name)
+                        
+                        # Check if this is a group-wide department
+                        if selected_department in GROUP_WIDE_DEPARTMENTS:
+                            # Pull ALL employees from this department regardless of region
+                            for name, details in emp_details.items():
+                                if details.get('department') == selected_department:
+                                    dept_employees.append(name)
+                        else:
+                            # Regular department - filter by both department and region
+                            for name, details in emp_details.items():
+                                if details.get('department') == selected_department and details.get('region') == selected_region:
+                                    dept_employees.append(name)
                         
                         if dept_employees:
                             dept_labels = []
@@ -6790,10 +7067,169 @@ def employee_management():
                                 )
                                 
                                 st.plotly_chart(fig_dept, use_container_width=True)
-                            else:
-                                st.info("No reporting structure found.")
-                        else:
-                            st.info(f"No employees found in {selected_department} ({selected_region}).")
+                                
+                                # ============ DEPARTMENT BLOCK STRUCTURE ============
+                                st.markdown("---")
+                                if selected_department in GROUP_WIDE_DEPARTMENTS:
+                                    st.markdown(f"### 🏗️ Block Structure — {selected_department} (Group-Wide)")
+                                    st.markdown("*Combined Abuja & Lagos structure*")
+                                else:
+                                    st.markdown(f"### 🏗️ Block Structure — {selected_department}")
+                                    st.markdown(f"*{selected_region} Region*")
+                                
+                                dept_org_html = """<!DOCTYPE html>
+                                <html>
+                                <head>
+                                <style>
+                                * { margin: 0; padding: 0; box-sizing: border-box; }
+                                html, body { 
+                                    background: #1E1E1E !important;
+                                    background-color: #1E1E1E !important;
+                                    margin: 0 !important;
+                                    padding: 20px !important;
+                                    font-family: 'Inter', sans-serif;
+                                    overflow-x: auto;
+                                    min-height: 100vh;
+                                    width: 100%;
+                                }
+                                .tree-container {
+                                    display: flex;
+                                    align-items: flex-start;
+                                    min-width: max-content;
+                                    background: #1E1E1E !important;
+                                    background-color: #1E1E1E !important;
+                                    padding: 20px;
+                                }
+                                .tree-node {
+                                    display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                    margin: 0 10px;
+                                }
+                                .card {
+                                    background: #2D2D2D !important;
+                                    background-color: #2D2D2D !important;
+                                    padding: 10px;
+                                    border-radius: 8px;
+                                    text-align: center;
+                                    min-width: 130px;
+                                    max-width: 160px;
+                                    color: #F0E6D3 !important;
+                                    box-shadow: 0 2px 8px rgba(0,0,0,0.8);
+                                    position: relative;
+                                }
+                                .card strong {
+                                    color: #FFFFFF !important;
+                                }
+                                .card small {
+                                    color: #CCCCCC !important;
+                                }
+                                .card-root { 
+                                    border: 3px solid #CC0000 !important; 
+                                    background: #1a1a1a !important;
+                                }
+                                .card-sub { 
+                                    border: 1px solid #718096 !important; 
+                                    background: #1a1a1a !important;
+                                }
+                                .children {
+                                    display: flex;
+                                    align-items: flex-start;
+                                    justify-content: center;
+                                    position: relative;
+                                    padding-top: 30px;
+                                }
+                                .children::before {
+                                    content: '';
+                                    position: absolute;
+                                    top: 0;
+                                    left: 50%;
+                                    width: 3px;
+                                    height: 30px;
+                                    background: #D4AF37 !important;
+                                }
+                                .child {
+                                    display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                    position: relative;
+                                    padding: 0 5px;
+                                }
+                                .child::before {
+                                    content: '';
+                                    position: absolute;
+                                    top: -30px;
+                                    left: 50%;
+                                    width: 3px;
+                                    height: 30px;
+                                    background: #F0E6D3 !important;
+                                }
+                                .child::after {
+                                    content: '';
+                                    position: absolute;
+                                    top: -30px;
+                                    left: 0;
+                                    width: 100%;
+                                    height: 3px;
+                                    background: #F0E6D3 !important;
+                                }
+                                .child:first-child::after {
+                                    left: 50%;
+                                    width: 50%;
+                                }
+                                .child:last-child::after {
+                                    width: 50%;
+                                }
+                                </style>
+                                </head>
+                                <body>
+                                <div class="tree-container">
+                                """
+                                
+                                # Build department tree recursively
+                                def render_dept_node(name, is_root=False):
+                                    html = """
+                                    <div class="tree-node">
+                                        <div class="card """ + ("card-root" if is_root else "card-sub") + """">
+                                            <strong style="font-size:0.8rem;">""" + name + """</strong><br>
+                                            <small style="color:#888;font-size:0.7rem;">""" + emp_details.get(name, {}).get('position', '') + """</small><br>
+                                            <small style="color:#aaa;font-size:0.65rem;">""" + emp_details.get(name, {}).get('region', '') + """</small>
+                                        </div>
+                                    """
+                                    direct_reports = [r for r in reports_map.get(name, []) if r in dept_employees]
+                                    if direct_reports:
+                                        html += """
+                                        <div class="children">
+                                        """
+                                        for report in direct_reports:
+                                            html += """
+                                            <div class="child">
+                                            """ + render_dept_node(report) + """
+                                            </div>
+                                            """
+                                        html += """
+                                        </div>
+                                        """
+                                    html += """
+                                    </div>
+                                    """
+                                    return html
+                                
+                                for root_name in dept_roots:
+                                    dept_org_html += render_dept_node(root_name, is_root=True)
+                                
+                                dept_org_html += """
+                                </div>
+                                <script>
+                                document.body.style.backgroundColor = '#1E1E1E';
+                                document.documentElement.style.backgroundColor = '#1E1E1E';
+                                window.parent.document.querySelector('iframe').style.backgroundColor = '#1E1E1E';
+                                </script>
+                                </body>
+                                </html>
+                                """
+                                
+                                st.components.v1.html(dept_org_html, height=600, scrolling=True)
     
     # ============ TAB 7: DEMOGRAPHICS ============
     with tab7:
@@ -18827,7 +19263,7 @@ def reports_analytics():
         if not emp_df.empty:
             total_emp = len(emp_df)
             departments = len(emp_df['department'].unique())
-            active_emp = len(emp_df[emp_df['status'] == 'Active'])
+            active_emp = len(emp_df[emp_df['status'] == 'Confirmed'])
             if 'gender' in emp_df.columns:
                 male_count = len(emp_df[emp_df['gender'].str.lower() == 'male'])
                 female_count = len(emp_df[emp_df['gender'].str.lower() == 'female'])
