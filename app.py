@@ -13663,12 +13663,12 @@ def staff_confirmation():
                                             "status":"Rejected by COO","coo_decision":"Rejected"
                                         }, {"id":r.get('id')})
                                         st.error("❌ Rejected"); st.rerun()
-                    except:
-                        pass
-            else:
-                st.info("No employees currently on probation.")
-        else:
-            st.info("This section is for COO only.")
+                        except:
+                            pass
+                    else:
+                        st.info("No employees currently on probation.")
+                else:
+                    st.info("This section is for COO only.")
     
     # ============================================================
     # TAB 4: CONFIRMED STAFF
