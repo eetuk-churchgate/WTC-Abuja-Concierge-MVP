@@ -13663,12 +13663,12 @@ def staff_confirmation():
                                             "status":"Rejected by COO","coo_decision":"Rejected"
                                         }, {"id":r.get('id')})
                                         st.error("❌ Rejected"); st.rerun()
-                        except:
-                            pass
-                    else:
-                        st.info("No employees currently on probation.")
+                    except:
+                        pass
                 else:
-                    st.info("This section is for COO only.")
+                    st.info("No employees currently on probation.")
+            else:
+                st.info("This section is for COO only.")
     
     # ============================================================
     # TAB 4: CONFIRMED STAFF
@@ -13774,35 +13774,35 @@ def staff_confirmation():
                             letter_file = st.file_uploader("Upload Confirmation Letter (PDF or DOCX)", type=['pdf', 'docx'], key=f"letter_{emp_id}")
                             
                             if st.button("📧 Send Confirmation Letter", key=f"send_letter_{emp_id}", use_container_width=True, type="primary"):
-                                if letter_file:
-                                    if emp_email:
-                                        try:
-                                            from utils.email_service import EmailService
-                                            EmailService().send_email(
-                                                emp_email,
-                                                f"🎉 Your Confirmation Letter - Churchgate Group",
-                                                f"Dear {emp_name},\n\nCongratulations! Your employment has been confirmed.\n\nChurchgate Group HR"
-                                            )
-                                            
-                                            db._patch("confirmation_reviews", {
-                                                "status": "Letter Sent",
-                                                "letter_sent_date": datetime.now().strftime('%Y-%m-%d %H:%M')
-                                            }, {"employee_id": emp_id})
-                                            
-                                            db._patch("employees", {
-                                                "status": "Active",
-                                                "confirmation_status": "Letter Sent"
-                                            }, {"employee_id": emp_id})
-                                            
-                                            st.success(f"✅ Letter sent to {emp_email}!")
-                                            st.balloons()
-                                            st.rerun()
-                                        except Exception as e:
-                                            st.error(f"Error: {str(e)}")
+                                    if letter_file:
+                                        if emp_email:
+                                            try:
+                                                from utils.email_service import EmailService
+                                                EmailService().send_email(
+                                                    emp_email,
+                                                    f"🎉 Your Confirmation Letter - Churchgate Group",
+                                                    f"Dear {emp_name},\n\nCongratulations! Your employment has been confirmed.\n\nChurchgate Group HR"
+                                                )
+                                                
+                                                db._patch("confirmation_reviews", {
+                                                    "status": "Letter Sent",
+                                                    "letter_sent_date": datetime.now().strftime('%Y-%m-%d %H:%M')
+                                                }, {"employee_id": emp_id})
+                                                
+                                                db._patch("employees", {
+                                                    "status": "Active",
+                                                    "confirmation_status": "Letter Sent"
+                                                }, {"employee_id": emp_id})
+                                                
+                                                st.success(f"✅ Letter sent to {emp_email}!")
+                                                st.balloons()
+                                                st.rerun()
+                                            except Exception as e:
+                                                st.error(f"Error: {str(e)}")
+                                        else:
+                                            st.error("❌ No email found for this employee")
                                     else:
-                                        st.error("❌ No email found for this employee")
-                                else:
-                                    st.error("❌ Please upload the confirmation letter first")
+                                        st.error("❌ Please upload the confirmation letter first")
                 else:
                     st.info("No pending HR processing.")
             else:
