@@ -4080,12 +4080,12 @@ def employee_dashboard():
             st.session_state['navigate_to'] = "👤 My Profile"
             st.rerun()
     with qc4:
-        if st.button("🏖️ Request Leave", use_container_width=True):
-            st.session_state['navigate_to'] = "🔄 Requests Hub"
+        if st.button("✅ Staff Confirmation", use_container_width=True):
+            st.session_state['navigate_to'] = "✅ Staff Confirmation"
             st.rerun()
     with qc5:
-        if st.button("📚 Training", use_container_width=True):
-            st.session_state['navigate_to'] = "🎓 Training & Development"
+        if st.button("💼 Recruitment", use_container_width=True):
+            st.session_state['navigate_to'] = "💼 Recruitment Hub"
             st.rerun()
     
     # ============ MAIN CONTENT ============
@@ -4425,7 +4425,7 @@ def employee_dashboard():
         ('Magesh Gopal', 'Facility Management'),
         ('Nchor Agba', 'Security'),
         ('Olatubosun Otaiku', 'Central Stores'),
-        ('Peravali Kotaiah', 'Facility Management'),
+        ('Peravali Kotaiah', 'Warehouse Management'),
         ('Sanjeev Purwar', 'Engineering & Project Development & Project Development'),
         ('Sani Usman', 'Security'),
     ]
@@ -6271,7 +6271,7 @@ def employee_management():
                             ec1, ec2, ec3 = st.columns(3)
                             with ec1:
                                 current_dept = str(emp.get('department', 'Technology Group'))
-                                dept_options = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering & Project Development', 'Admin', 'Central Stores', 'Chairman/GMD\'s Office & Residence']
+                                dept_options = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering & Project Development', 'Admin', 'Central Stores', 'Warehouse Management', 'Chairman/GMD\'s Office & Residence']
                                 dept_idx = dept_options.index(current_dept) if current_dept in dept_options else 1
                                 new_dept = st.selectbox("Department", dept_options, index=dept_idx, key=f"dept_{emp['employee_id']}_{st.session_state.dir_page}")
                                 
@@ -6408,7 +6408,7 @@ def employee_management():
                 phone = st.text_input("Phone")
             with c2:
                 employee_id = st.text_input("Employee ID *", placeholder="e.g., AN00001")
-                department = st.selectbox("Department *", ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering & Project Development', 'Admin', 'Central Stores', 'Chairman/GMD''s Office & Residence'])
+                department = st.selectbox("Department *", ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering & Project Development', 'Admin', 'Central Stores', 'Warehouse Management', 'Chairman/GMD\'s Office & Residence'])
                 position = st.text_input("Position *")
                 grade = st.selectbox("Grade", ['Junior', 'Intermediate', 'Mid-Senior', 'Senior', 'Manager', 'Senior Manager', 'General Manager', 'Head of Department(HOD)', 'Management', 'Senior Management/C-Level'])
             with c3:
@@ -7576,11 +7576,77 @@ def employee_management():
                     document.documentElement.style.backgroundColor = '#1E1E1E';
                     window.parent.document.querySelector('iframe').style.backgroundColor = '#1E1E1E';
                     </script>
+                    
+                    <div style="text-align:center;margin-top:20px;padding-bottom:20px;">
+                        <button onclick="window.print()" style="background:linear-gradient(135deg, #C9A84C 0%, #8B6914 100%);color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:700;font-size:14px;letter-spacing:0.05em;font-family:'Inter',sans-serif;">
+                            📥 Download / Print Org Chart
+                        </button>
+                    </div>
+                    <style>
+                    /* Print CSS - Show FULL org chart on A3 Landscape */
+                    @media print {
+                        @page {
+                            size: A3 landscape;
+                            margin: 10mm;
+                        }
+                        body, html {
+                            background: #1E1E1E !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            overflow: visible !important;
+                            width: 100% !important;
+                            min-height: auto !important;
+                        }
+                        .tree-container {
+                            display: flex !important;
+                            flex-wrap: nowrap !important;
+                            align-items: flex-start !important;
+                            min-width: 100% !important;
+                            width: 100% !important;
+                            overflow: visible !important;
+                            padding: 10px !important;
+                            transform: scale(0.9) !important;
+                            transform-origin: top left !important;
+                        }
+                        .tree-node {
+                            margin: 0 8px !important;
+                        }
+                        .card {
+                            min-width: 120px !important;
+                            max-width: 160px !important;
+                            padding: 10px !important;
+                            font-size: 0.85rem !important;
+                            break-inside: avoid !important;
+                            page-break-inside: avoid !important;
+                        }
+                        .card strong {
+                            font-size: 0.85rem !important;
+                        }
+                        .card small {
+                            font-size: 0.75rem !important;
+                        }
+                        button {
+                            display: none !important;
+                        }
+                    }
+                    </style>
+                    <script>
+                    window.onbeforeprint = function() {
+                        document.body.style.backgroundColor = '#1E1E1E';
+                        document.documentElement.style.backgroundColor = '#1E1E1E';
+                        var tree = document.querySelector('.tree-container');
+                        if (tree) {
+                            tree.style.overflow = 'visible';
+                            tree.style.minWidth = '100%';
+                            tree.style.width = '100%';
+                        }
+                    };
+                    </script>
                     </body>
                     </html>
                     """
                     
-                    st.components.v1.html(org_html, height=600, scrolling=True)
+                    st.components.v1.html(org_html, height=650, scrolling=True)
 
                 
                 # ============ DEPARTMENT SANKEY ============
@@ -7851,11 +7917,77 @@ def employee_management():
                                 document.documentElement.style.backgroundColor = '#1E1E1E';
                                 window.parent.document.querySelector('iframe').style.backgroundColor = '#1E1E1E';
                                 </script>
+                                
+                                <div style="text-align:center;margin-top:20px;padding-bottom:20px;">
+                                    <button onclick="window.print()" style="background:linear-gradient(135deg, #C9A84C 0%, #8B6914 100%);color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:700;font-size:14px;letter-spacing:0.05em;font-family:'Inter',sans-serif;">
+                                        📥 Download / Print Org Chart
+                                    </button>
+                                </div>
+                                <style>
+                                /* Print CSS - Show FULL org chart on A3 Landscape */
+                                @media print {
+                                    @page {
+                                        size: A3 landscape;
+                                        margin: 10mm;
+                                    }
+                                    body, html {
+                                        background: #1E1E1E !important;
+                                        margin: 0 !important;
+                                        padding: 0 !important;
+                                        overflow: visible !important;
+                                        width: 100% !important;
+                                        min-height: auto !important;
+                                    }
+                                    .tree-container {
+                                        display: flex !important;
+                                        flex-wrap: nowrap !important;
+                                        align-items: flex-start !important;
+                                        min-width: 100% !important;
+                                        width: 100% !important;
+                                        overflow: visible !important;
+                                        padding: 10px !important;
+                                        transform: scale(0.9) !important;
+                                        transform-origin: top left !important;
+                                    }
+                                    .tree-node {
+                                        margin: 0 8px !important;
+                                    }
+                                    .card {
+                                        min-width: 120px !important;
+                                        max-width: 160px !important;
+                                        padding: 10px !important;
+                                        font-size: 0.85rem !important;
+                                        break-inside: avoid !important;
+                                        page-break-inside: avoid !important;
+                                    }
+                                    .card strong {
+                                        font-size: 0.85rem !important;
+                                    }
+                                    .card small {
+                                        font-size: 0.75rem !important;
+                                    }
+                                    button {
+                                        display: none !important;
+                                    }
+                                }
+                                </style>
+                                <script>
+                                window.onbeforeprint = function() {
+                                    document.body.style.backgroundColor = '#1E1E1E';
+                                    document.documentElement.style.backgroundColor = '#1E1E1E';
+                                    var tree = document.querySelector('.tree-container');
+                                    if (tree) {
+                                        tree.style.overflow = 'visible';
+                                        tree.style.minWidth = '100%';
+                                        tree.style.width = '100%';
+                                    }
+                                };
+                                </script>
                                 </body>
                                 </html>
                                 """
                                 
-                                st.components.v1.html(dept_org_html, height=600, scrolling=True)
+                                st.components.v1.html(dept_org_html, height=650, scrolling=True)
     
     # ============ TAB 7: DEMOGRAPHICS ============
     with tab7:
@@ -8416,7 +8548,7 @@ def performance_okrs():
     
     all_depts = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources',
                  'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal',
-                 'Operations', 'Engineering & Project Development', 'Central Stores', 'Chairman/GMD''s Office & Residence', 'Project Development', 'Trade Services', 'Admin']
+                 'Operations', 'Engineering & Project Development', 'Central Stores', 'Warehouse Management', 'Chairman/GMD\'s Office & Residence', 'Project Development', 'Trade Services', 'Admin']
     
     SUBSIDIARY_REGIONS = {
         'World Trade Center(WTC)': 'Abuja', 'World Trade Center': 'Abuja', 'WTC': 'Abuja',
@@ -12971,8 +13103,23 @@ def staff_confirmation():
     total_probation = len(probation_employees)
     ending_soon = 0; overdue = 0; now = datetime.now()
     
+    # Get confirmed employee IDs from database
+    try:
+        reviews_data = db._get("confirmation_reviews")
+        confirmed_count = len([r for r in reviews_data if r.get('status') == 'Approved by COO']) if reviews_data else 0
+        confirmed_ids = set([r.get('employee_id', '') for r in reviews_data if r.get('status') == 'Approved by COO']) if reviews_data else set()
+    except:
+        confirmed_count = 0
+        confirmed_ids = set()
+    
     if not probation_employees.empty:
         for _, emp in probation_employees.iterrows():
+            emp_id = emp.get('employee_id', '')
+            
+            # SKIP employees who are already confirmed
+            if emp_id in confirmed_ids:
+                continue
+            
             end_date = calculate_probation_end(emp.get('join_date'))
             if end_date:
                 days_left = (end_date - now).days
@@ -12983,7 +13130,7 @@ def staff_confirmation():
     c1.metric("👥 On Probation", total_probation)
     c2.metric("⏰ Ending Soon (14d)", ending_soon)
     c3.metric("🚨 Overdue", overdue)
-    c4.metric("✅ Confirmed", 0)
+    c4.metric("✅ Confirmed", confirmed_count)
     
     st.markdown("---")
     
@@ -13512,20 +13659,18 @@ def staff_confirmation():
             st.subheader("🔍 COO Review & Confirm")
             
             if is_coo:
+                # Get ONLY employees with "Pending COO Approval" status
+                try:
+                    reviews_data = db._get("confirmation_reviews")
+                    pending_coo_ids = set([r.get('employee_id', '') for r in reviews_data if r.get('status') == 'Pending COO Approval']) if reviews_data else set()
+                except:
+                    pending_coo_ids = set()
+                
                 if not probation_employees.empty:
-                    filtered_review = probation_employees.copy()
+                    filtered_review = probation_employees[probation_employees['employee_id'].isin(pending_coo_ids)].copy()
                     
                     if not is_admin:
                         filtered_review = filtered_review[filtered_review['department'].str.lower().str.strip() == user_dept.lower().strip()]
-                    
-                    if not filtered_review.empty:
-                        now_date = datetime.now()
-                        due_review = []
-                        for _, emp_row in filtered_review.iterrows():
-                            emp_end = calculate_probation_end(emp_row.get('join_date'))
-                            if emp_end and emp_end <= now_date:
-                                due_review.append(emp_row)
-                        filtered_review = pd.DataFrame(due_review) if due_review else pd.DataFrame()
                 
                 if is_admin:
                     col1, col2, col3 = st.columns(3)
@@ -13635,34 +13780,68 @@ def staff_confirmation():
                                 st.markdown(f"**Reviewed by {hod_name}:** on {r.get('review_date','')[:10]}")
                                 
                                 st.markdown("---")
+                                st.markdown("##### 6. COO EXECUTIVE COMMENTS (Required)")
+                                coo_comment = st.text_area("Executive Comments *", 
+                                    placeholder="COO must enter executive comments for any action...",
+                                    key=f"coo_comment_{emp_id}")
+                                
+                                st.markdown("---")
                                 col1, col2, col3 = st.columns(3)
                                 with col1:
                                     if st.button(f"✅ Approve", key=f"coo_app_{emp_id}", use_container_width=True, type="primary"):
-                                        db._patch("confirmation_reviews", {
-                                            "status":"Approved by COO","coo_decision":"Approved",
-                                            "coo_name":user_name,"approved_date":now.strftime('%Y-%m-%d %H:%M')
-                                        }, {"id":r.get('id')})
-                                        db._patch("employees", {"status":"HR Processing", "confirmation_status":"Pending HR Processing"}, {"employee_id":emp_id})
-                                        
-                                        send_confirmation_email("bsakote@churchgate.com", 
-                                            f"✅ Confirmation Approved: {emp_name}", 
-                                            f"HR Team,\n\nCOO approved {emp_name}.\n\nPlease process confirmation letter.")
-                                        send_confirmation_email(emp.get('email',''), 
-                                            f"🎉 Confirmation Approved!", 
-                                            f"Dear {emp_name},\n\nCongratulations! Your employment has been confirmed.\n\nChurchgate Group HR")
-                                        st.success("✅ Confirmed!"); st.balloons(); st.rerun()
+                                        if not coo_comment or not coo_comment.strip():
+                                            st.error("❌ Executive Comments are REQUIRED before Approving!")
+                                        else:
+                                            db._patch("confirmation_reviews", {
+                                                "status":"Approved by COO","coo_decision":"Approved",
+                                                "coo_name":user_name,"coo_comments":coo_comment,
+                                                "approved_date":now.strftime('%Y-%m-%d %H:%M')
+                                            }, {"id":r.get('id')})
+                                            db._patch("employees", {"status":"HR Processing", "confirmation_status":"Pending HR Processing"}, {"employee_id":emp_id})
+                                            
+                                            send_confirmation_email("bsakote@churchgate.com", 
+                                                f"✅ Confirmation Approved: {emp_name}", 
+                                                f"HR Team,\n\nCOO approved {emp_name}.\n\nCOO Comments: {coo_comment}\n\nPlease process confirmation letter.")
+                                            send_confirmation_email(emp.get('email',''), 
+                                                f"🎉 Confirmation Approved!", 
+                                                f"Dear {emp_name},\n\nCongratulations! Your employment has been confirmed.\n\nCOO Comments: {coo_comment}\n\nChurchgate Group HR")
+                                            st.success("✅ Confirmed!"); st.balloons(); st.rerun()
                                 with col2:
-                                    if st.button(f"🔄 Return to HOD", key=f"coo_ret_{emp_id}", use_container_width=True):
-                                        db._patch("confirmation_reviews", {
-                                            "status":"Returned to HOD","coo_decision":"Returned"
-                                        }, {"id":r.get('id')})
-                                        st.warning("🔄 Returned to HOD"); st.rerun()
+                                    if st.button(f"🔄 Return for Review", key=f"coo_ret_{emp_id}", use_container_width=True):
+                                        if not coo_comment or not coo_comment.strip():
+                                            st.error("❌ Executive Comments are REQUIRED before Returning for Review!")
+                                        else:
+                                            db._patch("confirmation_reviews", {
+                                                "status":"Returned for Review",
+                                                "coo_decision":"Returned",
+                                                "coo_comments":coo_comment
+                                            }, {"id":r.get('id')})
+                                            # Notify Team Lead
+                                            try:
+                                                reports_to = emp.get('reports_to', '')
+                                                if reports_to:
+                                                    tl_name_parts = reports_to.split()
+                                                    tl_search = db._get("employees", {"first_name": tl_name_parts[0]})
+                                                    if tl_search and len(tl_search) > 0:
+                                                        tl_email = tl_search[0].get('email', '')
+                                                        if tl_email:
+                                                            send_confirmation_email(tl_email, 
+                                                                f"🔄 Confirmation Returned for Review: {emp_name}", 
+                                                                f"Dear {reports_to},\n\nCOO has returned {emp_name}'s confirmation for re-review.\n\nCOO Comments: {coo_comment}\n\nPlease review and resubmit through the workflow.\n\nChurchgate Group HR")
+                                            except:
+                                                pass
+                                            st.warning("🔄 Returned for Review - Team Lead notified"); st.rerun()
                                 with col3:
                                     if st.button(f"❌ Reject", key=f"coo_rej_{emp_id}", use_container_width=True):
-                                        db._patch("confirmation_reviews", {
-                                            "status":"Rejected by COO","coo_decision":"Rejected"
-                                        }, {"id":r.get('id')})
-                                        st.error("❌ Rejected"); st.rerun()
+                                        if not coo_comment or not coo_comment.strip():
+                                            st.error("❌ Executive Comments are REQUIRED before Rejecting!")
+                                        else:
+                                            db._patch("confirmation_reviews", {
+                                                "status":"Rejected by COO",
+                                                "coo_decision":"Rejected",
+                                                "coo_comments":coo_comment
+                                            }, {"id":r.get('id')})
+                                            st.error("❌ Rejected"); st.rerun()
                     except:
                         pass
                 else:
@@ -13685,95 +13864,95 @@ def staff_confirmation():
                         avg_score = sum(float(r.get('total_performance_score', 0)) for r in confirmed) / len(confirmed)
                         outstanding = len([r for r in confirmed if r.get('performance_rating') == 'Outstanding'])
                         satisfactory = len([r for r in confirmed if r.get('performance_rating') == 'Satisfactory'])
-                    
-                    st.markdown("---")
-                    c1, c2, c3, c4 = st.columns(4)
-                    c1.metric("✅ Total Confirmed", len(confirmed))
-                    c2.metric("📊 Avg Score", f"{avg_score:.0f}/100")
-                    c3.metric("🌟 Outstanding", outstanding)
-                    c4.metric("👍 Satisfactory", satisfactory)
-                    
-                    st.markdown("---")
-                    
-                    for r in confirmed:
-                        score = r.get('total_performance_score', 'N/A')
-                        rating = r.get('performance_rating', 'N/A')
                         
-                        rating_colors = {
-                            'Outstanding': '#38a169', 'Satisfactory': '#3182ce', 
-                            'Average': '#d69e2e', 'Unsatisfactory': '#dd6b20', 'Poor': '#CC0000'
-                        }
-                        rating_color = rating_colors.get(rating, '#a0aec0')
+                        st.markdown("---")
+                        c1, c2, c3, c4 = st.columns(4)
+                        c1.metric("✅ Total Confirmed", len(confirmed))
+                        c2.metric("📊 Avg Score", f"{avg_score:.0f}/100")
+                        c3.metric("🌟 Outstanding", outstanding)
+                        c4.metric("👍 Satisfactory", satisfactory)
                         
-                        with st.expander(f"{'🌟' if rating == 'Outstanding' else '✅'} {r.get('employee_name','')} — {r.get('position','')} | {score}/100 ({rating})"):
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                st.markdown(f"**👤 Employee:** {r.get('employee_name','')}")
-                                st.markdown(f"**💼 Position:** {r.get('position','')}")
-                                st.markdown(f"**🏢 Department:** {r.get('department','')}")
-                                st.markdown(f"**📍 Region:** {r.get('region','N/A')} | **🏢 Subsidiary:** {r.get('subsidiary','N/A')}")
-                                st.markdown(f"**👥 TL:** {r.get('supervisor_name','')} | **👔 HOD:** {r.get('hod_name','')}")
-                            with col2:
-                                st.markdown(f"**📅 Confirmed:** {r.get('approved_date','')[:10]}")
-                                st.markdown(f"**📊 Score:** {score}/100")
-                                st.markdown(f"**⭐ Rating:** <span style='color:{rating_color};font-weight:700;'>{rating}</span>", unsafe_allow_html=True)
+                        st.markdown("---")
+                        
+                        for r in confirmed:
+                            score = r.get('total_performance_score', 'N/A')
+                            rating = r.get('performance_rating', 'N/A')
                             
-                            if r.get('strengths') or r.get('weaknesses'):
-                                st.markdown("---")
+                            rating_colors = {
+                                'Outstanding': '#38a169', 'Satisfactory': '#3182ce', 
+                                'Average': '#d69e2e', 'Unsatisfactory': '#dd6b20', 'Poor': '#CC0000'
+                            }
+                            rating_color = rating_colors.get(rating, '#a0aec0')
+                            
+                            with st.expander(f"{'🌟' if rating == 'Outstanding' else '✅'} {r.get('employee_name','')} — {r.get('position','')} | {score}/100 ({rating})"):
                                 col1, col2 = st.columns(2)
                                 with col1:
-                                    if r.get('strengths'):
-                                        st.markdown("**💪 Strengths:**")
-                                        st.markdown(f"<small>{r.get('strengths','')[:300]}</small>", unsafe_allow_html=True)
+                                    st.markdown(f"**👤 Employee:** {r.get('employee_name','')}")
+                                    st.markdown(f"**💼 Position:** {r.get('position','')}")
+                                    st.markdown(f"**🏢 Department:** {r.get('department','')}")
+                                    st.markdown(f"**📍 Region:** {r.get('region','N/A')} | **🏢 Subsidiary:** {r.get('subsidiary','N/A')}")
+                                    st.markdown(f"**👥 TL:** {r.get('supervisor_name','')} | **👔 HOD:** {r.get('hod_name','')}")
                                 with col2:
-                                    if r.get('weaknesses'):
-                                        st.markdown("**📈 Development Areas:**")
-                                        st.markdown(f"<small>{r.get('weaknesses','')[:300]}</small>", unsafe_allow_html=True)
+                                    st.markdown(f"**📅 Confirmed:** {r.get('approved_date','')[:10]}")
+                                    st.markdown(f"**📊 Score:** {score}/100")
+                                    st.markdown(f"**⭐ Rating:** <span style='color:{rating_color};font-weight:700;'>{rating}</span>", unsafe_allow_html=True)
+                                
+                                if r.get('strengths') or r.get('weaknesses'):
+                                    st.markdown("---")
+                                    col1, col2 = st.columns(2)
+                                    with col1:
+                                        if r.get('strengths'):
+                                            st.markdown("**💪 Strengths:**")
+                                            st.markdown(f"<small>{r.get('strengths','')[:300]}</small>", unsafe_allow_html=True)
+                                    with col2:
+                                        if r.get('weaknesses'):
+                                            st.markdown("**📈 Development Areas:**")
+                                            st.markdown(f"<small>{r.get('weaknesses','')[:300]}</small>", unsafe_allow_html=True)
+                        
+                        # Export
+                        st.markdown("---")
+                        export_data = [{
+                            'Employee': r.get('employee_name'), 'Position': r.get('position'),
+                            'Department': r.get('department'), 'Region': r.get('region',''),
+                            'Subsidiary': r.get('subsidiary',''), 'Score': r.get('total_performance_score'),
+                            'Rating': r.get('performance_rating'), 'Confirmed Date': r.get('approved_date','')[:10],
+                            'TL': r.get('supervisor_name'), 'HOD': r.get('hod_name')
+                        } for r in confirmed]
+                        st.download_button("📥 Export Confirmed Staff (CSV)", 
+                            pd.DataFrame(export_data).to_csv(index=False),
+                            "confirmed_staff.csv", "text/csv", use_container_width=True)
+                    else:
+                        st.info("No confirmed staff yet.")
                     
-                    # Export
+                    # HR PROCESSING QUEUE
                     st.markdown("---")
-                    export_data = [{
-                        'Employee': r.get('employee_name'), 'Position': r.get('position'),
-                        'Department': r.get('department'), 'Region': r.get('region',''),
-                        'Subsidiary': r.get('subsidiary',''), 'Score': r.get('total_performance_score'),
-                        'Rating': r.get('performance_rating'), 'Confirmed Date': r.get('approved_date','')[:10],
-                        'TL': r.get('supervisor_name'), 'HOD': r.get('hod_name')
-                    } for r in confirmed]
-                    st.download_button("📥 Export Confirmed Staff (CSV)", 
-                        pd.DataFrame(export_data).to_csv(index=False),
-                        "confirmed_staff.csv", "text/csv", use_container_width=True)
-                else:
-                    st.info("No confirmed staff yet.")
-                
-                # HR PROCESSING QUEUE
-                st.markdown("---")
-                st.markdown("#### 🏢 HR Processing Queue")
-                
-                hr_processing = [r for r in reviews if r.get('status') == 'Approved by COO'] if reviews else []
-                
-                if hr_processing:
-                    for r in hr_processing:
-                        emp_name = r.get('employee_name', '')
-                        emp_id = r.get('employee_id', '')
-                        emp_email = ''
-                        
-                        try:
-                            emp_data = db.get_all_employees()
-                            if not emp_data.empty:
-                                match = emp_data[emp_data['employee_id'] == emp_id]
-                                if not match.empty:
-                                    emp_email = match.iloc[0].get('email', '')
-                        except:
-                            pass
-                        
-                        with st.expander(f"🏢 {emp_name} — {r.get('position', '')} | {r.get('department', '')}"):
-                            st.markdown(f"**Employee:** {emp_name}")
-                            st.markdown(f"**Email:** {emp_email or 'N/A'}")
-                            st.markdown(f"**Score:** {r.get('total_performance_score', 'N/A')}/100 — {r.get('performance_rating', 'N/A')}")
+                    st.markdown("#### 🏢 HR Processing Queue")
+                    
+                    hr_processing = [r for r in reviews if r.get('status') == 'Approved by COO'] if reviews else []
+                    
+                    if hr_processing:
+                        for r in hr_processing:
+                            emp_name = r.get('employee_name', '')
+                            emp_id = r.get('employee_id', '')
+                            emp_email = ''
                             
-                            letter_file = st.file_uploader("Upload Confirmation Letter (PDF or DOCX)", type=['pdf', 'docx'], key=f"letter_{emp_id}")
+                            try:
+                                emp_data = db.get_all_employees()
+                                if not emp_data.empty:
+                                    match = emp_data[emp_data['employee_id'] == emp_id]
+                                    if not match.empty:
+                                        emp_email = match.iloc[0].get('email', '')
+                            except:
+                                pass
                             
-                            if st.button("📧 Send Confirmation Letter", key=f"send_letter_{emp_id}", use_container_width=True, type="primary"):
+                            with st.expander(f"🏢 {emp_name} — {r.get('position', '')} | {r.get('department', '')}"):
+                                st.markdown(f"**Employee:** {emp_name}")
+                                st.markdown(f"**Email:** {emp_email or 'N/A'}")
+                                st.markdown(f"**Score:** {r.get('total_performance_score', 'N/A')}/100 — {r.get('performance_rating', 'N/A')}")
+                                
+                                letter_file = st.file_uploader("Upload Confirmation Letter (PDF or DOCX)", type=['pdf', 'docx'], key=f"letter_{emp_id}")
+                                
+                                if st.button("📧 Send Confirmation Letter", key=f"send_letter_{emp_id}", use_container_width=True, type="primary"):
                                     if letter_file:
                                         if emp_email:
                                             try:
@@ -13803,19 +13982,18 @@ def staff_confirmation():
                                             st.error("❌ No email found for this employee")
                                     else:
                                         st.error("❌ Please upload the confirmation letter first")
+                    else:
+                        st.info("No pending HR processing.")
                 else:
-                    st.info("No pending HR processing.")
-            else:
-                st.info("No confirmation reviews found.")
-        except:
-            st.info("Data loading...")
+                    st.info("No confirmation reviews found.")
+            except:
+                st.info("Data loading...")
     
     # ============================================================
-    # TAB 5: DASHBOARD (was Tab 4) - UNCHANGED CONTENT
+    # TAB 5: DASHBOARD - CLEAN (NO DIAGNOSTICS)
     # ============================================================
     with tab5:
         st.subheader("📊 Confirmation & Probation Analytics")
-        # ... (SAME AS PREVIOUS TAB 4 CONTENT)
         try:
             reviews = db._get("confirmation_reviews")
             all_employees = db.get_all_employees()
@@ -13824,7 +14002,7 @@ def staff_confirmation():
                 total_employees = len(all_employees) if not all_employees.empty else 0
                 total_probation = len(all_employees[all_employees['status'] == 'Probation']) if not all_employees.empty else 0
                 total_confirmed = len([r for r in reviews if r.get('status') in ['Approved by COO', 'Letter Sent']]) if reviews else 0
-                total_pending = len([r for r in reviews if r.get('status') in ['Pending COO Approval', 'Pending', 'Pending HOD Validation']]) if reviews else 0
+                total_pending = len([r for r in reviews if r.get('status') == 'Pending COO Approval']) if reviews else 0
                 total_extended = len([r for r in reviews if 'Extension' in str(r.get('status', ''))]) if reviews else 0
                 confirmation_rate = (total_confirmed / max(total_probation + total_confirmed, 1)) * 100
                 
@@ -13869,11 +14047,80 @@ def staff_confirmation():
                     fig1.update_traces(textposition='inside', textinfo='percent+label', textfont_size=10, textfont_color='#FFFFFF')
                     st.plotly_chart(fig1, use_container_width=True)
                 
+                st.markdown("---")
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    dept_confirm_data = {}
+                    if reviews:
+                        for r in reviews:
+                            dept = r.get('department', 'Unknown')
+                            status = r.get('status', 'Pending')
+                            if dept not in dept_confirm_data:
+                                dept_confirm_data[dept] = {'Confirmed': 0, 'Pending': 0, 'Extended': 0}
+                            if status in ['Approved by COO', 'Letter Sent']: dept_confirm_data[dept]['Confirmed'] += 1
+                            elif 'Extension' in str(status): dept_confirm_data[dept]['Extended'] += 1
+                            elif status == 'Pending COO Approval': dept_confirm_data[dept]['Pending'] += 1
+                    
+                    if dept_confirm_data:
+                        dept_df = pd.DataFrame([{'Department': d, **s} for d, s in dept_confirm_data.items()])
+                        fig2 = px.bar(dept_df, x='Department', y=['Confirmed', 'Pending', 'Extended'],
+                                    barmode='stack', color_discrete_sequence=['#38a169', '#d69e2e', '#3182ce'])
+                        fig2.update_layout(
+                            height=350, margin=dict(t=40, b=80, l=20, r=20), title="By Department",
+                            title_font=dict(color='#C9A84C', family='Georgia, serif'),
+                            paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                            legend=dict(font=dict(color='#F0E6D3', size=9), orientation="h", yanchor="bottom", y=1.02),
+                            xaxis_tickangle=-45, xaxis_tickfont=dict(size=9, color='#F0E6D3')
+                        )
+                        st.plotly_chart(fig2, use_container_width=True)
+                
+                with col2:
+                    region_data = {}
+                    if reviews:
+                        for r in reviews:
+                            region = r.get('region', 'Unknown')
+                            if region not in region_data: region_data[region] = {'Confirmed': 0, 'Pending': 0}
+                            if r.get('status') in ['Approved by COO', 'Letter Sent']: region_data[region]['Confirmed'] += 1
+                            elif r.get('status') == 'Pending COO Approval': region_data[region]['Pending'] += 1
+                    
+                    if region_data:
+                        region_df = pd.DataFrame([{'Region': r, **s} for r, s in region_data.items()])
+                        fig3 = px.bar(region_df, x='Region', y=['Confirmed', 'Pending'], barmode='group',
+                                    color_discrete_sequence=['#38a169', '#d69e2e'])
+                        fig3.update_layout(
+                            height=350, margin=dict(t=40, b=40, l=20, r=20), title="By Region",
+                            title_font=dict(color='#C9A84C', family='Georgia, serif'),
+                            paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E',
+                            font=dict(color='#F0E6D3', family='Inter, sans-serif'),
+                            legend=dict(font=dict(color='#F0E6D3', size=9), orientation="h", yanchor="bottom", y=1.02)
+                        )
+                        st.plotly_chart(fig3, use_container_width=True)
+                
+                st.markdown("---")
+                
+                # Recent Activity
+                st.markdown("#### 📅 Recent Activity")
+                if reviews:
+                    recent = sorted(reviews, key=lambda x: x.get('review_date', ''), reverse=True)[:5]
+                    for r in recent:
+                        status = r.get('status', 'Pending')
+                        icon = '✅' if 'Approved' in str(status) else '⏳' if 'Pending' in str(status) else '🔄' if 'Extension' in str(status) else '❌'
+                        color = '#38a169' if 'Approved' in str(status) else '#d69e2e' if 'Pending' in str(status) else '#3182ce'
+                        st.markdown(f"""<div style="padding:0.3rem 0.6rem;margin:0.15rem 0;border-left:3px solid {color};background:#1E1E1E;border-radius:3px;font-size:0.8rem;color:#f0e6d3;"><strong style="color:#C9A84C;">{icon} {r.get('employee_name','')}</strong> — {r.get('position','')} | {status} | {r.get('review_date','')[:10]}</div>""", unsafe_allow_html=True)
+                
                 # Export
                 st.markdown("---")
-                if reviews:
-                    full_data = pd.DataFrame([{'Employee': r.get('employee_name'), 'Position': r.get('position'), 'Department': r.get('department'), 'Status': r.get('status'), 'Score': r.get('total_performance_score'), 'Rating': r.get('performance_rating'), 'TL': r.get('supervisor_name'), 'HOD': r.get('hod_name')} for r in reviews])
-                    st.download_button("📥 Export Full Data (CSV)", full_data.to_csv(index=False), "confirmation_data.csv", "text/csv", use_container_width=True)
+                col1, col2 = st.columns(2)
+                with col1:
+                    if reviews:
+                        full_data = pd.DataFrame([{'Employee': r.get('employee_name'), 'Position': r.get('position'), 'Department': r.get('department'), 'Status': r.get('status'), 'Score': r.get('total_performance_score'), 'Rating': r.get('performance_rating'), 'Date': r.get('review_date','')[:10]} for r in reviews])
+                        st.download_button("📥 Export CSV", full_data.to_csv(index=False), "confirmation_data.csv", "text/csv", use_container_width=True)
+                with col2:
+                    summary = pd.DataFrame([{'Metric': 'Total', 'Value': total_employees}, {'Metric': 'Probation', 'Value': total_probation}, {'Metric': 'Confirmed', 'Value': total_confirmed}, {'Metric': 'Rate', 'Value': f"{confirmation_rate:.0f}%"}])
+                    st.download_button("📥 Summary CSV", summary.to_csv(index=False), "summary.csv", "text/csv", use_container_width=True)
             else:
                 st.info("No confirmation data yet.")
         except:
@@ -13918,7 +14165,7 @@ def promotions():
     
     all_depts = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources',
                  'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal',
-                 'Operations', 'Engineering & Project Development', 'Central Stores', 'Chairman/GMD''s Office & Residence', 'Project Development', 'Trade Services', 'Admin']
+                 'Operations', 'Engineering & Project Development', 'Central Stores', 'Warehouse Management', 'Chairman/GMD\'s Office & Residence', 'Project Development', 'Trade Services', 'Admin']
     for dept in all_depts:
         if dept not in aplayers_data:
             aplayers_data[dept] = []
@@ -17451,7 +17698,7 @@ APPLY NOW: {public_url}
             c1, c2 = st.columns(2)
             with c1:
                 job_title = st.text_input("Job Title *", placeholder="e.g., Senior Network Engineer")
-                department = st.selectbox("Department *", ['Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering & Project Development', 'Central Stores', 'Chairman/GMD''s Office & Residence', 'Project Development', 'Trade Services', 'Admin'])
+                department = st.selectbox("Department *", ['Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales & Marketing', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering & Project Development', 'Central Stores', 'Warehouse Management', 'Chairman/GMD\'s Office & Residence', 'Project Development', 'Trade Services', 'Admin'])
                 location = st.selectbox("Location", ["World Trade Center Abuja", "Churchgate Tower 1 Lagos", "Churchgate Tower 2 Lagos", "Churchgate Plaza Abuja", "Remote/Hybrid"])
                 employment_type = st.selectbox("Employment Type", ["Full-time", "Contract", "Part-time", "Intern"])
             with c2:
@@ -17587,6 +17834,7 @@ APPLY NOW: {public_url}
                         'Technology Group': 'eetuk@churchgate.com',
                         'Engineering & Project Development': 'purwar@churchgate.com',
                         'Central Stores': 'abora@churchgate.com',
+                        'Warehouse Management': 'kperavali@churchgate.com',
                         'Project Development': 'deffiong@churchgate.com',
                         'Trade Services': 'akarim@churchgate.com',
                         'Chairman/GMD\'s Office & Residence': 'vbmahtani@churchgate.com'
@@ -19683,7 +19931,7 @@ APPLY NOW: {public_url}
                         'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 
                         'Procurement', 'Security', 'Legal', 'Operations', 
                         'Engineering & Project Development', 'Admin', 'Central Stores',
-                        'Chairman/GMD\'s Office & Residence'
+                        'Warehouse Management', 'Chairman/GMD\'s Office & Residence'
                     ])
                 with c2:
                     bg_type = st.multiselect("Check Type *", [
@@ -25929,7 +26177,7 @@ def my_profile():
                 </div>
                 """, unsafe_allow_html=True)
             
-            st.markdown("---")
+           st.markdown("---")
             
             with st.form("profile_update_form"):
                 st.markdown("#### ✏️ Basic Information")
@@ -25941,7 +26189,7 @@ def my_profile():
                     new_gender = st.selectbox("Gender", ['Male', 'Female'], index=0 if emp_gender == 'Male' else 1)
                 with c2:
                     new_last = st.text_input("Last Name", value=last_name)
-                    dept_list = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering & Project Development', 'Admin', 'Central Stores', 'Chairman/GMD\'s Office & Residence']
+                    dept_list = ['Senior Management', 'Technology Group', 'Facility Management', 'Human Resources', 'Accounts & Finance', 'Sales, Marketing & Trade Services', 'Procurement', 'Security', 'Legal', 'Operations', 'Engineering & Project Development', 'Admin', 'Central Stores', 'Warehouse Management', 'Chairman/GMD\'s Office & Residence']
                     dept_idx = dept_list.index(emp_dept) if emp_dept in dept_list else 0
                     new_dept = st.selectbox("Department", dept_list, index=dept_idx)
                     new_region = st.selectbox("Region", ['Abuja', 'Lagos'], index=0 if emp_region == 'Abuja' else 1)
