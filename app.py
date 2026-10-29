@@ -19551,9 +19551,11 @@ APPLY NOW: {public_url}
     with tab4:
         st.subheader("🌐 Candidate Management Portal")
         
+        # USE CACHED DATA
+        candidates = get_cached_candidates_hub()
+        
         # Stats row
         try:
-            candidates = db.get_all_candidates()
             total_candidates = len(candidates) if not candidates.empty else 0
             new_today = len(candidates[candidates['created_at'].str.contains(datetime.now().strftime('%Y-%m-%d'))]) if not candidates.empty and 'created_at' in candidates.columns else 0
             shortlisted = len(candidates[candidates['status'] == 'Shortlisted']) if not candidates.empty and 'status' in candidates.columns else 0
@@ -19583,169 +19585,193 @@ APPLY NOW: {public_url}
         with cand_tab1:
             st.subheader("📋 Candidate Database")
             
-            try:
-                candidates = db.get_all_candidates()
-                if not candidates.empty:
-                    # Filters
-                    col1, col2, col3, col4 = st.columns(4)
-                    with col1:
-                        status_filter = st.selectbox("Status", ["All", "New", "Shortlisted", "Interview Scheduled", "Offered", "Hired", "Rejected"], key="cand_status")
-                    with col2:
-                        # Build job name map
-                        job_name_map = {"All Jobs": "All Jobs"}
-                        try:
-                            all_reqs = db.get_all_job_requisitions()
-                            for r in all_reqs:
-                                req_id = r.get('req_id', '')
-                                title = r.get('title', req_id)
-                                job_name_map[title] = req_id
-                        except:
-                            pass
-                        
-                        # Add job_ids from candidates that don't have titles
-                        if 'job_id' in candidates.columns:
-                            for jid in candidates['job_id'].dropna().unique():
-                                if jid not in job_name_map.values():
-                                    job_name_map[jid] = jid
-                        
-                        job_filter_name = st.selectbox("Job", list(job_name_map.keys()), key="cand_job")
-                        job_filter = job_name_map.get(job_filter_name, "All Jobs")
-                    with col3:
-                        sort_by = st.selectbox("Sort", ["Newest First", "Name A-Z", "Status"], key="cand_sort")
-                    with col4:
-                        search_cand = st.text_input("🔍 Search", placeholder="Name or email...", key="cand_search")
+            if not candidates.empty:
+                # Filters
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    status_filter = st.selectbox("Status", ["All", "New", "Shortlisted", "Interview Scheduled", "Offered", "Hired", "Rejected"], key="cand_status")
+                with col2:
+                    # Build job name map from cache
+                    job_name_map = {"All Jobs": "All Jobs"}
+                    all_reqs = get_cached_requisitions_hub()
+                    for r in all_reqs:
+                        req_id = r.get('req_id', '')
+                        title = r.get('title', req_id)
+                        job_name_map[title] = req_id
                     
-                    # Apply filters
-                    display = candidates.copy()
-                    if status_filter != "All":
-                        display = display[display['status'] == status_filter]
-                    if job_filter != "All Jobs" and 'job_id' in display.columns:
-                        display = display[display['job_id'] == job_filter]
-                    if search_cand:
-                        s = search_cand.lower()
-                        display = display[display['first_name'].str.lower().str.contains(s, na=False) | display['last_name'].str.lower().str.contains(s, na=False) | display['email'].str.lower().str.contains(s, na=False)]
+                    if 'job_id' in candidates.columns:
+                        for jid in candidates['job_id'].dropna().unique():
+                            if jid not in job_name_map.values():
+                                job_name_map[jid] = jid
                     
-                    st.markdown(f"**Showing {len(display)} candidates**")
+                    job_filter_name = st.selectbox("Job", list(job_name_map.keys()), key="cand_job")
+                    job_filter = job_name_map.get(job_filter_name, "All Jobs")
+                with col3:
+                    sort_by = st.selectbox("Sort", ["Newest First", "Name A-Z", "Status"], key="cand_sort")
+                with col4:
+                    search_cand = st.text_input("🔍 Search", placeholder="Name or email...", key="cand_search")
+                
+                # Apply filters
+                display = candidates.copy()
+                if status_filter != "All":
+                    display = display[display['status'] == status_filter]
+                if job_filter != "All Jobs" and 'job_id' in display.columns:
+                    display = display[display['job_id'] == job_filter]
+                if search_cand:
+                    s = search_cand.lower()
+                    display = display[display['first_name'].str.lower().str.contains(s, na=False) | display['last_name'].str.lower().str.contains(s, na=False) | display['email'].str.lower().str.contains(s, na=False)]
+                
+                # Apply sorting
+                if sort_by == "Name A-Z":
+                    display = display.sort_values('first_name')
+                elif sort_by == "Status":
+                    display = display.sort_values('status')
+                
+                st.markdown(f"**Showing {len(display)} candidates**")
+                
+                # ==========================================
+                # PAGINATION (15 per page)
+                # ==========================================
+                items_per_page = 15
+                total_pages = max(1, (len(display) + items_per_page - 1) // items_per_page)
+                
+                if 'cand_page' not in st.session_state:
+                    st.session_state.cand_page = 1
+                if st.session_state.cand_page > total_pages:
+                    st.session_state.cand_page = total_pages
+                
+                col_p1, col_p2, col_p3 = st.columns([1, 2, 1])
+                with col_p1:
+                    if st.button("⬅️ Previous", disabled=(st.session_state.cand_page <= 1), use_container_width=True, key="cand_prev"):
+                        st.session_state.cand_page -= 1
+                        st.rerun()
+                with col_p2:
+                    st.markdown(f"<p style='text-align:center;'>Page <strong>{st.session_state.cand_page}</strong> of <strong>{total_pages}</strong></p>", unsafe_allow_html=True)
+                with col_p3:
+                    if st.button("Next ➡️", disabled=(st.session_state.cand_page >= total_pages), use_container_width=True, key="cand_next"):
+                        st.session_state.cand_page += 1
+                        st.rerun()
+                        
+                start_idx = (st.session_state.cand_page - 1) * items_per_page
+                end_idx = min(start_idx + items_per_page, len(display))
+                page_display = display.iloc[start_idx:end_idx]
+                
+                # Build job map for display
+                job_map = {}
+                for r in all_reqs:
+                    req_id = r.get('req_id', '')
+                    job_map[req_id] = r.get('title', req_id)
+                
+                # Render ONLY current page
+                for i, (_, cand) in enumerate(page_display.iterrows()):
+                    initials = (str(cand.get('first_name', ''))[:1] + str(cand.get('last_name', ''))[:1]).upper()
+                    status = cand.get('status', 'New')
+                    job_id = str(cand.get('job_id', ''))
+                    job_title = job_map.get(job_id, job_id) if job_id and job_id != 'None' else 'No Job Specified'
+                    score = int(float(cand.get('ai_score', 0))) if cand.get('ai_score') and float(cand.get('ai_score', 0)) > 0 else 0
+                    cand_ref = cand.get('candidate_ref', f"unknown_{i}")
                     
-                    # Build job map for display
-                    job_map = {}
-                    try:
-                        all_reqs = db.get_all_job_requisitions()
-                        for r in all_reqs:
-                            req_id = r.get('req_id', '')
-                            job_map[req_id] = r.get('title', req_id)
-                    except:
-                        pass
+                    status_color = {
+                        'New': '#3182ce', 'Shortlisted': '#d69e2e', 'Interview Scheduled': '#38a169',
+                        'Offered': '#805ad5', 'Hired': '#38a169', 'Rejected': '#CC0000'
+                    }.get(status, '#a0aec0')
                     
-                    for _, cand in display.iterrows():
-                        initials = (str(cand.get('first_name', ''))[:1] + str(cand.get('last_name', ''))[:1]).upper()
-                        status = cand.get('status', 'New')
-                        job_id = str(cand.get('job_id', ''))
-                        job_title = job_map.get(job_id, job_id) if job_id and job_id != 'None' else 'No Job Specified'
-                        score = int(float(cand.get('ai_score', 0))) if cand.get('ai_score') and float(cand.get('ai_score', 0)) > 0 else 0
+                    emoji = "🌟" if score >= 85 else "👍" if score >= 70 else "🔶" if score > 0 else "📋"
+                    
+                    # expanded=False so they are collapsed by default!
+                    with st.expander(f"{emoji} {cand.get('first_name', '')} {cand.get('last_name', '')} | {job_title} | {status} | Score: {score}%", expanded=False):
+                        col1, col2 = st.columns([1, 3])
+                        with col1:
+                            st.markdown(f"""<div style="width:45px;height:45px;border-radius:50%;background:{status_color};display:flex;align-items:center;justify-content:center;font-weight:700;color:white;">{initials}</div>""", unsafe_allow_html=True)
+                            st.markdown(f"<span style='background:{status_color};color:white;padding:0.1rem 0.5rem;border-radius:10px;font-size:0.7rem;'>{status}</span>", unsafe_allow_html=True)
+                            if score > 0:
+                                st.metric("AI Score", f"{score}%")
+                        with col2:
+                            st.markdown(f"**📧** {cand.get('email', 'N/A')} | **📱** {cand.get('phone', 'N/A')}")
+                            st.markdown(f"**💼 Position:** {cand.get('current_position', 'N/A')} | **📅 Experience:** {cand.get('years_of_experience', 'N/A')} yrs")
+                            st.markdown(f"**🎯 Job Applied:** {job_title}")
+                            st.markdown(f"**🔗** {str(cand.get('linkedin_url', 'N/A'))[:50] if cand.get('linkedin_url') else 'N/A'}")
                         
-                        status_color = {
-                            'New': '#3182ce', 'Shortlisted': '#d69e2e', 'Interview Scheduled': '#38a169',
-                            'Offered': '#805ad5', 'Hired': '#38a169', 'Rejected': '#CC0000'
-                        }.get(status, '#a0aec0')
+                        st.markdown("---")
                         
-                        emoji = "🌟" if score >= 85 else "👍" if score >= 70 else "🔶" if score > 0 else "📋"
+                        # CV Display
+                        st.markdown("### 📄 CV & Documents")
+                        cv_text = str(cand.get('resume_text', ''))
+                        cv_url = str(cand.get('cv_url', ''))
+                        resume_filename = str(cand.get('resume_filename', ''))
                         
-                        with st.expander(f"{emoji} {cand.get('first_name', '')} {cand.get('last_name', '')} | {job_title} | {status} | Score: {score}%", expanded=True):
-                            col1, col2 = st.columns([1, 3])
-                            with col1:
-                                st.markdown(f"""<div style="width:45px;height:45px;border-radius:50%;background:{status_color};display:flex;align-items:center;justify-content:center;font-weight:700;color:white;">{initials}</div>""", unsafe_allow_html=True)
-                                st.markdown(f"<span style='background:{status_color};color:white;padding:0.1rem 0.5rem;border-radius:10px;font-size:0.7rem;'>{status}</span>", unsafe_allow_html=True)
-                                if score > 0:
-                                    st.metric("AI Score", f"{score}%")
-                            with col2:
-                                st.markdown(f"**📧** {cand.get('email', 'N/A')} | **📱** {cand.get('phone', 'N/A')}")
-                                st.markdown(f"**💼 Position:** {cand.get('current_position', 'N/A')} | **📅 Experience:** {cand.get('years_of_experience', 'N/A')} yrs")
-                                st.markdown(f"**🎯 Job Applied:** {job_title}")
-                                st.markdown(f"**🔗** {str(cand.get('linkedin_url', 'N/A'))[:50] if cand.get('linkedin_url') else 'N/A'}")
-                            
-                            st.markdown("---")
-                            
-                            # CV Display - ALWAYS VISIBLE
-                            st.markdown("### 📄 CV & Documents")
-                            cv_text = str(cand.get('resume_text', ''))
-                            cv_url = str(cand.get('cv_url', ''))
-                            resume_filename = str(cand.get('resume_filename', ''))
-                            
-                            col_cv1, col_cv2 = st.columns([3, 1])
-                            with col_cv1:
-                                if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 10:
-                                    st.text_area("CV Content", cv_text[:5000], height=250, key=f"cv_tab3_{cand.get('candidate_ref')}", label_visibility="collapsed")
-                                    st.download_button("📥 Download CV Text", cv_text, f"CV_{cand.get('first_name', '')}_{cand.get('last_name', '')}.txt", "text/plain", key=f"dl_txt_tab3_{cand.get('candidate_ref')}")
-                                else:
-                                    st.warning("⚠️ No CV text extracted. CV may only be available as original file.")
-                            
-                            with col_cv2:
-                                if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 5:
-                                    st.markdown(f"📎 [Download Original: {resume_filename}]({cv_url})")
-                                    st.success("✅ Original file available")
-                                else:
-                                    st.info("No original file link")
-                            
-                            st.markdown("---")
-                            
-                            # Quick actions
-                            c1, c2, c3, c4 = st.columns(4)
-                            with c1:
-                                new_status = st.selectbox("Update Status", ["New", "Shortlisted", "Interview Scheduled", "Offered", "Hired", "Rejected"], key=f"status_{cand.get('candidate_ref')}")
-                            with c2:
-                                if st.button("💾 Update", key=f"upd_{cand.get('candidate_ref')}"):
-                                    db._patch("candidates", {"status": new_status}, {"candidate_ref": cand.get('candidate_ref')})
-                                    st.success("✅ Updated!")
-                                    st.rerun()
-                            with c3:
-                                if st.button("🤖 AI Screen Now", key=f"screen_tab3_{cand.get('candidate_ref')}"):
-                                    cv_text_local = cv_text
-                                    cv_url_local = str(cand.get('cv_url', ''))
-                                    
-                                    if (not cv_text_local or cv_text_local in ['None', '', 'nan'] or len(cv_text_local) < 50):
-                                        if cv_url_local and cv_url_local not in ['None', '', 'nan'] and len(cv_url_local) > 10:
-                                            with st.spinner("📄 Extracting CV text..."):
-                                                extracted = extract_text_from_cv_url(cv_url_local)
-                                                if extracted:
-                                                    cv_text_local = extracted
-                                                    try:
-                                                        db._patch("candidates", {"resume_text": cv_text_local[:10000]}, {"candidate_ref": cand.get('candidate_ref', '')})
-                                                    except:
-                                                        pass
-                                    
-                                    if cv_text_local and cv_text_local not in ['None', '', 'nan'] and len(cv_text_local) > 50:
-                                        with st.spinner("🤖 Running AI analysis..."):
-                                            jd_text = ""
-                                            if job_id and job_id not in ['None', '', 'nan']:
+                        col_cv1, col_cv2 = st.columns([3, 1])
+                        with col_cv1:
+                            if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 10:
+                                # Unique key using start_idx and i
+                                st.text_area("CV Content", cv_text[:2000], height=200, key=f"cv_tab3_{cand_ref}_{start_idx}_{i}", label_visibility="collapsed")
+                                st.download_button("📥 Download CV Text", cv_text, f"CV_{cand.get('first_name', '')}_{cand.get('last_name', '')}.txt", "text/plain", key=f"dl_txt_tab3_{cand_ref}_{start_idx}_{i}")
+                            else:
+                                st.warning("⚠️ No CV text extracted.")
+                        
+                        with col_cv2:
+                            if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 5:
+                                st.markdown(f"📎 [Download Original: {resume_filename}]({cv_url})")
+                                st.success("✅ Original file available")
+                            else:
+                                st.info("No original file link")
+                        
+                        st.markdown("---")
+                        
+                        # Quick actions
+                        c1, c2, c3, c4 = st.columns(4)
+                        with c1:
+                            new_status = st.selectbox("Update Status", ["New", "Shortlisted", "Interview Scheduled", "Offered", "Hired", "Rejected"], key=f"status_{cand_ref}_{start_idx}_{i}")
+                        with c2:
+                            if st.button("💾 Update", key=f"upd_{cand_ref}_{start_idx}_{i}"):
+                                db._patch("candidates", {"status": new_status}, {"candidate_ref": cand_ref})
+                                get_cached_candidates_hub.clear() # Clear cache to refresh the UI
+                                st.success("✅ Updated!")
+                                st.rerun()
+                        with c3:
+                            if st.button("🤖 AI Screen Now", key=f"screen_tab3_{cand_ref}_{start_idx}_{i}"):
+                                cv_text_local = cv_text
+                                cv_url_local = str(cand.get('cv_url', ''))
+                                
+                                if (not cv_text_local or cv_text_local in ['None', '', 'nan'] or len(cv_text_local) < 50):
+                                    if cv_url_local and cv_url_local not in ['None', '', 'nan'] and len(cv_url_local) > 10:
+                                        with st.spinner("📄 Extracting CV text..."):
+                                            extracted = extract_text_from_cv_url(cv_url_local)
+                                            if extracted:
+                                                cv_text_local = extracted
                                                 try:
-                                                    all_reqs = db.get_all_job_requisitions()
-                                                    for r in all_reqs:
-                                                        if r.get('req_id') == job_id:
-                                                            jd_text = r.get('jd', '')
-                                                            break
+                                                    db._patch("candidates", {"resume_text": cv_text_local[:10000]}, {"candidate_ref": cand_ref})
                                                 except:
                                                     pass
-                                            res = ai_agent.deep_analyze_candidate(cv_text, jd_text)
-                                            if isinstance(res, dict):
-                                                db._patch("candidates", {
-                                                    "ai_score": int(res.get('overall_score', 0)),
-                                                    "ai_tier": res.get('tier', 'Pending')
-                                                }, {"candidate_ref": cand.get('candidate_ref')})
-                                                st.success(f"✅ Scored: {int(res.get('overall_score', 0))}% - {res.get('tier', '')}")
-                                                st.rerun()
-                            with c4:
-                                if st.button("📧 Email", key=f"email_{cand.get('candidate_ref')}"):
-                                    st.info(f"Email queued to {cand.get('email')}")
-            except Exception as e:
-                st.error(f"Error loading candidates: {str(e)[:200]}")
+                                
+                                if cv_text_local and cv_text_local not in ['None', '', 'nan'] and len(cv_text_local) > 50:
+                                    with st.spinner("🤖 Running AI analysis..."):
+                                        jd_text = ""
+                                        if job_id and job_id not in ['None', '', 'nan']:
+                                            for r in all_reqs:
+                                                if r.get('req_id') == job_id:
+                                                    jd_text = r.get('jd', '')
+                                                    break
+                                        res = ai_agent.deep_analyze_candidate(cv_text_local, jd_text)
+                                        if isinstance(res, dict):
+                                            db._patch("candidates", {
+                                                "ai_score": int(res.get('overall_score', 0)),
+                                                "ai_tier": res.get('tier', 'Pending')
+                                            }, {"candidate_ref": cand_ref})
+                                            get_cached_candidates_hub.clear()
+                                            st.success(f"✅ Scored: {int(res.get('overall_score', 0))}% - {res.get('tier', '')}")
+                                            st.rerun()
+                        with c4:
+                            if st.button("📧 Email", key=f"email_{cand_ref}_{start_idx}_{i}"):
+                                st.info(f"Email queued to {cand.get('email')}")
+            else:
+                st.info("No candidates found in the database.")
         
         # ===== SUB-TAB 2: QUICK ADD CANDIDATE =====
         with cand_tab2:
             st.subheader("➕ Quick Add Candidate")
             st.info("Manually add a candidate from walk-in, referral, or external source.")
             
-            # File uploaders OUTSIDE the form
             st.markdown("#### 📎 Documents")
             q_cv = st.file_uploader("Upload CV *", type=['pdf', 'docx'], key="quick_cv")
             q_other = st.file_uploader("Upload Other Documents (Optional)", type=['pdf', 'docx', 'jpg', 'png'], accept_multiple_files=True, key="quick_other")
@@ -19822,6 +19848,7 @@ APPLY NOW: {public_url}
                                 "source": q_src,
                                 "status": "New"
                             })
+                            get_cached_candidates_hub.clear() # Clear cache so new candidate shows up
                             st.success(f"✅ Candidate {q_fn} {q_ln} added! (Ref: {tracking_id})")
                             st.balloons()
                             time.sleep(1)
@@ -19836,7 +19863,6 @@ APPLY NOW: {public_url}
             st.subheader("📱 Career Page Preview")
             st.info("This is what candidates see on the live Careers Page.")
             
-            # Quick preview of the actual career page
             st.markdown("""
             <div style="background:linear-gradient(135deg, #1a1a1a, #2d2a1f);padding:1.5rem;text-align:center;border-radius:8px;margin-bottom:1rem;">
                 <h2 style="color:#F5E6CC;margin:0;">🚀 Build Your Career at Churchgate Group</h2>
@@ -19844,8 +19870,7 @@ APPLY NOW: {public_url}
             </div>
             """, unsafe_allow_html=True)
             
-            # Show active jobs preview
-            if st.session_state.active_jobs:
+            if 'active_jobs' in st.session_state and st.session_state.active_jobs:
                 st.markdown(f"**🟢 {len(st.session_state.active_jobs)} Live Job(s) on Career Page**")
                 for job in st.session_state.active_jobs[:3]:
                     st.markdown(f"""
@@ -19857,7 +19882,6 @@ APPLY NOW: {public_url}
             
             st.markdown("---")
             st.markdown(f"**🔗 Live Career Page:** [hris.churchgate.com/Careers](https://hris.churchgate.com/Careers)")
-            st.markdown(f"**📊 Application Form Preview:**")
             
             with st.expander("Preview Application Form", expanded=False):
                 st.text_input("First Name *", disabled=True, placeholder="Candidate fills this")
@@ -19911,7 +19935,7 @@ APPLY NOW: {public_url}
                     if title not in job_options:
                         job_options.append(title)
             
-            col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
+            col1, col2, col3 = st.columns([2, 1, 1])
             with col1:
                 screen_job = st.selectbox("📋 Screen by Job Posting", job_options, key="screen_job_t5")
             
@@ -19931,9 +19955,6 @@ APPLY NOW: {public_url}
             
             with col3:
                 btn_job = st.button("🤖 Screen This Job", use_container_width=True, type="primary", disabled=(screen_job == "Select Job..."), key="btn_screen_job_t5")
-            
-            with col4:
-                st.markdown("") # Empty placeholder to keep layout aligned
             
             # Process job screening
             if btn_job and screen_job != "Select Job..." and selected_job_id:
@@ -20151,30 +20172,31 @@ APPLY NOW: {public_url}
                                         get_cached_candidates_hub.clear() # Refresh cache
                                         st.success(f"✅ Scored: {int(res.get('overall_score', 0))}%")
                                         st.rerun()
-                                else:
-                                    st.warning("No valid CV text.")
+                            else:
+                                st.warning("No valid CV text.")
             
-            # Analytics
+            # ==========================================
+            # ANALYTICS MOVED TO EXPANDER (Fixes Pagination Lag)
+            # ==========================================
             if screened > 0:
                 st.markdown("---")
-                st.markdown("### 📊 Analytics")
-                col1, col2 = st.columns(2)
-                with col1:
-                    tier3 = len(candidates[candidates['ai_tier'].str.contains('Tier 3', na=False)]) if 'ai_tier' in candidates.columns else 0
-                    tier4 = len(candidates[candidates['ai_tier'].str.contains('Tier 4', na=False)]) if 'ai_tier' in candidates.columns else 0
-                    fig = px.pie(values=[tier1, tier2, tier3, tier4, total-screened], names=['T1⭐','T2👍','T3🔶','T4❌','Pending'], hole=0.5, color_discrete_sequence=['#38a169','#d69e2e','#dd6b20','#CC0000','#a0aec0'])
-                    fig.update_layout(height=350, paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3', family='Inter, sans-serif'))
-                    st.plotly_chart(fig, use_container_width=True)
-                with col2:
-                    scores = candidates[candidates['ai_score'] > 0]['ai_score'].dropna() if 'ai_score' in candidates.columns else []
-                    if len(scores) > 0:
-                        fig2 = px.histogram(scores, nbins=10, color_discrete_sequence=['#CC0000'])
-                        fig2.update_layout(height=350, paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3', family='Inter, sans-serif'), title_font=dict(color='#C9A84C', family='Georgia, serif'), xaxis=dict(tickfont=dict(color='#F0E6D3'), title_font=dict(color='#C9A84C')), yaxis=dict(tickfont=dict(color='#F0E6D3'), title_font=dict(color='#C9A84C')))
-                        st.plotly_chart(fig2, use_container_width=True)
+                with st.expander("📊 Show Analytics & Charts", expanded=False):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        tier3 = len(candidates[candidates['ai_tier'].str.contains('Tier 3', na=False)]) if 'ai_tier' in candidates.columns else 0
+                        tier4 = len(candidates[candidates['ai_tier'].str.contains('Tier 4', na=False)]) if 'ai_tier' in candidates.columns else 0
+                        fig = px.pie(values=[tier1, tier2, tier3, tier4, total-screened], names=['T1⭐','T2👍','T3🔶','T4❌','Pending'], hole=0.5, color_discrete_sequence=['#38a169','#d69e2e','#dd6b20','#CC0000','#a0aec0'])
+                        fig.update_layout(height=350, paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3', family='Inter, sans-serif'))
+                        st.plotly_chart(fig, use_container_width=True)
+                    with col2:
+                        scores = candidates[candidates['ai_score'] > 0]['ai_score'].dropna() if 'ai_score' in candidates.columns else []
+                        if len(scores) > 0:
+                            fig2 = px.histogram(scores, nbins=10, color_discrete_sequence=['#CC0000'])
+                            fig2.update_layout(height=350, paper_bgcolor='#1E1E1E', plot_bgcolor='#1E1E1E', font=dict(color='#F0E6D3', family='Inter, sans-serif'), title_font=dict(color='#C9A84C', family='Georgia, serif'), xaxis=dict(tickfont=dict(color='#F0E6D3'), title_font=dict(color='#C9A84C')), yaxis=dict(tickfont=dict(color='#F0E6D3'), title_font=dict(color='#C9A84C')))
+                            st.plotly_chart(fig2, use_container_width=True)
             
             st.markdown("---")
             st.download_button("📥 Export CSV", candidates[['candidate_ref','first_name','last_name','email','job_id','ai_score','ai_tier','status']].to_csv(index=False), "screening_report.csv", "text/csv")
-            st.metric("⏱️ Est. Time-to-Hire", f"{max(7, 21 - screened)} days")
         
         else:
             st.info("🤖 No applications yet. Share the Careers Page URL to start building your talent pipeline.")
@@ -21082,6 +21104,20 @@ APPLY NOW: {public_url}
                     st.success(f"✅ Referral submitted! Bonus eligible upon successful hire.")
                     st.balloons()
 
+@st.cache_data(ttl=300, show_spinner=False)
+def get_cached_candidates_agent():
+    try:
+        return db.get_all_candidates()
+    except:
+        return pd.DataFrame()
+
+@st.cache_data(ttl=300, show_spinner=False)
+def get_cached_requisitions_agent():
+    try:
+        return db.get_all_job_requisitions()
+    except:
+        return []
+
 def ai_recruitment_agent():
     track_engagement("AI Recruitment Agent")
     st.markdown("""<div class="churchgate-header"><h1>🤖 AI Recruitment Agent</h1><p>AI-Powered CV-JD Matching | Verbatim Detection | Inconsistency Flags | Skills Gap Matrix | Bias Detection | Interview Generator | Executive Reports</p></div>""", unsafe_allow_html=True)
@@ -21105,26 +21141,25 @@ def ai_recruitment_agent():
         st.subheader("🚀 Recruitment Pipeline & Bulk Screening")
         
         try:
-            candidates = db.get_all_candidates()
+            candidates = get_cached_candidates_agent()
+            all_reqs = get_cached_requisitions_agent()
+            
             if not candidates.empty:
                 # Job filter
                 job_map = {}
-                try:
-                    all_reqs = db.get_all_job_requisitions()
-                    for r in all_reqs:
-                        req_id = r.get('req_id', '')
-                        short_id = f"JOB-{req_id[-6:]}" if len(req_id) >= 6 else req_id
-                        title = r.get('title', req_id)
-                        job_map[req_id] = title
-                        job_map[short_id] = title
-                except:
-                    pass
+                for r in all_reqs:
+                    req_id = r.get('req_id', '')
+                    short_id = f"JOB-{req_id[-6:]}" if len(req_id) >= 6 else req_id
+                    title = r.get('title', req_id)
+                    job_map[req_id] = title
+                    job_map[short_id] = title
                 
                 job_options = ["All Jobs"]
                 if 'job_id' in candidates.columns:
                     for jid in candidates['job_id'].dropna().unique():
                         title = job_map.get(jid, jid)
-                        job_options.append(title)
+                        if title not in job_options:
+                            job_options.append(title)
                 
                 pipeline_job_filter = st.selectbox("📋 Filter by Job", job_options, key="pipeline_job_filter")
                 
@@ -21150,9 +21185,7 @@ def ai_recruitment_agent():
                 if pipeline_stats:
                     stages = list(pipeline_stats.keys())
                     counts = list(pipeline_stats.values())
-                    total = sum(counts)
                     
-                    # Visual pipeline
                     cols = st.columns(len(stages))
                     for i, (stage, count) in enumerate(pipeline_stats.items()):
                         with cols[i]:
@@ -21180,51 +21213,27 @@ def ai_recruitment_agent():
                             for _, row in unscreened.iterrows():
                                 try:
                                     cv_text = str(row.get('resume_text', ''))
-                                    cv_url = str(row.get('cv_url', ''))
+                                    if not cv_text or cv_text in ['None', '', 'nan'] or len(cv_text) < 50:
+                                        continue
                                     
-                                    # Extract from original file if no text
-                                    if (not cv_text or cv_text in ['None', '', 'nan'] or len(cv_text) < 50):
-                                        if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
-                                            extracted = extract_text_from_cv_url(cv_url)
-                                            if extracted:
-                                                cv_text = extracted
-                                                try:
-                                                    db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
-                                                except:
-                                                    pass
+                                    job_id_val = str(row.get('job_id', ''))
+                                    jd_text = ""
+                                    if job_id_val and job_id_val != 'None':
+                                        for r in all_reqs:
+                                            if r.get('req_id') == job_id_val:
+                                                jd_text = r.get('jd', '')
+                                                break
                                     
-                                    if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
-                                        job_id_val = str(row.get('job_id', ''))
-                                        jd_text = ""
-                                        if job_id_val and job_id_val != 'None':
-                                            for r in all_reqs:
-                                                if r.get('req_id') == job_id_val:
-                                                    jd_text = r.get('jd', '')
-                                                    break
-                                        
-                                        result = ai_agent.deep_analyze_candidate(cv_text, jd_text) if jd_text else ai_agent.score_candidate_advanced(cv_text, ai_agent.analyze_jd(cv_text[:500]))
-                                        if isinstance(result, dict):
-                                            score = int(result.get('overall_score', 0))
-                                            tier = result.get('tier', 'Pending')
-                                            db._patch("candidates", {"ai_score": score, "ai_tier": tier}, {"candidate_ref": row.get('candidate_ref', '')})
-                                            try:
-                                                db._post("recruitment_pipeline", {
-                                                    "candidate_ref": row.get('candidate_ref', ''),
-                                                    "candidate_name": f"{row.get('first_name','')} {row.get('last_name','')}",
-                                                    "candidate_email": row.get('email', ''),
-                                                    "job_id": job_id_val,
-                                                    "job_title": job_map.get(job_id_val, ''),
-                                                    "current_stage": "AI Screened",
-                                                    "ai_score": score,
-                                                    "ai_tier": tier,
-                                                    "updated_by": user_name
-                                                })
-                                            except:
-                                                pass
-                                            screened += 1
-                                except Exception as ex:
+                                    result = ai_agent.deep_analyze_candidate(cv_text, jd_text) if jd_text else ai_agent.score_candidate_advanced(cv_text, ai_agent.analyze_jd(cv_text[:500]))
+                                    if isinstance(result, dict):
+                                        score = int(result.get('overall_score', 0))
+                                        tier = result.get('tier', 'Pending')
+                                        db._patch("candidates", {"ai_score": score, "ai_tier": tier}, {"candidate_ref": row.get('candidate_ref', '')})
+                                        screened += 1
+                                except:
                                     pass
                             st.success(f"✅ {screened} candidates screened!")
+                            get_cached_candidates_agent.clear()
                             st.rerun()
                 with col3:
                         if st.button("📊 Quick Score", use_container_width=True, disabled=len(unscreened)==0):
@@ -21232,18 +21241,6 @@ def ai_recruitment_agent():
                                 for _, row in unscreened.iterrows():
                                     try:
                                         cv_text = str(row.get('resume_text', ''))
-                                        cv_url = str(row.get('cv_url', ''))
-                                        
-                                        if (not cv_text or cv_text in ['None', '', 'nan'] or len(cv_text) < 50):
-                                            if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 10:
-                                                extracted = extract_text_from_cv_url(cv_url)
-                                                if extracted:
-                                                    cv_text = extracted
-                                                    try:
-                                                        db._patch("candidates", {"resume_text": cv_text[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
-                                                    except:
-                                                        pass
-                                        
                                         if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 50:
                                             result = ai_agent.score_candidate_advanced(cv_text, ai_agent.analyze_jd(cv_text[:500]))
                                             if isinstance(result, dict):
@@ -21251,6 +21248,7 @@ def ai_recruitment_agent():
                                     except:
                                         pass
                                 st.success("✅ Quick scores applied!")
+                                get_cached_candidates_agent.clear()
                                 st.rerun()
                 
                 # ===== TIERING REPORT =====
@@ -21269,216 +21267,65 @@ def ai_recruitment_agent():
                     c3.metric("📊 Avg Score", f"{int(screened_cands['ai_score'].mean())}%")
                     c4.metric("👥 Total Screened", len(screened_cands))
                     
-                    # Transparent Scorecard Table
-                    st.markdown("#### 📊 Transparent Scoring Criteria")
-                    st.info("""
-                    **How scores are calculated:**
-                    - 🎯 Skills Match (30%) | 💼 Experience (25%) | 🎓 Education (10%) | 📜 Certifications (5%)
-                    - 📄 CV Quality (10%) | ✍️ Communication (10%) | 🔑 Keywords (5%) | 🚨 Verbatim Penalty (-5%)
-                    - 🔗 LinkedIn Presence (+5%) | 📝 Cover Letter (+5%)
-                    """)
-                    
-                    # Build detailed scorecard
+                    # Removed the heavy AI re-scoring loop. Now using saved DB scores for instant load!
                     scorecard_data = []
                     for _, row in screened_cands.iterrows():
-                        cv_text = str(row.get('resume_text', ''))
-                        # Get detailed scores from AI agent
-                        try:
-                            job_jd = ""
-                            if selected_job_id:
-                                for r in all_reqs:
-                                    if r.get('req_id') == selected_job_id:
-                                        job_jd = r.get('jd', '')
-                                        break
-                            jd_analysis = ai_agent.analyze_jd(job_jd) if job_jd else ai_agent.analyze_jd(cv_text[:500])
-                            detailed = ai_agent.score_candidate_advanced(cv_text, jd_analysis)
-                        except:
-                            detailed = {}
-                        
-                        # Safe getters to handle None values
-                        def safe_int(val, default=0):
-                            try:
-                                return int(float(val)) if val is not None else default
-                            except:
-                                return default
-                        
-                        def safe_str(val, default='N/A'):
-                            return str(val) if val is not None else default
-                        
                         scorecard_data.append({
                             'Rank': len(scorecard_data) + 1,
                             'Candidate': f"{row.get('first_name','')} {row.get('last_name','')}",
-                            'Overall': safe_int(detailed.get('overall_score', row.get('ai_score', 0))),
-                            'Tier': safe_str(detailed.get('tier', row.get('ai_tier')), 'Pending'),
-                            'Role_Type': safe_str(detailed.get('role_type'), 'General'),
-                            'Core_Competencies': detailed.get('core_competencies', []),
-                            # Standard scores
-                            'Skills': safe_int(detailed.get('skills_score', 0)),
-                            'Experience': safe_int(detailed.get('experience_score', 0)),
-                            'Education': safe_int(detailed.get('education_score', 0)),
-                            'CV_Quality': safe_int(detailed.get('cv_quality_score', 0)),
-                            'Soft_Skills': safe_int(detailed.get('soft_skills_score', 0)),
-                            'Culture_Fit': safe_int(detailed.get('culture_fit_score', 0)),
-                            # Risk & Confidence
-                            'Verbatim_Risk': f"{safe_int(detailed.get('verbatim_flags', 0))}%",
-                            'AI_Confidence': f"{safe_int(detailed.get('confidence', 0))}%",
-                            # Strengths & Gaps
-                            'Strengths': ', '.join(detailed.get('key_strengths', [])[:3]) if detailed.get('key_strengths') else 'N/A',
-                            'Gaps': ', '.join(detailed.get('gaps_identified', [])[:3]) if detailed.get('gaps_identified') else 'N/A',
-                            # Red Flags
-                            'Red_Flags': ', '.join(detailed.get('red_flags', [])) if detailed.get('red_flags') else 'None',
-                            # Salary
-                            'Salary_Estimate': safe_str(detailed.get('salary_estimation'), 'N/A'),
-                            # Recommendation
-                            'Recommendation': safe_str(detailed.get('recommendation'), 'N/A'),
-                            # Interview Questions
-                            'Interview_Questions': detailed.get('interview_questions', []),
-                            # Dynamic extra scores - capture ANY additional scores the AI returns
-                            'Extra_Scores': {k: v for k, v in detailed.items() if k.endswith('_score') and k not in ['overall_score', 'skills_score', 'experience_score', 'education_score', 'cv_quality_score', 'soft_skills_score', 'culture_fit_score', 'builder_operator_score', 'execution_rigor_score']},
-                            # Risk factors
-                            'Risk_Factors': detailed.get('risk_factors', []),
+                            'Overall': int(row.get('ai_score', 0)),
+                            'Tier': str(row.get('ai_tier', 'Pending')),
+                            'Role_Type': 'General' # Default to save API calls
                         })
                     
                     if scorecard_data:
-                        # Build dynamic table - only show relevant columns
-                        display_cols = ['Rank', 'Candidate', 'Overall', 'Tier', 'Role_Type']
+                        st.markdown("#### 📊 Transparent Scoring Criteria")
+                        st.info("Scores are calculated instantly using your saved AI metrics. To see full breakdowns, click a candidate below.")
                         
-                        # Add columns that have data
-                        for col in ['Skills', 'Experience', 'Education', 'CV_Quality', 'Culture_Fit', 'Verbatim_Risk', 'AI_Confidence', 'Salary_Estimate', 'Recommendation', 'Red_Flags']:
-                            sample_val = str(scorecard_data[0].get(col, ''))
-                            if sample_val and sample_val not in ['0%', '0', 'N/A', 'None', '']:
-                                display_cols.append(col)
-                        
-                        scorecard_df = pd.DataFrame(scorecard_data)[display_cols]
+                        scorecard_df = pd.DataFrame(scorecard_data)
                         html_table = scorecard_df.to_html(classes='dark-csv-table', index=False, border=0, escape=False)
                         st.markdown(html_table, unsafe_allow_html=True)
                         
-                        # Detailed breakdown for each candidate
+                        # Detailed breakdown moved to on-demand to prevent slow rendering
                         st.markdown("---")
-                        st.markdown("### 🔍 Individual Score Breakdowns")
-                        for i, data in enumerate(scorecard_data):
-                            with st.expander(f"📊 {data.get('Candidate', 'Unknown')} — {data.get('Overall', 0)}% — {data.get('Tier', 'Pending')} — {data.get('Role_Type', 'General')}"):
-                                
-                                # ===== DYNAMIC COMPETENCY BREAKDOWN =====
-                                competencies = data.get('Core_Competencies', [])
-                                if competencies:
-                                    st.markdown("### 🎯 Role-Specific Competency Assessment")
-                                    st.caption(f"📌 Role Type: {data.get('Role_Type', 'General')}")
+                        st.markdown("### 🔍 Individual Score Breakdowns (On-Demand)")
+                        for i, data in enumerate(scorecard_data[:10]): # Only show top 10 for instant load
+                            with st.expander(f"📊 {data.get('Candidate', 'Unknown')} — {data.get('Overall', 0)}% — {data.get('Tier', 'Pending')}"):
+                                if st.button("Generate Full AI Breakdown", key=f"gen_breakdown_{i}"):
+                                    # Do the heavy AI work ONLY when clicked
+                                    row = screened_cands.iloc[i]
+                                    cv_text = str(row.get('resume_text', ''))
+                                    job_jd = ""
+                                    if selected_job_id:
+                                        for r in all_reqs:
+                                            if r.get('req_id') == selected_job_id:
+                                                job_jd = r.get('jd', '')
+                                                break
+                                    jd_analysis = ai_agent.analyze_jd(job_jd) if job_jd else ai_agent.analyze_jd(cv_text[:500])
+                                    detailed = ai_agent.score_candidate_advanced(cv_text, jd_analysis)
                                     
-                                    # Competency summary table
-                                    comp_data = []
-                                    for comp in competencies:
-                                        comp_data.append({
-                                            'Competency': comp.get('name', 'N/A'),
-                                            'Weight': f"{comp.get('weight', 0)}%",
-                                            'Score': f"{comp.get('score', 0)}/5",
-                                            'Evidence': comp.get('evidence', '')[:80]
-                                        })
-                                    if comp_data:
-                                        html_table = pd.DataFrame(comp_data).to_html(classes='dark-csv-table', index=False, border=0, escape=False)
-                                        st.markdown(html_table, unsafe_allow_html=True)
+                                    st.markdown("### 📊 Detailed Breakdown")
+                                    cols = st.columns(3)
+                                    with cols[0]:
+                                        st.metric("🎯 Skills", f"{detailed.get('skills_score', 0)}%")
+                                    with cols[1]:
+                                        st.metric("💼 Experience", f"{detailed.get('experience_score', 0)}%")
+                                    with cols[2]:
+                                        st.metric("🎓 Education", f"{detailed.get('education_score', 0)}%")
                                     
-                                    # Visual competency bars
-                                    for comp in competencies:
-                                        comp_name = comp.get('name', 'Competency')
-                                        comp_score = comp.get('score', 0)
-                                        comp_weight = comp.get('weight', 0)
-                                        
-                                        col1, col2 = st.columns([3, 1])
-                                        with col1:
-                                            st.markdown(f"**{comp_name}** ({comp_weight}%)")
-                                            st.progress(comp_score/5)
-                                        with col2:
-                                            st.markdown(f"**{comp_score}/5**")
-                                
-                                st.markdown("---")
-                                
-                                # ===== STANDARD SCORES =====
-                                st.markdown("### 📊 Standard Scores")
-                                cols = st.columns(3)
-                                with cols[0]:
-                                    st.metric("🎯 Skills", f"{data.get('Skills', 0)}%")
-                                    st.metric("🎓 Education", f"{data.get('Education', 0)}%")
-                                with cols[1]:
-                                    st.metric("💼 Experience", f"{data.get('Experience', 0)}%")
-                                    st.metric("📄 CV Quality", f"{data.get('CV_Quality', 0)}%")
-                                with cols[2]:
-                                    st.metric("🤝 Soft Skills", f"{data.get('Soft_Skills', 0)}%")
-                                    st.metric("🏢 Culture Fit", f"{data.get('Culture_Fit', 0)}%")
-                                
-                                # ===== DYNAMIC EXTRA SCORES (any score AI returns) =====
-                                extra_scores = data.get('Extra_Scores', {})
-                                if extra_scores:
-                                    st.markdown("---")
-                                    st.markdown("### 📈 Additional Role-Specific Scores")
-                                    extra_cols = st.columns(min(len(extra_scores), 4))
-                                    for idx, (key, value) in enumerate(extra_scores.items()):
-                                        label = key.replace('_score', '').replace('_', ' ').title()
-                                        col_idx = idx % len(extra_cols)
-                                        with extra_cols[col_idx]:
-                                            st.metric(f"📌 {label}", f"{safe_int(value)}%")
-                                
-                                st.markdown("---")
-                                
-                                # ===== RISK & CONFIDENCE =====
-                                col1, col2, col3 = st.columns(3)
-                                with col1:
-                                    st.markdown(f"**🚨 Verbatim Risk:** {data.get('Verbatim_Risk', '0%')}")
-                                with col2:
-                                    st.markdown(f"**🤖 AI Confidence:** {data.get('AI_Confidence', '0%')}")
-                                with col3:
-                                    st.progress(data.get('Overall', 0)/100)
-                                
-                                # ===== STRENGTHS & GAPS =====
-                                c1, c2 = st.columns(2)
-                                with c1:
-                                    st.markdown("**✅ Key Strengths**")
-                                    st.success(data.get('Strengths', 'N/A'))
-                                with c2:
-                                    st.markdown("**⚠️ Gaps Identified**")
-                                    st.warning(data.get('Gaps', 'N/A'))
-                                
-                                # ===== RED FLAGS =====
-                                red_flags = data.get('Red_Flags', 'None')
-                                if red_flags and red_flags != 'None':
-                                    st.error(f"**🚩 Red Flags:** {red_flags}")
-                                
-                                # ===== RISK FACTORS =====
-                                risk_factors = data.get('Risk_Factors', [])
-                                if risk_factors:
-                                    st.markdown("**⚠️ Risk Factors:**")
-                                    for risk in risk_factors:
-                                        st.markdown(f"- {risk}")
-                                
-                                # ===== SALARY =====
-                                salary = data.get('Salary_Estimate', 'N/A')
-                                if salary and salary != 'N/A':
-                                    st.info(f"**💰 Market Salary Estimate:** {salary}")
-                                
-                                # ===== RECOMMENDATION =====
-                                recommendation = data.get('Recommendation', 'N/A')
-                                if recommendation and recommendation != 'N/A':
-                                    st.success(f"**💡 AI Recommendation:** {recommendation}")
-                                
-                                # ===== INTERVIEW QUESTIONS =====
-                                questions = data.get('Interview_Questions', [])
-                                if questions:
-                                    st.markdown("---")
-                                    st.markdown("### 🎯 AI-Generated Interview Questions")
-                                    for q_idx, q in enumerate(questions[:5]):
-                                        st.markdown(f"**{q_idx+1}.** {q}")
-                    
+                                    st.success(f"**✅ Strengths:** {', '.join(detailed.get('key_strengths', [])[:3])}")
+                                    st.warning(f"**⚠️ Gaps:** {', '.join(detailed.get('gaps_identified', [])[:3])}")
+
                     # Send to Manager
                     col1, col2 = st.columns(2)
                     with col1:
                         manager_email = st.text_input("Hiring Manager Email", value="bsakote@churchgate.com", key="manager_email")
                     with col2:
                         if st.button("📧 Send Report to Manager", use_container_width=True, type="primary"):
-                            # Build email
-                            email_body = f"<h2>AI Screening Report</h2><p>Job: {pipeline_job_filter}</p><table border='1' cellpadding='5'><tr><th>Rank</th><th>Candidate</th><th>Score</th><th>Tier</th><th>Email</th></tr>"
-                            for i, (_, row) in enumerate(screened_cands.iterrows()):
-                                email_body += f"<tr><td>{i+1}</td><td>{row.get('first_name','')} {row.get('last_name','')}</td><td>{int(row.get('ai_score',0))}%</td><td>{row.get('ai_tier','')}</td><td>{row.get('email','')}</td></tr>"
-                            email_body += "</table><p>Please review and shortlist candidates for interview.</p>"
+                            email_body = f"<h2>AI Screening Report</h2><p>Job: {pipeline_job_filter}</p><table border='1' cellpadding='5'><tr><th>Rank</th><th>Candidate</th><th>Score</th><th>Tier</th></tr>"
+                            for i, (_, row) in enumerate(screened_cands.head(10).iterrows()):
+                                email_body += f"<tr><td>{i+1}</td><td>{row.get('first_name','')} {row.get('last_name','')}</td><td>{int(row.get('ai_score',0))}%</td><td>{row.get('ai_tier','')}</td></tr>"
+                            email_body += "</table>"
                             
                             try:
                                 from utils.email_service import EmailService
@@ -21487,10 +21334,7 @@ def ai_recruitment_agent():
                             except:
                                 st.success("✅ Report queued for delivery.")
                     
-                    # Download report
-                    st.download_button("📥 Download Tiering Report (CSV)", 
-                                      screened_cands[['first_name', 'last_name', 'email', 'ai_score', 'ai_tier']].to_csv(index=False),
-                                      f"tiering_report_{pipeline_job_filter}.csv", "text/csv")
+                    st.download_button("📥 Download Tiering Report (CSV)", screened_cands[['first_name', 'last_name', 'email', 'ai_score', 'ai_tier']].to_csv(index=False), f"tiering_report_{pipeline_job_filter}.csv", "text/csv")
                 
                 # ===== SHORTLISTING =====
                 st.markdown("---")
@@ -21511,21 +21355,8 @@ def ai_recruitment_agent():
                                 for _, row in screened_cands.iterrows():
                                     if f"{row['first_name']} {row['last_name']}" == name_part:
                                         db._patch("candidates", {"status": "Shortlisted"}, {"candidate_ref": row.get('candidate_ref', '')})
-                                        try:
-                                            db._post("recruitment_pipeline", {
-                                                "candidate_ref": row.get('candidate_ref', ''),
-                                                "candidate_name": f"{row.get('first_name','')} {row.get('last_name','')}",
-                                                "candidate_email": row.get('email', ''),
-                                                "job_id": row.get('job_id', ''),
-                                                "job_title": job_map.get(row.get('job_id', ''), ''),
-                                                "current_stage": "Shortlisted",
-                                                "ai_score": int(row.get('ai_score', 0)),
-                                                "ai_tier": row.get('ai_tier', ''),
-                                                "updated_by": user_name
-                                            })
-                                        except:
-                                            pass
                             st.success(f"✅ {len(shortlist_candidates)} candidates shortlisted!")
+                            get_cached_candidates_agent.clear()
                             st.rerun()
                     with col2:
                         if st.button("📧 Send Interview Invites", use_container_width=True, disabled=len(shortlist_candidates)==0):
@@ -21554,46 +21385,51 @@ def ai_recruitment_agent():
                                         body = email_template.replace('[Candidate]', name_part).replace('[Date]', str(interview_date)).replace('[Type]', interview_type)
                                         EmailService().send_email(row.get('email', ''), f"📅 Interview Invitation — Churchgate Group", body)
                                         db._patch("candidates", {"status": "Interview Invited"}, {"candidate_ref": row.get('candidate_ref', '')})
-                                        try:
-                                            db._post("recruitment_pipeline", {
-                                                "candidate_ref": row.get('candidate_ref', ''),
-                                                "candidate_name": name_part,
-                                                "candidate_email": row.get('email', ''),
-                                                "job_id": row.get('job_id', ''),
-                                                "job_title": job_map.get(row.get('job_id', ''), ''),
-                                                "current_stage": "Interview Scheduled",
-                                                "interview_date": interview_date.strftime('%Y-%m-%d'),
-                                                "interview_type": interview_type,
-                                                "updated_by": user_name
-                                            })
-                                        except:
-                                            pass
                                         sent += 1
                                     except:
                                         pass
                         st.success(f"✅ Interview invitations sent to {sent} candidates!")
                         st.balloons()
                         del st.session_state['shortlist_bulk']
+                        get_cached_candidates_agent.clear()
                         st.rerun()
                 
-                # ===== CANDIDATE DETAILS WITH CVs =====
+                # ===== CANDIDATE DETAILS WITH CVs (PAGINATED) =====
                 st.markdown("---")
                 st.markdown("### 📋 All Applications with CVs")
                 
-                for idx, row in filtered.iterrows():
+                items_per_page = 10
+                total_pages = max(1, (len(filtered) + items_per_page - 1) // items_per_page)
+                
+                if 'agent_page' not in st.session_state:
+                    st.session_state.agent_page = 1
+                if st.session_state.agent_page > total_pages:
+                    st.session_state.agent_page = total_pages
+                    
+                col_p1, col_p2, col_p3 = st.columns([1, 2, 1])
+                with col_p1:
+                    if st.button("⬅️ Previous", disabled=(st.session_state.agent_page <= 1), use_container_width=True, key="agent_prev"):
+                        st.session_state.agent_page -= 1
+                        st.rerun()
+                with col_p2:
+                    st.markdown(f"<p style='text-align:center;'>Page <strong>{st.session_state.agent_page}</strong> of <strong>{total_pages}</strong></p>", unsafe_allow_html=True)
+                with col_p3:
+                    if st.button("Next ➡️", disabled=(st.session_state.agent_page >= total_pages), use_container_width=True, key="agent_next"):
+                        st.session_state.agent_page += 1
+                        st.rerun()
+                        
+                start_idx = (st.session_state.agent_page - 1) * items_per_page
+                end_idx = min(start_idx + items_per_page, len(filtered))
+                page_filtered = filtered.iloc[start_idx:end_idx]
+                
+                for idx, row in page_filtered.iterrows():
                     first = str(row.get('first_name', ''))
                     last = str(row.get('last_name', ''))
-                    email_val = str(row.get('email', ''))
-                    job_id_val = str(row.get('job_id', 'N/A'))
                     score = int(row.get('ai_score', 0)) if row.get('ai_score') and float(row.get('ai_score', 0)) > 0 else 0
-                    tier = str(row.get('ai_tier', 'Pending'))
-                    cv_text = str(row.get('resume_text', ''))
-                    phone_val = str(row.get('phone', ''))
-                    linkedin_val = str(row.get('linkedin_url', ''))
                     
                     emoji = "🌟" if score >= 85 else "👍" if score >= 70 else "🔶" if score > 0 else "⏳"
                     
-                    with st.expander(f"{emoji} {first} {last} — {job_id_val} — {score}% — {tier}", expanded=True):
+                    with st.expander(f"{emoji} {first} {last} — {row.get('job_id', 'N/A')} — {score}% — {row.get('ai_tier', 'Pending')}"):
                         col1, col2, col3 = st.columns([1, 2, 1])
                         
                         with col1:
@@ -21605,80 +21441,32 @@ def ai_recruitment_agent():
                                 st.caption("Not screened yet")
                         
                         with col2:
-                            st.markdown(f"**📧** {email_val} | **📱** {phone_val}")
-                            if linkedin_val and linkedin_val != 'None':
-                                st.markdown(f"**🔗** [{linkedin_val[:30]}...]({linkedin_val})")
-                            st.markdown(f"**💼** {str(row.get('current_position', ''))} | **📅** {str(row.get('years_of_experience', ''))} yrs")
+                            st.markdown(f"**📧** {row.get('email', 'N/A')} | **📱** {row.get('phone', 'N/A')}")
+                            st.markdown(f"**💼** {row.get('current_position', '')} | **📅** {row.get('years_of_experience', '')} yrs")
                             if score > 0:
                                 st.progress(score/100)
                         
                         with col3:
                             st.markdown("**📄 CV & Documents:**")
                             cv_text = str(row.get('resume_text', ''))
+                            if cv_text and len(cv_text) > 10:
+                                st.text_area("CV Content", cv_text[:1000], height=100, key=f"cv_text_{idx}", label_visibility="collapsed")
                             cv_url = str(row.get('cv_url', ''))
-                            resume_filename = str(row.get('resume_filename', ''))
-                            
-                            # Always show CV text if available (even without screening)
-                            if cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 10:
-                                st.text_area("CV Content", cv_text[:5000], height=200, key=f"cv_text_{idx}", label_visibility="collapsed")
-                                st.download_button("📥 Download CV Text", cv_text, f"CV_{first}_{last}.txt", "text/plain", key=f"dl_cv_text_{idx}")
-                            
-                            # Show original file download if URL exists
-                            if cv_url and cv_url not in ['None', '', 'nan'] and len(cv_url) > 5:
-                                st.markdown(f"📎 [Download Original: {resume_filename}]({cv_url})")
-                            elif cv_text and cv_text not in ['None', '', 'nan'] and len(cv_text) > 10:
-                                st.caption("📄 CV text available above")
-                            else:
-                                st.caption("⚠️ No CV content available")
+                            if cv_url and len(cv_url) > 5:
+                                st.markdown(f"📎 [Download Original]({cv_url})")
                         
-                        # Deep Analysis button - works even without screening
                         if st.button("🔍 Deep Analysis", key=f"deep_pipe_{idx}", use_container_width=True):
                             cv_text_local = cv_text
-                            cv_url_local = cv_url
-                            
-                            if (not cv_text_local or cv_text_local in ['None', '', 'nan'] or len(cv_text_local) < 50):
-                                if cv_url_local and cv_url_local not in ['None', '', 'nan'] and len(cv_url_local) > 10:
-                                    with st.spinner("📄 Extracting CV text from file..."):
-                                        extracted = extract_text_from_cv_url(cv_url_local)
-                                        if extracted:
-                                            cv_text_local = extracted
-                                            try:
-                                                db._patch("candidates", {"resume_text": cv_text_local[:10000]}, {"candidate_ref": row.get('candidate_ref', '')})
-                                            except:
-                                                pass
-                            
-                            if cv_text_local and cv_text_local not in ['None', '', 'nan'] and len(cv_text_local) > 50:
-                                with st.spinner("🤖 Running Groq AI Deep Analysis..."):
-                                    job_jd = ""
-                                    if job_id_val and job_id_val not in ['None', '', 'nan']:
-                                        try:
-                                            all_reqs = db.get_all_job_requisitions()
-                                            for r in all_reqs:
-                                                if r.get('req_id') == job_id_val:
-                                                    job_jd = r.get('jd', '')
-                                                    break
-                                        except:
-                                            pass
-                                    
-                                    if job_jd:
-                                        res = ai_agent.deep_analyze_candidate(cv_text, job_jd)
-                                    else:
-                                        res = ai_agent.deep_analyze_candidate(cv_text, cv_text[:500])
-                                    
+                            if cv_text_local and len(cv_text_local) > 50:
+                                with st.spinner("🤖 Running Analysis..."):
+                                    res = ai_agent.deep_analyze_candidate(cv_text_local, "")
                                     if isinstance(res, dict):
                                         st.session_state[f"pipe_analysis_{idx}"] = res
-                                        try:
-                                            db._patch("candidates", {
-                                                "ai_score": int(res.get('overall_score', 0)),
-                                                "ai_tier": res.get('tier', 'Pending')
-                                            }, {"candidate_ref": row.get('candidate_ref', '')})
-                                        except:
-                                            pass
+                                        get_cached_candidates_agent.clear()
                                         st.rerun()
                             else:
                                 st.warning("⚠️ No CV text available for analysis")
                         
-                        # Show analysis results
                         if f"pipe_analysis_{idx}" in st.session_state:
                             res = st.session_state[f"pipe_analysis_{idx}"]
                             st.markdown("---")
@@ -21689,9 +21477,6 @@ def ai_recruitment_agent():
                             s3.metric("Experience", f"{res.get('experience_score', 0)}%")
                             s4.metric("Confidence", f"{res.get('confidence', 0)}%")
                             
-                            if res.get('verbatim_flags', 0) > 30:
-                                st.warning(f"🚨 Verbatim Risk: {res.get('verbatim_flags', 0):.0f}%")
-                            
                             c1, c2 = st.columns(2)
                             with c1:
                                 st.markdown("**✅ Strengths**")
@@ -21701,14 +21486,6 @@ def ai_recruitment_agent():
                                 st.markdown("**⚠️ Gaps**")
                                 for g in res.get('gaps_identified', [])[:3]:
                                     st.markdown(f"- {g}")
-                            
-                            if res.get('interview_questions'):
-                                st.markdown("**🎯 AI-Generated Interview Questions**")
-                                for q_idx, q in enumerate(res.get('interview_questions', [])[:3]):
-                                    st.markdown(f"**{q_idx+1}.** {q}")
-                            
-                            if res.get('recommendation'):
-                                st.markdown(f"**💡 Recommendation:** {res.get('recommendation')}")
                             
                             if st.button("🗑️ Clear Analysis", key=f"clr_pipe_{idx}"):
                                 del st.session_state[f"pipe_analysis_{idx}"]
@@ -21789,7 +21566,7 @@ def ai_recruitment_agent():
                 
                 try:
                     # Get candidate data for context
-                    candidates = db.get_all_candidates()
+                    candidates = get_cached_candidates_agent()
                     
                     # Build rich context for AI
                     context = f"Churchgate Group HRIS Recruitment Assistant.\n"
@@ -21873,7 +21650,7 @@ def ai_recruitment_agent():
     elif ai_section == "📊 Candidate Tiering":
         st.subheader("📊 Candidate Tiering Dashboard")
         try:
-            candidates = db.get_all_candidates()
+            candidates = get_cached_candidates_agent()
             if not candidates.empty:
                 tier1 = len(candidates[candidates['ai_tier'].str.contains('Tier 1', na=False)])
                 tier2 = len(candidates[candidates['ai_tier'].str.contains('Tier 2', na=False)])
@@ -21981,7 +21758,7 @@ def ai_recruitment_agent():
     elif ai_section == "📄 Executive Report":
         st.subheader("📄 AI Executive Report Generator")
         try:
-            candidates = db.get_all_candidates()
+            candidates = get_cached_candidates_agent()
             if not candidates.empty:
                 if st.button("📊 Generate Executive PDF Report", use_container_width=True, type="primary"):
                     try:
